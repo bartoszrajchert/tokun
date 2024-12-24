@@ -1,0 +1,68 @@
+{
+  "brand": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "$value": "#0057FF",
+        "$description": "Primary brand color"
+      },
+      "secondary": {
+        "$value": "#FFD700",
+        "$type": "color",
+        "$description": "Secondary brand color"
+      },
+      "neutral": {
+        "light": {
+          "$value": "#F5F5F5",
+          "$type": "color",
+          "$description": "Light neutral color"
+        },
+        "dark": {
+          "$value": "#333333",
+          "$type": "color",
+          "$description": "Dark neutral color"
+        }
+      }
+    }
+  },
+  "alias": {
+    "color": {
+      "background": {
+        "primary": {
+          "$value": "{brand.color.primary}",
+          "$type": "color",
+          "$description": "Primary background color"
+        },
+        "secondary": {
+          "$value": "{brand.color.secondary}",
+          "$type": "color",
+          "$description": "Secondary background color"
+        },
+        "neutral": {
+          "light": {
+            "$value": "{brand.color.neutral.light}",
+            "$type": "color",
+            "$description": "Light neutral background color"
+          },
+          "dark": {
+            "$value": "{brand.color.neutral.dark}",
+            "$type": "color",
+            "$description": "Dark neutral background color"
+          }
+        }
+      },
+      "text": {
+        "primary": {
+          "$value": "{brand.color.neutral.dark}",
+          "$type": "color",
+          "$description": "Primary text color"
+        },
+        "secondary": {
+          "$value": "{brand.color.neutral.light}",
+          "$type": "color",
+          "$description": "Secondary text color"
+        }
+      }
+    }
+  }
+}

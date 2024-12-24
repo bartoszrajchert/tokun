@@ -1,0 +1,34 @@
+{
+  "brand": {
+    "typography": {
+      "heading": {
+        "$value": {
+          "fontFamily": "{brand.font.family.primary}",
+          "fontSize": "{brand.font.size.large}",
+          "fontWeight": "{brand.font.weight.bold}",
+          "letterSpacing": {
+            "value": 0.1,
+            "unit": "rem"
+          },
+          "lineHeight": 1.2
+        },
+        "$type": "typography",
+        "$description": "Heading typography"
+      },
+      "body": {
+        "$value": {
+          "fontFamily": "{brand.font.family.secondary}",
+          "fontSize": "{brand.font.size.medium}",
+          "fontWeight": "{brand.font.weight.regular}",
+          "letterSpacing": {
+            "value": 0.05,
+            "unit": "rem"
+          },
+          "lineHeight": 1
+        },
+        "$type": "typography",
+        "$description": "Body typography"
+      }
+    }
+  }
+}
