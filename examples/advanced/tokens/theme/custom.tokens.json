@@ -1,0 +1,29 @@
+{
+  "brand": {
+    "unknown token": {
+      "$type": "unknown",
+      "$value": {
+        "abc": "def",
+        "ghi": "jkl"
+      }
+    },
+    "second unknown token": {
+      "$type": "unknown",
+      "$value": "mno"
+    },
+    "same name different token": {
+      "$type": "color",
+      "$value": "#123456"
+    },
+    "Same Name Different Token": {
+      "$type": "color",
+      "$value": "#123"
+    }
+  },
+  "alias": {
+    "custom color": {
+      "$type": "color",
+      "$value": "{brand.same name different token}"
+    }
+  }
+}

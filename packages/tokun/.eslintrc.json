@@ -1,0 +1,3 @@
+{
+  "extends": ["@tokun/eslint-config/base"]
+}

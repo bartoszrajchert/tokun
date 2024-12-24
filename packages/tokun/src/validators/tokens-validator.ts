@@ -1,0 +1,211 @@
+import { isReference, unwrapReference } from "utils/helpers.js";
+import { FlattenTokens, toFlat } from "utils/to-flat.js";
+import { traverseTokens } from "utils/traverse-tokens.js";
+import { Token, TokenGroup, TokenType } from "../types/definitions.js";
+import { GroupSchema, dtcgJsonSchemas } from "./schemas.js";
+
+export type TypeValidators = {
+  [key: string]: {
+    validator: (token: Token) => boolean;
+  };
+};
+
+export type RuleValidators = ((flatten: FlattenTokens) => {
+  errors: ValidatorError[];
+})[];
+
+export type Validators = {
+  types?: TypeValidators;
+  rules?: RuleValidators;
+};
+
+export type ValidatorError = {
+  name: string;
+  message: string;
+  path: string;
+  value?: unknown;
+};
+
+/**
+ * Validate the token group.
+ * The function checks if the token group is valid and if the references are correct.
+ *
+ * @param value Unknown value to validate
+ * @param validators Custom validator to use
+ * @returns True if the value is a valid token group
+ */
+export function tokensValidator(
+  value: unknown,
+  validators: Validators = {},
+): { errors: ValidatorError[]; warnings: string[] } {
+  const { types, rules } = validators;
+  const { errors: groupErrors } = validateGroup(value, types);
+  if (groupErrors.length > 0) {
+    return {
+      errors: groupErrors,
+      warnings: [],
+    };
+  }
+
+  const { flatten } = toFlat(value as TokenGroup);
+  const { errors: refErrors } = validateRules(flatten, rules);
+  if (refErrors.length > 0) {
+    return {
+      errors: refErrors,
+      warnings: [],
+    };
+  }
+
+  return {
+    errors: [],
+    warnings: [],
+  };
+}
+
+/**
+ * Validate the token group.
+ *
+ * @param value Possible token group to validate
+ * @param customTypes Custom token types to validate
+ * @returns Errors found during the validation. If the array is empty, the token group is valid.
+ */
+function validateGroup(
+  value: unknown,
+  customTypes: TypeValidators = {},
+): {
+  errors: ValidatorError[];
+} {
+  const mapTypeWithSchema: TypeValidators = {
+    ...dtcgJsonSchemas,
+    ...customTypes,
+  };
+
+  const errors: ValidatorError[] = [];
+
+  traverseTokens(value, {
+    onToken: (token, path, lastType) => {
+      if (lastType === undefined) {
+        errors.push({
+          message: `The token at ${path} does not have a type. Please add a type.`,
+          name: "missingTokenType",
+          path,
+        });
+        return;
+      }
+
+      const schema = mapTypeWithSchema[lastType as TokenType];
+      if (!schema) {
+        errors.push({
+          message: `Invalid token type at ${path}. The type is: ${lastType}`,
+          name: "invalidTokenType",
+          path,
+          value: lastType,
+        });
+        return;
+      }
+
+      const result = schema.validator(token);
+      if (!result) {
+        errors.push({
+          message: `Invalid token value at ${path} (${lastType}). The value is: ${JSON.stringify(token.$value)}`,
+          name: "invalidTokenValue",
+          path,
+          value: lastType,
+        });
+      }
+    },
+    onGroup: (group, path) => {
+      const schema = GroupSchema(Object.keys(customTypes));
+      const result = schema.safeParse(group);
+
+      if (!result.success) {
+        errors.push({
+          message: `Invalid group at ${path}. Please check the group properties.`,
+          name: "invalidGroup",
+          path,
+        });
+      }
+    },
+  });
+
+  return {
+    errors,
+  };
+}
+
+/**
+ * Validate the references in the token group.
+ * The function checks if the reference exists and has the same type.
+ *
+ * @param tokenGroup - The token group to validate.
+ */
+function validateRules(
+  flatten: FlattenTokens,
+  customRules: RuleValidators = [],
+): { errors: ValidatorError[] } {
+  const finalErrors: ValidatorError[] = [];
+
+  const alleRules: RuleValidators = [
+    isReferencedTokenExists,
+    hasSameType,
+    ...customRules,
+  ];
+
+  alleRules.forEach((rule) => {
+    const { errors } = rule(flatten);
+    if (errors.length > 0) {
+      finalErrors.push(...errors);
+    }
+  });
+
+  return {
+    errors: finalErrors,
+  };
+}
+
+function isReferencedTokenExists(flatten: FlattenTokens): {
+  errors: ValidatorError[];
+} {
+  const errors: ValidatorError[] = [];
+
+  flatten.forEach(({ $value: value }, key) => {
+    if (isReference(value)) {
+      const reference = unwrapReference(value);
+
+      if (!flatten.has(reference)) {
+        errors.push({
+          message: `The reference "${value}" does not exist in ${key}`,
+          name: "referenceNotFound",
+          path: key,
+          value: value,
+        });
+        return;
+      }
+    }
+  });
+
+  return { errors };
+}
+
+function hasSameType(flatten: FlattenTokens): { errors: ValidatorError[] } {
+  const errors: ValidatorError[] = [];
+
+  flatten.forEach(({ $value: value, $type: type }, key) => {
+    if (isReference(value)) {
+      const referencedToken = flatten.get(unwrapReference(value));
+      if (!referencedToken) return;
+
+      if (referencedToken.$type !== type) {
+        errors.push({
+          message: `The reference "${value}" must have the same type. Got "${referencedToken?.$type}" but expected "${type} in ${key}"`,
+          name: "referenceTypeMismatch",
+          path: key,
+          value: { expected: type, got: referencedToken.$type },
+        });
+        return;
+      }
+    }
+  });
+
+  return { errors };
+}

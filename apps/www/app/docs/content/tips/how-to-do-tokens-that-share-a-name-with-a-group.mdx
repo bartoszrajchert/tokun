@@ -1,0 +1,35 @@
+---
+title: "How to do tokens that share a name with a group"
+order: 4
+---
+
+# How to do tokens that share a name with a group
+
+This is the exact question asked in [#97 issue](https://github.com/design-tokens/community-group/issues/97) on DTSG repository.
+
+## The solution
+
+The DTSG is not yet aligned (12/04/2024 version) about this topic. You can follow the issue on GitHub.
+However, tokun is giving you an ability to create such token by defining empty key (`""`). See an example below:
+
+```json
+{
+  "color": {
+    "": {
+      "$type": "color",
+      "$value": "#123456",
+      "$description": "Default color"
+    },
+    "primary": {
+      "$type": "color",
+      "$value": "#FFFFFF",
+      "$description": "Primary color"
+    }
+  }
+}
+```
+
+This JSON will generate 2 tokens:
+
+- `color`
+- `color.primary`

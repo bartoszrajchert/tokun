@@ -1,0 +1,58 @@
+---
+title: "Using the CLI"
+order: 3
+---
+
+# Using CLI
+
+The tokun command line interface (CLI) provides useful functionality with fewer configurations in an executable format.
+
+## Installation
+
+To use CLI you can install it globally:
+
+```bash
+npm install -g tokun
+```
+
+Or have it as a dev dependency in your project:
+
+```bash
+npm install -D tokun
+```
+
+## Commands
+
+The CLI provides the following commands:
+
+- `build` — Build design tokens to a different format. This builder is simplified, to use more advencent option please create a custom script.
+- `validate` — Validate design tokens against the DTCG format.
+
+### build
+
+Build design tokens to a different format. This builder is simplified, to use more advencent option please create a custom script.
+
+```bash
+tokun build
+```
+
+Options:
+| Name | Usage | Description |
+|--------------------|-----------------------|------------------------------------------------------------------------------------|
+| Configuration path | -c, --config \<config\> | The path to the config file. |
+| Input path | -i, --input \<input\> | The input file. This can be a glob pattern. See `tinyglobby` for more information. |
+| Output path | -o, --output \<output\> | The output file to write. |
+
+
+### validate
+
+Validate design tokens against the DTCG format.
+
+```bash
+tokun validate <inputs...>
+```
+
+Arguments:
+| Name | Usage | Description |
+|-----------------|-----------------------|------------------------------------------------------------------------------------|
+| Inputs | \<inputs...\> | The input files to validate. This can be a glob pattern. See `tinyglobby` for more information. |
