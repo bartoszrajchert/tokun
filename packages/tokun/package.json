@@ -1,6 +1,6 @@
 {
   "name": "tokun",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "🥷 tokun is a simple, and easy-to-use tool for working with design tokens with powerups.",
   "type": "module",
   "bin": {
