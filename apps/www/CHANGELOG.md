@@ -1,5 +1,13 @@
 # docs
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [8b77b3c]
+- Updated dependencies [347d178]
+  - tokun@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

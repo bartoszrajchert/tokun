@@ -1,5 +1,12 @@
 # tokun
 
+## 0.1.2
+
+### Patch Changes
+
+- 8b77b3c: Fix duration and transition token types with latest DTCG changes (27 Nov 2024), use "hasOwnProperty" instead of "Object.hasOwn" for better compatibility, don't generate sourcemap, target es6 syntax, export types
+- 347d178: Split node and browser versions
+
 ## 0.1.1
 
 ### Patch Changes
