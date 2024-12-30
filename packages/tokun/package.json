@@ -38,7 +38,7 @@
   "author": "Bartosz Rajchert",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.14.11",
+    "@types/node": "^20.17.10",
     "@types/prompts": "^2.4.9"
   },
   "dependencies": {
@@ -47,8 +47,8 @@
     "ora": "^8.1.1",
     "prompts": "^2.4.2",
     "radash": "^12.1.0",
-    "tinyglobby": "^0.2.6",
-    "zod": "^3.23.8"
+    "tinyglobby": "^0.2.10",
+    "zod": "^3.24.1"
   },
   "browser": {
     "tinyglobby": false,
