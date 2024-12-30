@@ -1,4 +1,4 @@
-import { build, buildObject } from "builder/tokun.js";
+import { build } from "builder/browser/index.js";
 import { Loader, UseFormat } from "utils/types.js";
 import { describe, expect, it, vi } from "vitest";
 
@@ -21,7 +21,7 @@ describe("parseDesignTokens", () => {
     const invalidObj = { invalid: "content" };
 
     expect(() =>
-      buildObject({
+      build({
         obj: invalidObj,
         loader: mockParser,
         formats: [mockFormat],
@@ -35,7 +35,7 @@ describe("parseDesignTokens", () => {
       tokens: {},
     };
 
-    const result = buildObject({
+    const result = build({
       obj: validObj,
       loader: mockParser,
       formats: [mockFormat],
@@ -67,7 +67,7 @@ describe("parseDesignTokens", () => {
       ],
     };
 
-    const result = buildObject({
+    const result = build({
       obj: validObj,
       loader: mockParser,
       formats: [transformFormat],
@@ -97,7 +97,7 @@ describe("parseDesignTokens", () => {
       ],
     };
 
-    const result = buildObject({
+    const result = build({
       obj: validObj,
       loader: mockParser,
       formats: [filterFormat],

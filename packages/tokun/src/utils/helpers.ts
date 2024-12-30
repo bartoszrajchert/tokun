@@ -191,3 +191,16 @@ export function replacer(_: any, value: any) {
     return value;
   }
 }
+
+export const findInRegistry = <T>(
+  name: string,
+  registry: (T & { name: string })[],
+): T => {
+  const found = registry.find((reg) => reg.name === name);
+
+  if (!found) {
+    throw new Error(`${name} not found.`);
+  }
+
+  return found;
+};

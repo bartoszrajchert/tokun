@@ -1,4 +1,4 @@
-import { build } from "builder/tokun.js";
+import { build } from "builder/node/index.js";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import prompts from "prompts";
