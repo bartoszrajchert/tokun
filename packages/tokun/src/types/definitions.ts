@@ -40,7 +40,12 @@ export type FontWeightToken = BaseProperties & {
 
 export type DurationToken = BaseProperties & {
   $type?: "duration";
-  $value: `${number}ms` | ReferenceValue;
+  $value:
+    | {
+        value: number;
+        unit: "ms" | "s";
+      }
+    | ReferenceValue;
 };
 
 export type CubicBezierToken = BaseProperties & {

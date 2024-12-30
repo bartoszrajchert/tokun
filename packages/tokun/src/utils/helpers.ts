@@ -73,8 +73,8 @@ export function hasUnallowedCharactersInName(value: string) {
  * @returns The result of the check.
  * @link https://tr.designtokens.org/format/#additional-group-properties
  */
-export function isToken(obj: any): obj is Token {
-  return Object.hasOwn(obj, "$value");
+export function isToken(obj: object): obj is Token {
+  return obj.hasOwnProperty("$value");
 }
 
 /**

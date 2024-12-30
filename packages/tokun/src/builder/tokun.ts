@@ -8,7 +8,9 @@ import {
 } from "utils/helpers.js";
 import { FlattenTokens } from "utils/to-flat.js";
 import { Loader, Transform, TransformGroup, UseFormat } from "utils/types.js";
-import { Validators, tokensValidator } from "validators/tokens-validator.js";
+
+import { dtcgValidator } from "validators/dtcg-validator.js";
+import { ValidatorConfig } from "validators/types.js";
 import { Options } from "../utils/define-config.js";
 import {
   formatRegistry,
@@ -167,27 +169,27 @@ function buildDesignTokens({
   obj: object;
   loader: Loader;
   formats: UseFormat[];
-  customValidator?: Validators;
+  customValidator?: ValidatorConfig;
 }) {
   const output: {
     filePath: string;
     content: string;
   }[] = [];
-  for (const format of formats) {
-    const { errors, warnings } = tokensValidator(obj, customValidator);
-    if (errors.length > 0) {
-      errors.forEach(({ message }) => {
-        console.error(red(`! ${message}`));
-      });
-      throw new Error("Provided content is not a valid token group.");
-    }
-    if (warnings.length > 0) {
-      const uniqueWarnings = Array.from(new Set(warnings));
-      uniqueWarnings.forEach((message) => {
-        console.warn(yellow(message));
-      });
-    }
+  const { errors, warnings } = dtcgValidator(obj, customValidator);
+  if (errors.length > 0) {
+    errors.forEach(({ message }) => {
+      console.error(red(`! ${message}`));
+    });
+    throw new Error("Provided content is not a valid token group.");
+  }
+  if (warnings.length > 0) {
+    const uniqueWarnings = Array.from(new Set(warnings));
+    uniqueWarnings.forEach((message) => {
+      console.warn(yellow(message));
+    });
+  }
 
+  for (const format of formats) {
     const parsedJson = loader.loadFn({
       content: obj as TokenGroup,
     });
@@ -254,7 +256,7 @@ function buildDesignTokens({
 const isTransformGroup = (
   arg: Transform | TransformGroup,
 ): arg is TransformGroup => {
-  return Object.hasOwn(arg, "transforms");
+  return arg.hasOwnProperty("transforms");
 };
 
 const transformToken = ({

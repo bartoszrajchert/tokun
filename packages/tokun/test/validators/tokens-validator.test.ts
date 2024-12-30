@@ -1,5 +1,5 @@
 import { TokenGroup } from "types/definitions.js";
-import { tokensValidator } from "validators/tokens-validator.js";
+import { dtcgValidator } from "validators/dtcg-validator.js";
 import { describe, expect, it } from "vitest";
 
 describe("tokensValidator", () => {
@@ -22,7 +22,7 @@ describe("tokensValidator", () => {
       },
     };
 
-    const result = tokensValidator(validTokenGroup);
+    const result = dtcgValidator(validTokenGroup);
     console.log(result);
 
     expect(result.errors).toHaveLength(0);
@@ -47,7 +47,7 @@ describe("tokensValidator", () => {
       },
     };
 
-    const result = tokensValidator(invalidTokenGroup);
+    const result = dtcgValidator(invalidTokenGroup);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]!.name).toBe("missingTokenType");
   });
@@ -72,7 +72,7 @@ describe("tokensValidator", () => {
       },
     };
 
-    const result = tokensValidator(invalidTokenGroup);
+    const result = dtcgValidator(invalidTokenGroup);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]!.name).toBe("invalidTokenType");
   });
@@ -93,7 +93,7 @@ describe("tokensValidator", () => {
       },
     };
 
-    const result = tokensValidator(invalidTokenGroup);
+    const result = dtcgValidator(invalidTokenGroup);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]!.name).toBe("invalidTokenValue");
   });
@@ -119,7 +119,7 @@ describe("tokensValidator", () => {
       },
     };
 
-    const result = tokensValidator(invalidTokenGroup);
+    const result = dtcgValidator(invalidTokenGroup);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]!.name).toBe("invalidGroup");
   });
@@ -143,7 +143,7 @@ describe("tokensValidator", () => {
       },
     };
 
-    const result = tokensValidator(invalidTokenGroup);
+    const result = dtcgValidator(invalidTokenGroup);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]!.name).toBe("referenceNotFound");
   });
@@ -167,7 +167,7 @@ describe("tokensValidator", () => {
       },
     };
 
-    const result = tokensValidator(invalidTokenGroup);
+    const result = dtcgValidator(invalidTokenGroup);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]!.name).toBe("referenceTypeMismatch");
   });

@@ -2,7 +2,7 @@ import { TOKEN_TYPES } from "utils/helpers.js";
 import { hexColorWithAlphaRegex, tokenReferenceRegex } from "utils/regexes.js";
 import { z } from "zod";
 import { Token, TokenType } from "../types/definitions.js";
-import { TypeValidators } from "./tokens-validator.js";
+import { TypeValidators } from "./types.js";
 
 /**
  * Creates a schema for a token.
@@ -92,11 +92,16 @@ export const ColorTokenSchema = createSchema(
 
 /**
  * A schema for a dimension token.
+ * The dimension token is an object with a value and a unit.
+ * The unit can be "px" or "rem".
  *
  * @example
  * {
  *  $type: "dimension",
- *  $value: "16px",
+ *  $value: {
+ *    value: 16,
+ *    unit: "px"
+ *  },
  *  $description: "The size of the button."
  * }
  *
@@ -174,11 +179,16 @@ export const fontWeightValues = {
 
 /**
  * A schema for a duration token.
+ * The duration token is an object with a value and a unit.
+ * The unit can be "ms" or "s".
  *
  * @example
  * {
  *  $type: "duration",
- *  $value: "300ms",
+ *  $value: {
+ *    value: 300,
+ *    unit: "ms"
+ *  },
  *  $description: "The duration of the animation."
  * }
  *
@@ -187,8 +197,9 @@ export const fontWeightValues = {
  */
 export const DurationTokenSchema = createSchema(
   "duration",
-  z.string().refine((value) => value.endsWith("ms"), {
-    message: "The duration must be in milliseconds.",
+  z.strictObject({
+    value: z.number(),
+    unit: z.union([z.literal("ms"), z.literal("s")]),
   }),
 );
 
@@ -267,6 +278,10 @@ export const StrokeStyleTokenSchema = createSchema(
     }),
   ]),
 );
+export const strokeStyleTokenPropertyTypes: Record<string, string> = {
+  dashArray: "dimension",
+  lineCap: "string", // TODO: for now there is no "string" token type, revisit this later
+};
 
 export const BorderTokenSchema = createSchema(
   "border",
@@ -281,6 +296,11 @@ export const BorderTokenSchema = createSchema(
         "The border value must be an object with the correct properties.",
     }),
 );
+export const borderTokenPropertyTypes: Record<string, string> = {
+  color: "color",
+  width: "dimension",
+  style: "strokeStyle",
+};
 
 export const TransitionTokenSchema = createSchema(
   "transition",
@@ -295,6 +315,11 @@ export const TransitionTokenSchema = createSchema(
         "The transition value must be an object with the correct properties.",
     }),
 );
+export const transitionTokenPropertyTypes: Record<string, string> = {
+  duration: "duration",
+  delay: "duration",
+  timingFunction: "cubicBezier",
+};
 
 const SingleShadowValueSchema = z
   .strictObject({
@@ -335,6 +360,14 @@ export const ShadowTokenSchema = createSchema(
     z.array(z.union([SingleShadowValueSchema, ReferenceValueSchema])),
   ]),
 );
+export const shadowTokenPropertyTypes: Record<string, string> = {
+  color: "color",
+  offsetX: "dimension",
+  offsetY: "dimension",
+  blur: "dimension",
+  spread: "dimension",
+  inset: "boolean",
+};
 
 /**
  * A schema for a gradient token.
@@ -375,6 +408,10 @@ export const GradientTokenSchema = createSchema(
     ]),
   ),
 );
+export const gradientTokenPropertyTypes: Record<string, string> = {
+  color: "color",
+  position: "number",
+};
 
 /**
  * A schema for a typography token.
@@ -410,6 +447,13 @@ export const TypographyTokenSchema = createSchema(
         "The typography value must be an object with the correct properties.",
     }),
 );
+export const typographyTokenPropertyTypes: Record<string, TokenType> = {
+  fontFamily: "fontFamily",
+  fontSize: "dimension",
+  fontWeight: "fontWeight",
+  letterSpacing: "dimension",
+  lineHeight: "number",
+};
 
 export const dtcgJsonSchemas: TypeValidators = {
   color: {

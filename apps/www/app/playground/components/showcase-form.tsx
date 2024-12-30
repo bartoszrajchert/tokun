@@ -11,7 +11,7 @@ import {
   LoaderName,
   loaderNames,
 } from "tokun/utils";
-import { tokensValidator, type ValidatorError } from "tokun/validators";
+import { dtcgValidator, ValidatorError } from "tokun/validators";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -39,7 +39,7 @@ export default function ShowcaseForm() {
     });
 
     try {
-      const tokens = await buildObject({
+      const tokens = buildObject({
         obj: JSON.parse(value),
         ...config,
       });
@@ -56,7 +56,7 @@ export default function ShowcaseForm() {
     const json = document.querySelector("textarea")!.value;
 
     try {
-      const result = tokensValidator(JSON.parse(json));
+      const result = dtcgValidator(JSON.parse(json));
       setErrors(result.errors);
     } catch (error) {
       console.error(error);

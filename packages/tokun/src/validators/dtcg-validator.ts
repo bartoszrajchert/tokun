@@ -1,44 +1,29 @@
 import { isReference, unwrapReference } from "utils/helpers.js";
 import { FlattenTokens, toFlat } from "utils/to-flat.js";
 import { traverseTokens } from "utils/traverse-tokens.js";
-import { Token, TokenGroup, TokenType } from "../types/definitions.js";
+import { TokenGroup, TokenType } from "../types/definitions.js";
 import { GroupSchema, dtcgJsonSchemas } from "./schemas.js";
-
-export type TypeValidators = {
-  [key: string]: {
-    validator: (token: Token) => boolean;
-  };
-};
-
-export type RuleValidators = ((flatten: FlattenTokens) => {
-  errors: ValidatorError[];
-})[];
-
-export type Validators = {
-  types?: TypeValidators;
-  rules?: RuleValidators;
-};
-
-export type ValidatorError = {
-  name: string;
-  message: string;
-  path: string;
-  value?: unknown;
-};
+import {
+  RuleValidators,
+  TypeValidators,
+  ValidatorConfig,
+  ValidatorError,
+  ValidatorReturn,
+} from "./types.js";
 
 /**
  * Validate the token group.
  * The function checks if the token group is valid and if the references are correct.
  *
  * @param value Unknown value to validate
- * @param validators Custom validator to use
+ * @param config Validator to use
  * @returns True if the value is a valid token group
  */
-export function tokensValidator(
+export function dtcgValidator(
   value: unknown,
-  validators: Validators = {},
-): { errors: ValidatorError[]; warnings: string[] } {
-  const { types, rules } = validators;
+  config: ValidatorConfig = {},
+): ValidatorReturn {
+  const { types, rules } = config;
   const { errors: groupErrors } = validateGroup(value, types);
   if (groupErrors.length > 0) {
     return {

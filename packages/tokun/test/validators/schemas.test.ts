@@ -184,18 +184,19 @@ describe("Test schema single token", () => {
     expect(() => FontWeightTokenSchema.parse(res)).toThrowError();
   });
 
-  it.each(["12ms", "{duration.unknown}"])(
-    "test duration token %s",
-    (duration) => {
-      const res = {
-        $type: "duration",
-        $value: duration,
-        $description: "The duration of the animation.",
-      };
+  it.each([
+    { value: 12, unit: "ms" },
+    { value: 12, unit: "s" },
+    "{duration.unknown}",
+  ])("test duration token %s", (duration) => {
+    const res = {
+      $type: "duration",
+      $value: duration,
+      $description: "The duration of the animation.",
+    };
 
-      expect(() => DurationTokenSchema.parse(res)).not.toThrowError();
-    },
-  );
+    expect(() => DurationTokenSchema.parse(res)).not.toThrowError();
+  });
 
   it.each(["12", "12s", "12m", "12h", "12d", "12ms ", "{duration.unknown"])(
     "test invalid duration token %s",
@@ -403,7 +404,17 @@ describe("Test schema single token", () => {
   });
 
   it.each([
-    { duration: "12ms", timingFunction: [0.1, 0.2, 0.3, 0.4], delay: "12ms" },
+    {
+      duration: {
+        value: 12,
+        unit: "ms",
+      },
+      timingFunction: [0.1, 0.2, 0.3, 0.4],
+      delay: {
+        value: 12,
+        unit: "ms",
+      },
+    },
     {
       duration: "{duration.unkown}",
       timingFunction: "{timingFunction.unkown}",

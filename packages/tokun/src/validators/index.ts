@@ -1,2 +1,3 @@
+export * from "./dtcg-validator.js";
 export * from "./schemas.js";
-export * from "./tokens-validator.js";
+export type * from "./types.js";

@@ -1,4 +1,4 @@
-import { Validators } from "validators/tokens-validator.js";
+import { ValidatorConfig } from "validators/types.js";
 import {
   Format,
   Loader,
@@ -21,5 +21,5 @@ export type Options = {
       transforms?: (string | Transform | TransformGroup)[];
     }
   >[];
-  customValidator?: Validators;
+  customValidator?: ValidatorConfig;
 };
