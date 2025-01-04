@@ -1,5 +1,4 @@
 import typography from "@tailwindcss/typography";
-import fluid, { extract, fontSize, screens } from "fluid-tailwind";
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
@@ -11,12 +10,9 @@ const config: Config = {
       "./components/**/*.{js,ts,jsx,tsx,mdx}",
       "./app/**/*.{js,ts,jsx,tsx,mdx}",
     ],
-    extract,
   },
   theme: {
     extend: {
-      screens,
-      fontSize,
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -66,7 +62,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [tailwindcssAnimate, typography, fluid],
+  plugins: [tailwindcssAnimate, typography],
 };
 
 export default config;
