@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MDXData } from "../utils";
 
@@ -22,16 +25,20 @@ export default function PrevNextPage({ data }: { data: MDXData[] }) {
   return (
     <div className="flex justify-between my-12">
       {prev ? (
-        <a href={`/docs/${prev.slug.join("/")}`} className="text-blue-500">
-          ← {prev.metadata.title}
-        </a>
+        <Link href={`/docs/${prev.slug.join("/")}`}>
+          <Button variant="ghost">
+            <ChevronLeftIcon /> {prev.metadata.title}
+          </Button>
+        </Link>
       ) : (
         <div></div>
       )}
       {next ? (
-        <a href={`/docs/${next.slug.join("/")}`} className="text-blue-500">
-          {next.metadata.title} →
-        </a>
+        <Link href={`/docs/${next.slug.join("/")}`}>
+          <Button variant="ghost">
+            {next.metadata.title} <ChevronRightIcon />
+          </Button>
+        </Link>
       ) : (
         <div></div>
       )}

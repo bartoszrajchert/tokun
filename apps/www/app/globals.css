@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Switzer, Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
@@ -86,6 +86,74 @@ body {
     @apply border-border;
   }
   body {
+    font-size: var(--size-font);
     @apply bg-background text-foreground;
   }
+}
+
+.fancy {
+  font-family: "Dancing Script", cursive;
+}
+
+.gradient-bg {
+  --i-blob-x: 88%;
+  --i-blob-y: 88%;
+
+  --g1-x: 82%;
+  --g1-y: 13%;
+
+  --g2-x: 49%;
+  --g2-y: 39%;
+
+  --g3-x: 9%;
+  --g3-y: 89%;
+
+  --g4-x: 8%;
+  --g4-y: 7%;
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: -2;
+  height: 100vh;
+  filter: contrast(100%) brightness(100%);
+  background-color: hsla(256, 76%, 18%, 1);
+  background-image: radial-gradient(
+      at var(--i-blob-x) var(--i-blob-y),
+      rgb(9, 2, 23),
+      rgba(18, 4, 45, 0)
+    ),
+    radial-gradient(
+      at var(--g1-x) var(--g1-y),
+      rgb(44, 19, 95) 0px,
+      transparent 50%
+    ),
+    radial-gradient(
+      at var(--g2-x) var(--g2-y),
+      hsla(250, 51%, 28%, 1) 0px,
+      transparent 50%
+    ),
+    radial-gradient(
+      at var(--g3-x) var(--g3-y),
+      hsla(243, 56%, 72%, 1) 0px,
+      transparent 50%
+    ),
+    radial-gradient(
+      at var(--g4-x) var(--g4-y),
+      hsla(224, 53%, 71%, 1) 0px,
+      transparent 50%
+    );
+}
+
+.grain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: -1;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 323 323' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='6.08' numOctaves='6' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
 }
