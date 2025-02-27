@@ -159,13 +159,67 @@ function isReferencedTokenExists(flatten: FlattenTokens): {
 
       if (!flatten.has(reference)) {
         errors.push({
-          message: `The reference "${value}" does not exist in ${key}`,
+          message: `The reference "${value}" does not exist in "${key}"`,
           name: "referenceNotFound",
           path: key,
           value: value,
         });
         return;
       }
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((val, index) => {
+        if (isReference(val)) {
+          const reference = unwrapReference(val);
+
+          if (!flatten.has(reference)) {
+            errors.push({
+              message: `The reference "${val}" does not exist in "${key}[${index}]"`,
+              name: "referenceNotFound",
+              path: `${key}[${index}]`,
+              value: val,
+            });
+          }
+        }
+      });
+
+      return;
+    }
+
+    if (typeof value === "object") {
+      Object.entries(value).forEach(([property, val]) => {
+        if (isReference(val)) {
+          const reference = unwrapReference(val);
+
+          if (!flatten.has(reference)) {
+            errors.push({
+              message: `The reference "${val}" does not exist in "${key}", property "${property}"`,
+              name: "referenceNotFound",
+              path: `${key}.${property}`,
+              value: val,
+            });
+          }
+        }
+
+        if (Array.isArray(val)) {
+          val.forEach((v, index) => {
+            if (isReference(v)) {
+              const reference = unwrapReference(v);
+
+              if (!flatten.has(reference)) {
+                errors.push({
+                  message: `The reference "${v}" does not exist in "${key}", property "${property}[${index}]"`,
+                  name: "referenceNotFound",
+                  path: `${key}.${property}[${index}]`,
+                  value: v,
+                });
+              }
+            }
+          });
+        }
+      });
+      return;
     }
   });
 
