@@ -33,6 +33,7 @@ export function dtcgValidator(
   }
 
   const { flatten } = toFlat(value as TokenGroup);
+
   const { errors: refErrors } = validateRules(flatten, rules);
   if (refErrors.length > 0) {
     return {

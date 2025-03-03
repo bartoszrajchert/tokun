@@ -1,50 +1,141 @@
 import { green, red, yellow } from "kleur/colors";
-import { isEqual } from "radash";
-import { Token, TokenGroup } from "types/definitions.js";
+import { assign, isEqual } from "radash";
+import { Config, PlatformWithoutString } from "types/define-config.js";
+import { Token } from "types/definitions.js";
 import {
+  findInRegistry,
   isReference,
   isTokenComposite,
   unwrapReference,
 } from "utils/helpers.js";
+import {
+  formatRegistry,
+  loaderRegistry,
+  transformRegistry,
+} from "utils/registry.js";
 import { FlattenTokens } from "utils/to-flat.js";
-import { Loader, Transform, TransformGroup, UseFormat } from "utils/types.js";
+import { Transform, TransformGroup } from "utils/types.js";
 
-import { dtcgValidator } from "validators/dtcg-validator.js";
-import { ValidatorConfig } from "validators/types.js";
+import { cssFormat } from "./formats/css-format.js";
+import { dtcgJsonLoader } from "./loaders/dtcg-json-loader.js";
+import { cssTransforms } from "./transforms/index.js";
 
-export function buildDesignTokens({
+/**
+ * Converts an object to a file.
+ *
+ * @param loader The loader to use.
+ * @param formats The formats to convert to.
+ * @param customValidator The custom validator to use.
+ * @param obj The object to convert.
+ * @returns The converted files.
+ */
+export function build({ data, options }: Config) {
+  if (data === undefined) {
+    throw new Error("Provide data.");
+  }
+
+  const mergedData = dataToObject(data);
+
+  // Default build.
+  if (options === undefined) {
+    return buildDesignTokens({
+      obj: dtcgJsonLoader.loadFn({ content: mergedData }),
+      // TODO: think if this is not useful
+      // validator: dtcgValidator,
+      platforms: [
+        {
+          name: "css",
+          format: cssFormat,
+          transforms: [cssTransforms],
+          outputs: [
+            {
+              name: "output.css",
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  let { loader, platforms, validator, customValidator } = options;
+
+  if (typeof loader === "string") {
+    loader = findInRegistry(loader, loaderRegistry);
+  }
+
+  platforms = platforms.map((platform) => {
+    if (typeof platform.format === "string") {
+      platform.format = findInRegistry(platform.format, formatRegistry);
+    }
+
+    if (platform.transforms) {
+      platform.transforms = platform.transforms.map((transform) => {
+        if (typeof transform === "string") {
+          return findInRegistry(transform, transformRegistry);
+        }
+        return transform;
+      });
+    }
+
+    return platform;
+  });
+
+  if (validator) {
+    const { errors, warnings } = validator(mergedData, customValidator);
+
+    if (errors.length > 0) {
+      errors.forEach(({ message }) => {
+        console.error(red(`! ${message}`));
+      });
+      throw new Error("Provided content is not a valid token group.");
+    }
+
+    if (warnings.length > 0) {
+      const uniqueWarnings = Array.from(new Set(warnings));
+      uniqueWarnings.forEach((message) => {
+        console.warn(yellow(message));
+      });
+    }
+  }
+
+  return buildDesignTokens({
+    obj: loader.loadFn({ content: mergedData }),
+    platforms: platforms as PlatformWithoutString[],
+  });
+}
+
+function dataToObject(data: Config["data"]) {
+  if (typeof data === "string") {
+    JSON.parse(data);
+  }
+
+  if (Array.isArray(data)) {
+    const parsedData = (data as object[] | string[]).map((d) => {
+      return typeof d === "string" ? JSON.parse(d) : d;
+    });
+
+    return parsedData.reduce((acc, content) => {
+      return assign(acc, content);
+    }, {});
+  }
+
+  return data;
+}
+
+function buildDesignTokens({
   obj,
-  loader,
-  formats,
-  customValidator,
+  platforms,
 }: {
-  obj: object;
-  loader: Loader;
-  formats: UseFormat[];
-  customValidator?: ValidatorConfig;
+  obj: FlattenTokens;
+  platforms: PlatformWithoutString[];
 }) {
   const output: {
     filePath: string;
     content: string;
   }[] = [];
-  const { errors, warnings } = dtcgValidator(obj, customValidator);
-  if (errors.length > 0) {
-    errors.forEach(({ message }) => {
-      console.error(red(`! ${message}`));
-    });
-    throw new Error("Provided content is not a valid token group.");
-  }
-  if (warnings.length > 0) {
-    const uniqueWarnings = Array.from(new Set(warnings));
-    uniqueWarnings.forEach((message) => {
-      console.warn(yellow(message));
-    });
-  }
 
-  for (const format of formats) {
-    const parsedJson = loader.loadFn({
-      content: obj as TokenGroup,
-    });
+  for (const format of platforms) {
+    const parsedJson = obj;
 
     const transformed = format.transforms
       ? format.transforms.reduce((acc, transform) => {
@@ -74,13 +165,13 @@ export function buildDesignTokens({
         }, parsedJson)
       : parsedJson;
 
-    const formats = format.files.map((file) => {
+    const formats = format.outputs.map((output) => {
       let tokens = transformed;
 
-      if (file.filter) {
+      if (output.filter) {
         const filteredTokens = new Map(
           [...transformed].filter(([path, token]) => {
-            if (file.filter) return file.filter({ token, path });
+            if (output.filter) return output.filter({ token, path });
           }),
         );
 
@@ -88,7 +179,7 @@ export function buildDesignTokens({
       }
 
       return {
-        filePath: file.output,
+        filePath: output.name,
         content: format.format.formatter({
           tokens: tokens,
           config: format.config ?? {},

@@ -17,6 +17,10 @@ const config: Config = {
     extend: {
       screens,
       fontSize,
+      fontFamily: {
+        sans: ["var(--font-rubik)"],
+        mono: ["var(--font-ibm-plex-mono)"],
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

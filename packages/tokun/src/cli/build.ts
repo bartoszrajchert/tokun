@@ -1,4 +1,6 @@
-import { build } from "builder/node/index.js";
+import { build } from "builder/tokun.js";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import prompts from "prompts";
@@ -41,24 +43,48 @@ export async function runBuild({
   }
 }
 
-async function readConfigFile(filePath: string) {
-  const paths = await glob([filePath], { absolute: true });
+/**
+ * Read config file.
+ *
+ * TODO: handle .ts files
+ * TODO: handle .json files
+ *
+ * @param configPath
+ */
+async function readConfigFile(configPath: string) {
+  const globConfigPath = await glob([configPath], { absolute: true });
 
-  if (paths.length === 0) {
-    throw new Error("No files found.");
+  if (globConfigPath.length === 0) {
+    throw new Error("Config file has not been found.");
   }
 
-  if (paths.length > 1) {
-    throw new Error("More than one file found.");
+  if (globConfigPath.length > 1) {
+    throw new Error("More than one file found. Provide only one config file.");
   }
 
-  const absolutePath = path.resolve(paths[0]!);
+  const absolutePath = path.resolve(globConfigPath[0]!);
   const fileURL = pathToFileURL(absolutePath).href;
   const config = (await import(fileURL)).default;
 
   // TODO: validate config
 
-  build(config);
+  const tokenFiles = await glob(config.data, { absolute: true });
+
+  const finishedBuild = build({
+    ...config,
+    data: tokenFiles.map((file) => readFileSync(file, "utf-8")),
+  });
+
+  for (const { filePath, content } of finishedBuild) {
+    const dir = path.dirname(filePath);
+    console.log(`Writing to ${filePath}`);
+
+    if (!existsSync(dir)) {
+      mkdirSync(dir), { recursive: true };
+    }
+
+    await writeFile(filePath, content);
+  }
 }
 
 /**
@@ -85,11 +111,24 @@ async function readInputFile(filePath: string, outputFilePath: string) {
   const config = generateConfig({
     loader: response.loader,
     format: response.format,
-    output: outputFilePath,
+    name: outputFilePath,
   });
 
-  build({
+  const data = await readFile(filePath, "utf-8");
+
+  const finishedBuild = build({
     ...config,
-    inputs: [filePath],
+    data: [data],
   });
+
+  for (const { filePath, content } of finishedBuild) {
+    const dir = path.dirname(filePath);
+    console.log(`Writing to ${filePath}`);
+
+    if (!existsSync(dir)) {
+      mkdirSync(dir), { recursive: true };
+    }
+
+    await writeFile(filePath, content);
+  }
 }

@@ -1,5 +1,7 @@
-import { build } from "builder/browser/index.js";
-import { Loader, UseFormat } from "utils/types.js";
+import { build } from "builder/tokun.js";
+import { Platform } from "types/define-config.js";
+import { Loader } from "utils/types.js";
+import { dtcgValidator } from "validators/dtcg-validator.js";
 import { describe, expect, it, vi } from "vitest";
 
 describe("parseDesignTokens", () => {
@@ -9,12 +11,13 @@ describe("parseDesignTokens", () => {
     pattern: /\.json$/,
   };
 
-  const mockFormat = {
+  const mockPlatform: Platform = {
     format: {
-      name: "test",
+      name: "testFormat",
       formatter: vi.fn().mockReturnValue("formatted"),
     },
-    files: [{ output: "test.json" }],
+    outputs: [{ name: "test.json" }],
+    name: "testPlatform",
   };
 
   it("should validate tokens and throw error for invalid content", () => {
@@ -22,9 +25,12 @@ describe("parseDesignTokens", () => {
 
     expect(() =>
       build({
-        obj: invalidObj,
-        loader: mockParser,
-        formats: [mockFormat],
+        data: invalidObj,
+        options: {
+          validator: dtcgValidator,
+          loader: mockParser,
+          platforms: [mockPlatform],
+        },
       }),
     ).toThrowError();
   });
@@ -36,9 +42,11 @@ describe("parseDesignTokens", () => {
     };
 
     const result = build({
-      obj: validObj,
-      loader: mockParser,
-      formats: [mockFormat],
+      data: validObj,
+      options: {
+        loader: mockParser,
+        platforms: [mockPlatform],
+      },
     });
 
     expect(result).toEqual([
@@ -55,8 +63,8 @@ describe("parseDesignTokens", () => {
       tokens: {},
     };
 
-    const transformFormat: UseFormat = {
-      ...mockFormat,
+    const transformFormat: Platform = {
+      ...mockPlatform,
       transforms: [
         {
           type: "name",
@@ -68,9 +76,11 @@ describe("parseDesignTokens", () => {
     };
 
     const result = build({
-      obj: validObj,
-      loader: mockParser,
-      formats: [transformFormat],
+      data: validObj,
+      options: {
+        loader: mockParser,
+        platforms: [transformFormat],
+      },
     });
 
     expect(result).toEqual([
@@ -87,20 +97,22 @@ describe("parseDesignTokens", () => {
       tokens: {},
     };
 
-    const filterFormat = {
-      ...mockFormat,
-      files: [
+    const filterFormat: Platform = {
+      ...mockPlatform,
+      outputs: [
         {
-          output: "test.json",
+          name: "test.json",
           filter: () => true,
         },
       ],
     };
 
     const result = build({
-      obj: validObj,
-      loader: mockParser,
-      formats: [filterFormat],
+      data: validObj,
+      options: {
+        loader: mockParser,
+        platforms: [filterFormat],
+      },
     });
 
     expect(result).toEqual([

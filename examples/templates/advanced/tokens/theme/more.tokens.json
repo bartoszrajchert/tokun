@@ -193,12 +193,12 @@
     "motion": {
       "duration": {
         "short": {
-          "$value": "200ms",
+          "$value": { "value": 200, "unit": "ms" },
           "$type": "duration",
           "$description": "Short duration for transitions"
         },
         "long": {
-          "$value": "500ms",
+          "$value": { "value": 500, "unit": "ms" },
           "$type": "duration",
           "$description": "Long duration for transitions"
         }

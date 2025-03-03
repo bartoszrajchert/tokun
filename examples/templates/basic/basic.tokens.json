@@ -55,7 +55,7 @@
       "header": {
         "$type": "typography",
         "$value": {
-          "fontFamily": "{brand.typography.header.fontFamily}",
+          "fontFamily": ["{brand.typography.header.fontFamily}", "serif"],
           "fontSize": "{brand.typography.header.fontSize}",
           "fontWeight": "{brand.typography.header.fontWeight}",
           "letterSpacing": {

@@ -16,6 +16,10 @@ export function traverseTokens(
     onGroup?: (group: TokenGroup, path: string) => void;
   },
 ) {
+  if (value instanceof Map) {
+    value = Object.fromEntries(value);
+  }
+
   const stack: {
     value: Token | TokenGroup;
     key: string;

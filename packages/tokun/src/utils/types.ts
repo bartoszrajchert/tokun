@@ -39,16 +39,6 @@ export type Format = {
   }) => string;
 };
 
-export type UseFormat = {
-  format: Format;
-  files: {
-    output: string;
-    filter?: ({ token, path }: { token: Token; path: string }) => boolean;
-  }[];
-  transforms?: (Transform | TransformGroup)[];
-  config?: any;
-};
-
 export type ModifyProperties<
   T,
   Changes extends Partial<Record<keyof T, any>>,

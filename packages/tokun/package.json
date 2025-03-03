@@ -9,12 +9,8 @@
   "module": "dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/node/index.d.ts",
-      "default": "./dist/node/index.js"
-    },
-    "./browser": {
-      "types": "./dist/browser/index.d.ts",
-      "default": "./dist/browser/index.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./validators": {
       "types": "./dist/validators/index.d.ts",
