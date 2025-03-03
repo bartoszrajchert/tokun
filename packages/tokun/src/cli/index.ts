@@ -6,6 +6,7 @@ import packageJson from "../../package.json" with { type: "json" };
 import { runBuild } from "./build.js";
 import { logger } from "./utils/logger.js";
 import { runValidate } from "./validate.js";
+
 const handleSigTerm = () => process.exit(0);
 
 process.on("SIGTERM", handleSigTerm);

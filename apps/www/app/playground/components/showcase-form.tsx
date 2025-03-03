@@ -3,7 +3,7 @@
 import { useState } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import atomOneDark from "react-syntax-highlighter/dist/cjs/styles/hljs/atom-one-dark";
-import { build } from "tokun/browser";
+import { build } from "tokun";
 import {
   FormatName,
   formatNames,
@@ -40,8 +40,8 @@ export default function ShowcaseForm() {
 
     try {
       const tokens = build({
-        obj: JSON.parse(value),
-        ...config,
+        data: JSON.parse(value),
+        options: config,
       });
 
       if (tokens) {
@@ -67,7 +67,7 @@ export default function ShowcaseForm() {
     <div>
       <div className="grid h-full items-stretch gap-6 md:grid-cols-[1fr_200px]">
         <form
-          className="flex gap-2 flex-col"
+          className="flex flex-col gap-2"
           onSubmit={(e) => e.preventDefault()}
         >
           <Label htmlFor="name">JSON</Label>
@@ -77,7 +77,7 @@ export default function ShowcaseForm() {
               className="h-full min-h-[300px] lg:min-h-[500px] xl:min-h-[500px]"
               onChange={(e) => setValue(e.target.value)}
             />
-            <div className="rounded-md border bg-muted">
+            <div className="bg-muted rounded-md border">
               {parsed && parsed[0] && (
                 <SyntaxHighlighter
                   language="json"
@@ -109,7 +109,7 @@ export default function ShowcaseForm() {
             items={formatNames as unknown as string[]}
           />
           <div className="flex gap-1.5">
-            <InfoIcon size={14} className="flex-shrink-0 mt-1" />
+            <InfoIcon size={14} className="mt-1 flex-shrink-0" />
             <small>
               Transforms are automatically applied when choosing a format
             </small>

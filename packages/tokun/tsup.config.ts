@@ -2,22 +2,13 @@ import { defineConfig } from "tsup";
 
 export default defineConfig((options) => [
   {
-    entry: ["./src/builder/node/index.ts"],
+    entry: ["./src/builder/index.ts"],
     clean: !options.watch,
     format: ["esm"],
     target: ["es6"],
     minify: !options.watch,
     dts: true,
-    outDir: "./dist/node",
-  },
-  {
-    entry: ["./src/builder/browser/index.ts"],
-    clean: !options.watch,
-    format: ["esm"],
-    target: ["es6"],
-    minify: !options.watch,
-    dts: true,
-    outDir: "./dist/browser",
+    outDir: "./dist",
   },
   {
     entry: ["./src/validators/index.ts"],

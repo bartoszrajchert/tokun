@@ -1,10 +1,4 @@
-import {
-  Format,
-  Loader,
-  Transform,
-  TransformGroup,
-  UseFormat,
-} from "utils/types.js";
+import { Format, Loader, Transform, TransformGroup } from "utils/types.js";
 import { cssFormat } from "../builder/formats/css-format.js";
 import { detailedJsonFormat } from "../builder/formats/detailed-json-format.js";
 import { flattenJsonFormat } from "../builder/formats/flatten-json-format.js";
@@ -12,7 +6,7 @@ import { dtcgJsonLoader } from "../builder/loaders/dtcg-json-loader.js";
 import { camelCaseTransform } from "../builder/transforms/camel-case-transform.js";
 import { cssTransforms } from "../builder/transforms/css/css-transforms.js";
 import { kebabCaseTransform } from "../builder/transforms/kebab-case-transform.js";
-import { Options } from "./define-config.js";
+import { ConfigOptions } from "../types/define-config.js";
 import { FormatName, LoaderName } from "./registry.js";
 
 type ConfigParse = {
@@ -43,12 +37,12 @@ const poweredParse: ConfigParse = {
 export function generateConfig({
   loader,
   format,
-  output = "",
+  name = "",
 }: {
   loader: LoaderName;
   format: FormatName;
-  output?: string;
-}): Pick<Options, "loader" | "formats"> {
+  name?: string;
+}): ConfigOptions {
   const selectedLoader = poweredParse.loaders.find((l) => l.name === loader);
   const selectedFormatWithTransform = poweredParse.formatsWithTransform.find(
     (f) => f.format.name === format,
@@ -64,13 +58,14 @@ export function generateConfig({
 
   return {
     loader: selectedLoader,
-    formats: [
+    platforms: [
       {
+        name: "platform",
         format: selectedFormatWithTransform.format,
         transforms: selectedFormatWithTransform.transforms,
-        files: [
+        outputs: [
           {
-            output: output,
+            name,
           },
         ],
       },

@@ -4,12 +4,13 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { MDXData } from "../utils";
 
+// TODO: make it scrollable
 export function TocTree({ post }: { post: MDXData }) {
   const activeId = useActiveItem(post.toc.map((heading) => heading.slug));
 
   return (
-    <div className="hidden text-sm xl:block sticky top-20 -mt-6 h-fit pt-4">
-      <h3 className="text-lg font-bold mb-2 rounded-md">On this page</h3>
+    <div className="sticky top-16 -mt-6 hidden h-screen overflow-visible pt-4 text-sm xl:block">
+      <h3 className="mb-2 rounded-md text-lg font-bold">On this page</h3>
       <ul>
         {post.toc.map((heading) => (
           <li
