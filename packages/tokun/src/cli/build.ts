@@ -20,6 +20,12 @@ export async function runBuild({
 }) {
   startMessage("build");
 
+  if (!config) {
+    if (existsSync("/config.json")) {
+      config = "/config.json";
+    }
+  }
+
   if (!config && !input) {
     throw new Error("You must provide either a config or input file.");
   }
@@ -75,15 +81,15 @@ async function readConfigFile(configPath: string) {
     data: tokenFiles.map((file) => readFileSync(file, "utf-8")),
   });
 
-  for (const { filePath, content } of finishedBuild) {
-    const dir = path.dirname(filePath);
-    console.log(`Writing to ${filePath}`);
+  for (const { name, content } of finishedBuild) {
+    const dir = path.dirname(name);
+    console.log(`Writing to ${name}`);
 
     if (!existsSync(dir)) {
       mkdirSync(dir), { recursive: true };
     }
 
-    await writeFile(filePath, content);
+    await writeFile(name, content);
   }
 }
 
@@ -121,14 +127,14 @@ async function readInputFile(filePath: string, outputFilePath: string) {
     data: [data],
   });
 
-  for (const { filePath, content } of finishedBuild) {
-    const dir = path.dirname(filePath);
-    console.log(`Writing to ${filePath}`);
+  for (const { name, content } of finishedBuild) {
+    const dir = path.dirname(name);
+    console.log(`Writing to ${name}`);
 
     if (!existsSync(dir)) {
       mkdirSync(dir), { recursive: true };
     }
 
-    await writeFile(filePath, content);
+    await writeFile(name, content);
   }
 }
