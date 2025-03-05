@@ -9,8 +9,18 @@ describe("cssFormat", () => {
         "color-primary",
         {
           $value: "#ff0000",
+          $description: "Color primary",
           $extensions: {
             [CSS_EXTENSION]: { value: "#ff0000", resolvedValue: "#ff0000" },
+          },
+        },
+      ],
+      [
+        "color-secondary",
+        {
+          $value: "#111111",
+          $extensions: {
+            [CSS_EXTENSION]: { value: "#111111", resolvedValue: "#111111" },
           },
         },
       ],
@@ -25,6 +35,7 @@ describe("cssFormat", () => {
             lineHeight: 1.5,
           },
           $type: "typography",
+          $description: "Typography heading",
           $extensions: {
             [CSS_EXTENSION]: {
               value: "bold 16px/1.5 Arial",
@@ -40,7 +51,12 @@ describe("cssFormat", () => {
     const result = cssFormat.formatter({ tokens, config });
 
     expect(result).toBe(
-      `:root {\n  --color-primary: #ff0000;\n  --typography-heading: bold 16px/1.5 Arial;\n  --typography-heading-letter-spacing: 1px;\n}`,
+      `:root {
+  --color-primary: #ff0000; /* Color primary */
+  --color-secondary: #111111;
+  --typography-heading: bold 16px/1.5 Arial; /* Typography heading */
+  --typography-heading-letter-spacing: 1px; /* Typography heading */
+}`,
     );
   });
 

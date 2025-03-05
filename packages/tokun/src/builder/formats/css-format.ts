@@ -2,6 +2,14 @@ import { isReference, stringifyDimensionValue } from "utils/helpers.js";
 import { RESOLVED_EXTENSION } from "utils/to-flat.js";
 import { Format } from "utils/types.js";
 
+type CSSRoot = Record<
+  string,
+  {
+    value: string;
+    description?: string;
+  }
+>;
+
 export const CSS_EXTENSION = "com.tokun.css";
 
 /**
@@ -17,7 +25,7 @@ export const cssFormat: Format = {
   name: "css",
   formatter: ({ tokens, config }) => {
     config.outputReferences = config.outputReferences ?? false;
-    const cssRoot: Record<string, string> = {};
+    const cssRoot: CSSRoot = {};
 
     tokens.forEach((token, path) => {
       const variableName = createVariableName(path);
@@ -28,7 +36,10 @@ export const cssFormat: Format = {
         throw new Error(`The variable "${variableName}" already exists.`);
       }
 
-      cssRoot[variableName] = resolvedValue;
+      cssRoot[variableName] = {
+        value: resolvedValue,
+        description: token.$description,
+      };
 
       // Handle `letter-spacing` for typography tokens as a separate CSS variable
       if (token.$type === "typography" && !isReference(token.$value)) {
@@ -90,7 +101,7 @@ function resolveTokenValue(
  * @param config - Configuration specifying output reference usage
  */
 function handleTypographyToken(
-  cssRoot: Record<string, string>,
+  cssRoot: CSSRoot,
   token: any,
   path: string,
   config: { outputReferences: boolean },
@@ -109,7 +120,10 @@ function handleTypographyToken(
     );
   }
 
-  cssRoot[letterSpacingVariableName] = createVariable(letterSpacingValue);
+  cssRoot[letterSpacingVariableName] = {
+    value: createVariable(letterSpacingValue),
+    description: token.$description,
+  };
 }
 
 /**
@@ -118,9 +132,12 @@ function handleTypographyToken(
  * @param cssRoot - Root CSS object containing variable definitions
  * @returns The formatted CSS output string
  */
-function formatCSSOutput(cssRoot: Record<string, string>): string {
+function formatCSSOutput(cssRoot: CSSRoot): string {
   return `:root {\n${Object.entries(cssRoot)
-    .map(([key, value]) => `  ${key}: ${value};`)
+    .map(
+      ([key, { value, description }]) =>
+        `  ${key}: ${value};${description ? ` /* ${description} */` : ""}`,
+    )
     .join("\n")}\n}`;
 }
 
