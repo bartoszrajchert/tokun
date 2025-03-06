@@ -1,7 +1,7 @@
 import { Token } from "types/definitions.js";
-import { FlattenTokens } from "utils/to-flat.js";
 import { ValidatorConfig, ValidatorReturn } from "validators/types.js";
 import {
+  FileHeader,
   Format,
   Loader,
   ModifyProperties,
@@ -37,6 +37,7 @@ export type Platform = {
   outputs: {
     name: string;
     filter?: ({ token, path }: { token: Token; path: string }) => boolean;
+    fileHeader?: FileHeader;
   }[];
   config?: any;
 };

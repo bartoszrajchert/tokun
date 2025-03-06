@@ -23,7 +23,7 @@ export const CSS_EXTENSION = "com.tokun.css";
  */
 export const cssFormat: Format = {
   name: "css",
-  formatter: ({ tokens, config }) => {
+  formatter: ({ tokens, config, fileHeader }) => {
     config.outputReferences = config.outputReferences ?? false;
     const cssRoot: CSSRoot = {};
 
@@ -47,7 +47,14 @@ export const cssFormat: Format = {
       }
     });
 
-    return formatCSSOutput(cssRoot);
+    const fileHeaderText = fileHeader.fileHeader().join("\n * ");
+
+    if (fileHeaderText === "") {
+      return formatCSSOutput(cssRoot);
+    }
+
+    return `${formatFileHeader(fileHeaderText)}
+${formatCSSOutput(cssRoot)}`;
   },
 };
 
@@ -139,6 +146,16 @@ function formatCSSOutput(cssRoot: CSSRoot): string {
         `  ${key}: ${value};${description ? ` /* ${description} */` : ""}`,
     )
     .join("\n")}\n}`;
+}
+
+/**
+ *
+ * @param message Message to display on top of the file
+ */
+function formatFileHeader(message: string): string {
+  return `/**
+ * ${message}
+ */`;
 }
 
 /**

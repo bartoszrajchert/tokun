@@ -16,6 +16,7 @@ import {
 import { FlattenTokens } from "utils/to-flat.js";
 import { Transform, TransformGroup } from "utils/types.js";
 
+import { defaultFileHeader } from "./file-headers/default-file-header.js";
 import { cssFormat } from "./formats/css-format.js";
 import { dtcgJsonLoader } from "./loaders/dtcg-json-loader.js";
 import { cssTransforms } from "./transforms/index.js";
@@ -130,7 +131,7 @@ function buildDesignTokens({
   platforms: PlatformWithoutString[];
 }) {
   const output: {
-    filePath: string;
+    name: string;
     content: string;
   }[] = [];
 
@@ -179,10 +180,11 @@ function buildDesignTokens({
       }
 
       return {
-        filePath: output.name,
+        name: output.name,
         content: format.format.formatter({
           tokens: tokens,
           config: format.config ?? {},
+          fileHeader: output.fileHeader ?? defaultFileHeader,
         }),
       };
     });

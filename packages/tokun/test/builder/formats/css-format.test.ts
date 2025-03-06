@@ -1,3 +1,4 @@
+import { emptyFileHeader } from "builder/file-headers/empty-file-header.js";
 import { CSS_EXTENSION, cssFormat } from "builder/formats/css-format.js";
 import { FlattenTokens } from "utils/to-flat.js";
 import { describe, expect, it } from "vitest";
@@ -48,7 +49,11 @@ describe("cssFormat", () => {
 
     const config = { outputReferences: false };
 
-    const result = cssFormat.formatter({ tokens, config });
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
 
     expect(result).toBe(
       `:root {
@@ -73,9 +78,9 @@ describe("cssFormat", () => {
 
     const config = { outputReferences: false };
 
-    expect(() => cssFormat.formatter({ tokens, config })).toThrowError(
-      "No resolved value found",
-    );
+    expect(() =>
+      cssFormat.formatter({ tokens, config, fileHeader: emptyFileHeader }),
+    ).toThrowError("No resolved value found");
   });
 
   it("should handle references in values", () => {
@@ -96,7 +101,11 @@ describe("cssFormat", () => {
 
     const config = { outputReferences: true };
 
-    const result = cssFormat.formatter({ tokens, config });
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
 
     expect(result).toBe(
       `:root {\n  --color-primary: var(--color-secondary);\n}`,
@@ -128,7 +137,11 @@ describe("cssFormat", () => {
 
     const config = { outputReferences: false };
 
-    const result = cssFormat.formatter({ tokens, config });
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
 
     expect(result).toBe(
       `:root {\n  --typography-heading: bold 16px/1.5 Arial;\n  --typography-heading-letter-spacing: 1px;\n}`,
@@ -176,7 +189,9 @@ describe("cssFormat", () => {
 
     const config = { outputReferences: false };
 
-    expect(() => cssFormat.formatter({ tokens, config })).toThrow(
+    expect(() =>
+      cssFormat.formatter({ tokens, config, fileHeader: emptyFileHeader }),
+    ).toThrow(
       'The variable "--typography-heading-letter-spacing" already exists.',
     );
   });
@@ -193,7 +208,11 @@ describe("cssFormat", () => {
 
     const config = { outputReferences: false };
 
-    const result = cssFormat.formatter({ tokens, config });
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
 
     expect(result).toBe(`:root {\n  --color-primary: #ff0000;\n}`);
   });
@@ -222,7 +241,11 @@ describe("cssFormat", () => {
 
     const config = { outputReferences: false };
 
-    const result = cssFormat.formatter({ tokens, config });
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
 
     expect(result).toBe(
       `:root {\n  --shadow-default: 0px 4px 10px 0px #000000;\n}`,
