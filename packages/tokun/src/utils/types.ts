@@ -30,13 +30,16 @@ export type Loader = {
 
 export type Format = {
   name: string;
-  formatter: ({
-    tokens,
-    config,
-  }: {
+  formatter: (args: {
     tokens: FlattenTokens;
     config: any;
+    fileHeader: FileHeader;
   }) => string;
+};
+
+export type FileHeader = {
+  name: string;
+  fileHeader: () => string[];
 };
 
 export type ModifyProperties<

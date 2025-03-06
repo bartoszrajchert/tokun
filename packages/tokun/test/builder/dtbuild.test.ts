@@ -51,7 +51,7 @@ describe("parseDesignTokens", () => {
 
     expect(result).toEqual([
       {
-        filePath: "test.json",
+        name: "test.json",
         content: "formatted",
       },
     ]);
@@ -85,7 +85,7 @@ describe("parseDesignTokens", () => {
 
     expect(result).toEqual([
       {
-        filePath: "test.json",
+        name: "test.json",
         content: "formatted",
       },
     ]);
@@ -117,7 +117,7 @@ describe("parseDesignTokens", () => {
 
     expect(result).toEqual([
       {
-        filePath: "test.json",
+        name: "test.json",
         content: "formatted",
       },
     ]);

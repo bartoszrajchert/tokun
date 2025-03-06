@@ -24,7 +24,7 @@ export default function ShowcaseForm() {
   const [errors, setErrors] = useState<ValidatorError[]>([]);
   const [parsed, setParsed] = useState<
     {
-      filePath: string;
+      name: string;
       content: string;
     }[]
   >();
