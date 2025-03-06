@@ -63,6 +63,9 @@ const config: Config = {
           "5": "hsl(var(--chart-5))",
         },
       },
+      height: {
+        "screen-with-nav": "calc(100dvh - 57px)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

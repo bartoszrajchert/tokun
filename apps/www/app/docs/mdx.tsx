@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { compileMDX } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 
+import { Code } from "@/components/code";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import { highlight } from "sugar-high";
 
 function CustomLink(props) {
   const href = props.href;
@@ -30,11 +30,6 @@ function CustomLink(props) {
 
 function RoundedImage(props) {
   return <Image alt={props.alt} className="rounded-lg" {...props} />;
-}
-
-function Code({ children, ...props }) {
-  const codeHTML = highlight(children);
-  return <code dangerouslySetInnerHTML={{ __html: codeHTML }} {...props} />;
 }
 
 function slugify(str) {
