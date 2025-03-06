@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { InfoIcon } from "lucide-react";
 import { Dropdown } from "./dropdown";
 
-export default function ShowcaseForm() {
+export default function ShowcaseForm({ example }: { example: string }) {
   const [errors, setErrors] = useState<ValidatorError[]>([]);
   const [parsed, setParsed] = useState<
     {
@@ -30,7 +30,7 @@ export default function ShowcaseForm() {
   >();
   const [format, setFormat] = useState<string>("");
   const [loader, setLoader] = useState<string>("");
-  const [value, setValue] = useState<string>("");
+  const [value, setValue] = useState<string>(example);
 
   async function handleParse() {
     const config = generateConfig({
@@ -53,10 +53,8 @@ export default function ShowcaseForm() {
   }
 
   function handleValidate() {
-    const json = document.querySelector("textarea")!.value;
-
     try {
-      const result = dtcgValidator(JSON.parse(json));
+      const result = dtcgValidator(JSON.parse(value));
       setErrors(result.errors);
     } catch (error) {
       console.error(error);
@@ -70,11 +68,19 @@ export default function ShowcaseForm() {
           className="flex flex-col gap-2"
           onSubmit={(e) => e.preventDefault()}
         >
-          <Label htmlFor="name">JSON</Label>
+          <div className="flex gap-6">
+            <Label className="w-full" htmlFor="name">
+              JSON
+            </Label>
+            <Label className="w-full" htmlFor="name">
+              Output
+            </Label>
+          </div>
           <div className="grid h-full grid-rows-2 gap-6 lg:grid-cols-2 lg:grid-rows-1">
             <Textarea
               placeholder="Write your JSON here"
               className="h-full min-h-[300px] lg:min-h-[500px] xl:min-h-[500px]"
+              value={value}
               onChange={(e) => setValue(e.target.value)}
             />
             <div className="bg-muted rounded-md border">

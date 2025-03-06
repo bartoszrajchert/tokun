@@ -1,6 +1,7 @@
 "use client";
 
 import { MDXDataGroupedBySlug } from "@/app/docs/utils";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,22 +23,25 @@ export function DocsSidebar({ config }: DocsSidebarProps) {
       })
       .map((item, index) => {
         return (
-          <div key={index} className={cn("pb-2")}>
+          <div key={index}>
             {item.content ? (
-              <Link
-                className={cn(
-                  "mb-1 text-sm",
-                  pathname === `/docs/${item.slug}` ? "font-bold" : "",
-                )}
-                href={`/docs/${item.slug}`}
-              >
-                {item.metadata.title}
+              <Link href={`/docs/${item.slug}`}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "mb-0.5 h-auto w-full justify-start text-wrap p-2 text-left font-normal",
+                    pathname === `/docs/${item.slug}` ? "bg-accent" : "",
+                  )}
+                  size="sm"
+                >
+                  {item.metadata.title}
+                </Button>
               </Link>
             ) : (
               <p className="mb-2 text-sm font-bold">{item.metadata.title}</p>
             )}
             {item.children?.length && (
-              <div className="pl-4">{generateTree(item.children)}</div>
+              <div className="mb-3">{generateTree(item.children)}</div>
             )}
           </div>
         );
@@ -45,6 +49,8 @@ export function DocsSidebar({ config }: DocsSidebarProps) {
   };
 
   return config.length ? (
-    <div className="w-full">{generateTree(config)}</div>
+    <div className="h-screen-with-nav hidden max-w-[280px] overflow-auto border-r py-6 pl-8 pr-8 md:block lg:py-8">
+      <nav className="w-full">{generateTree(config)}</nav>
+    </div>
   ) : null;
 }

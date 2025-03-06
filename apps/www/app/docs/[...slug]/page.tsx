@@ -46,18 +46,18 @@ export default async function Page({ params }: Props) {
   }
 
   return (
-    <section className="relative lg:gap-10 xl:grid xl:grid-cols-[1fr_200px]">
-      <div>
-        <BreadcrumbPathname />
-        <article className="prose dark:prose-invert prose-pre:bg-slate-100 dark:prose-pre:bg-slate-900 relative mx-auto w-full min-w-0 max-w-2xl">
-          <CustomMDX source={post.content} />
-        </article>
-        <PrevNextPage data={docs} />
+    <section className="sm:h-screen-with-nav relative flex">
+      <div className={"mx-auto w-full overflow-auto xl:mr-auto"}>
+        <div className="mx-auto w-full max-w-[65ch] px-8">
+          <BreadcrumbPathname />
+          <article className="prose dark:prose-invert prose-pre:bg-accent dark:prose-pre:bg-accent relative mx-auto w-full">
+            <CustomMDX source={post.content} />
+          </article>
+          <PrevNextPage data={docs} />
+        </div>
       </div>
 
-      <div className="h-full border-l pl-6">
-        <TocTree post={post} />
-      </div>
+      <TocTree post={post} />
     </section>
   );
 }

@@ -2,6 +2,7 @@ import { MainNav } from "@/components/main-nav";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Rubik } from "next/font/google";
+import { getDocs, groupBySlug } from "./docs/utils";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,11 +17,13 @@ const IBMPlexMono = IBM_Plex_Mono({
   weight: ["400", "700"],
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const docs = await getDocs();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${rubik.variable} ${IBMPlexMono.variable} font-sans`}>
@@ -30,8 +33,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <MainNav />
-          <div className="m-auto max-w-[1200px]">{children}</div>
+          <MainNav config={groupBySlug(docs)} />
+          <div className="m-auto px-8">{children}</div>
         </ThemeProvider>
       </body>
     </html>
