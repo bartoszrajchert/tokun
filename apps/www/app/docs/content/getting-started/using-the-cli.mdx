@@ -5,7 +5,7 @@ order: 3
 
 # Using CLI
 
-The tokun command line interface (CLI) provides useful functionality with fewer configurations in an executable format.
+The Tokun command line interface (CLI) provides useful functionality with fewer configurations in an executable format.
 
 ## Installation
 
@@ -19,6 +19,12 @@ Or have it as a dev dependency in your project:
 
 ```bash
 npm install -D tokun
+```
+
+Or use it directly via `npx`:
+
+```bash
+npx tokun
 ```
 
 ## Commands
@@ -36,12 +42,52 @@ Build design tokens to a different format. This builder is simplified, to use mo
 tokun build
 ```
 
+If options are not provided, then the command will try search for `config.json` file in the root.
+
 Options:
 | Name | Usage | Description |
 |--------------------|-----------------------|------------------------------------------------------------------------------------|
 | Configuration path | -c, --config \<config\> | The path to the config file. |
 | Input path | -i, --input \<input\> | The input file. This can be a glob pattern. See `tinyglobby` for more information. |
 | Output path | -o, --output \<output\> | The output file to write. |
+
+#### Config file
+
+You can create configuration file which you can use with CLI `build` command.
+
+```json "package.json"
+{
+  "scripts": {
+    "build": "tokun build -c config.json"
+  }
+}
+```
+
+And the simplest configuration may look like this:
+
+```js "config.json"
+export default {
+  data: ["templates/basic/basic.tokens.json"],
+  options: {
+    loader: "dtcg-json",
+    platforms: [
+      {
+        name: "css",
+        format: "css",
+        transforms: ["kebab-case", "css-transforms"],
+        outputs: [
+          {
+            name: "dist/basic/vars.css",
+          },
+        ],
+        config: { outputReferences: true },
+      }
+    ],
+  },
+};
+```
+
+For more details, read [Config API](/docs/reference/config).
 
 
 ### validate
