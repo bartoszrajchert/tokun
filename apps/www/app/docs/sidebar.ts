@@ -1,5 +1,5 @@
 export const sidebarConfig = {
-  order: [
+  info: [
     {
       slug: "getting-started",
     },
@@ -14,6 +14,7 @@ export const sidebarConfig = {
     },
     {
       slug: "api",
+      name: "API",
     },
   ],
 };

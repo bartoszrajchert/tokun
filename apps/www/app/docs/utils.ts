@@ -3,6 +3,7 @@ import matter from "gray-matter";
 import fs from "node:fs";
 import path from "node:path";
 import { glob } from "tinyglobby";
+import { sidebarConfig } from "./sidebar";
 
 export const DEFAULT_SLUG = "getting-started/introduction";
 
@@ -30,6 +31,7 @@ export type MDXDataGroupedBySlug = {
   slug: string | string[];
   content?: string;
   children?: MDXDataGroupedBySlug[];
+  root?: boolean;
 };
 
 export function getDocs() {
@@ -90,14 +92,23 @@ export function groupBySlug(input: MDXData[]): MDXDataGroupedBySlug[] {
           item.slug.join().endsWith(pItem.slug[depth]),
         );
 
+        const root = !primaryItem;
+        const sidebarInfo = sidebarConfig.info.find(
+          (item) => item.slug === currentSlug,
+        );
+        const sidebarIndex = sidebarInfo
+          ? sidebarConfig.info.indexOf(sidebarInfo)
+          : undefined;
+
         tree[currentSlug] = {
+          root: root,
           metadata: {
             title: primaryItem
               ? primaryItem.metadata.title
-              : capitalize(currentSlug),
-            order: item.metadata.order,
+              : (sidebarInfo?.name ?? capitalize(currentSlug)),
+            order: root ? String(sidebarIndex) : primaryItem.metadata.order,
           },
-          slug: item.slug.join("/"),
+          slug: root ? item.slug[0] : item.slug.join("/"),
         };
       }
 

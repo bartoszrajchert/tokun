@@ -12,10 +12,10 @@ export default function PrevNextPage({ data }: { data: MDXData[] }) {
 
   const currPathname = pathname.split("/").slice(2).join("/");
   const sortedData = data.sort((a, b) => {
-    const aIndex = sidebarConfig.order.findIndex(
+    const aIndex = sidebarConfig.info.findIndex(
       (item) => item.slug === a.slug[0],
     );
-    const bIndex = sidebarConfig.order.findIndex(
+    const bIndex = sidebarConfig.info.findIndex(
       (item) => item.slug === b.slug[0],
     );
 
