@@ -15,16 +15,6 @@ export default {
         ],
         config: { outputReferences: true },
       },
-      {
-        name: "css",
-        format: "flatten-json",
-        transforms: ["camel-case"],
-        outputs: [
-          {
-            name: "dist/basic/vars.json",
-          },
-        ],
-      },
     ],
   },
 };
