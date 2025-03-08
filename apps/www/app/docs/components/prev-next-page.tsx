@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { sidebarConfig } from "../sidebar";
 import { MDXData } from "../utils";
 
 export default function PrevNextPage({ data }: { data: MDXData[] }) {
@@ -11,6 +12,17 @@ export default function PrevNextPage({ data }: { data: MDXData[] }) {
 
   const currPathname = pathname.split("/").slice(2).join("/");
   const sortedData = data.sort((a, b) => {
+    const aIndex = sidebarConfig.order.findIndex(
+      (item) => item.slug === a.slug[0],
+    );
+    const bIndex = sidebarConfig.order.findIndex(
+      (item) => item.slug === b.slug[0],
+    );
+
+    if (aIndex !== bIndex) {
+      return aIndex - bIndex;
+    }
+
     return Number(a.metadata.order) - Number(b.metadata.order);
   });
 
@@ -29,7 +41,7 @@ export default function PrevNextPage({ data }: { data: MDXData[] }) {
           <Button
             variant="outline"
             size="lg"
-            className="h-fit w-full justify-start px-4 py-3 text-right"
+            className="h-fit w-full min-w-[120px] justify-start px-4 py-3 text-right"
           >
             <div className="space-y-1">
               <p className="text-foreground/60">Next</p>
@@ -48,7 +60,7 @@ export default function PrevNextPage({ data }: { data: MDXData[] }) {
           <Button
             variant="outline"
             size="lg"
-            className="h-fit w-full justify-end px-4 py-3 text-left"
+            className="h-fit w-full min-w-[120px] justify-end px-4 py-3 text-left"
           >
             <div className="space-y-1">
               <p className="text-foreground/60">Previous</p>

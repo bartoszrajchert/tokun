@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { sidebarConfig } from "../sidebar";
 
 export interface DocsSidebarProps {
   config: MDXDataGroupedBySlug[];
@@ -16,6 +17,26 @@ export function DocsSidebar({ config }: DocsSidebarProps) {
   const generateTree = (data: MDXDataGroupedBySlug[]) => {
     return data
       .sort((a, b) => {
+        const aIndex = sidebarConfig.order.findIndex((item) => {
+          if (Array.isArray(a.slug)) {
+            return item.slug === a.slug[0];
+          }
+
+          return item.slug === a.slug.split("/")[0];
+        });
+
+        const bIndex = sidebarConfig.order.findIndex((item) => {
+          if (Array.isArray(b.slug)) {
+            return item.slug === b.slug[0];
+          }
+
+          return item.slug === b.slug.split("/")[0];
+        });
+
+        if (aIndex !== bIndex) {
+          return aIndex - bIndex;
+        }
+
         if (a.metadata.order && b.metadata.order) {
           return Number(a.metadata.order) - Number(b.metadata.order);
         }
