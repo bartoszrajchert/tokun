@@ -17,8 +17,7 @@ import { Transform } from "./types.js";
 
 /**
  * The unallowed characters in token or group name.
- *
- * @link https://tr.designtokens.org/format/#character-restrictions
+ * Reference: https://tr.designtokens.org/format/#character-restrictions
  */
 export const UNALLOWED_CHARACTERS_IN_NAME = ["{", "}", ".", "$"];
 
@@ -54,10 +53,10 @@ export const COMPOSITE_TOKEN_TYPES: TokenType[] = [
 
 /**
  * Check if the value has unallowed characters in the name.
+ * Reference: https://tr.designtokens.org/format/#character-restrictions
  *
  * @param value - The value to check.
  * @returns The result of the check.
- * @link https://tr.designtokens.org/format/#character-restrictions
  */
 export function hasUnallowedCharactersInName(value: string) {
   return (
@@ -68,10 +67,10 @@ export function hasUnallowedCharactersInName(value: string) {
 
 /**
  * Check if the object is a token.
+ * Reference: https://tr.designtokens.org/format/#additional-group-properties
  *
  * @param obj - The object to check.
  * @returns The result of the check.
- * @link https://tr.designtokens.org/format/#additional-group-properties
  */
 export function isToken(obj: object): obj is Token {
   return obj.hasOwnProperty("$value");

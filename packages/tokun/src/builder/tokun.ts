@@ -22,15 +22,14 @@ import { dtcgJsonLoader } from "./loaders/dtcg-json-loader.js";
 import { cssTransforms } from "./transforms/index.js";
 
 /**
- * Converts an object to a file.
+ * Build design tokens.
  *
- * @param loader The loader to use.
- * @param formats The formats to convert to.
- * @param customValidator The custom validator to use.
- * @param obj The object to convert.
- * @returns The converted files.
+ * @param config Configuration object.
+ * @returns Array of objects with name and content properties.
  */
-export function build({ data, options }: Config) {
+export function build(config: Config) {
+  const { data, options } = config;
+
   if (data === undefined) {
     throw new Error("Provide data.");
   }
