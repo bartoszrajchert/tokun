@@ -8,7 +8,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "release": "turbo run build lint test && changeset publish",
     "version": "changeset version",
-    "test": "turbo test"
+    "test": "turbo test",
+    "typedoc": "turbo typedoc"
   },
   "author": "Bartosz Rajchert",
   "license": "MIT",

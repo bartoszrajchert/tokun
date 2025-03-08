@@ -11,11 +11,14 @@ import Link from "next/link";
 import React from "react";
 
 function CustomLink(props) {
-  const href = props.href;
+  const href: string = props.href;
+  const markdownWithAnchorFileRegex = /\.mdx?(?:$|#.+$)/;
 
-  if (href.startsWith("/")) {
+  if (href.startsWith("/") || markdownWithAnchorFileRegex.test(href)) {
+    const cleanHref = href.replace(".md", "").replace(".mdx", "");
+
     return (
-      <Link href={href} {...props}>
+      <Link {...props} href={cleanHref}>
         {props.children}
       </Link>
     );
