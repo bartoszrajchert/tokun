@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "entryPointStrategy": "packages",
+  "entryPoints": ["../../packages/*"],
+  "out": "./app/docs/content/api",
+  "outputFileStrategy": "modules",
+  "readme": "none",
+  "hidePageHeader": true,
+  "hideBreadcrumbs": true,
+  "useCodeBlocks": true,
+  "includeHierarchySummary": false,
+  "parametersFormat": "table",
+  "typeDeclarationFormat": "table",
+  "classPropertiesFormat": "table",
+  "entryFileName": "index",
+  "disableGit": true,
+  "disableSources": true,
+  "plugin": [
+    "typedoc-plugin-markdown",
+    "typedoc-plugin-frontmatter",
+    "./scripts/typedoc/plugins.mjs"
+  ]
+}

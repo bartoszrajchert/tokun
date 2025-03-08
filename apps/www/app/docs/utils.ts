@@ -9,6 +9,7 @@ export const DEFAULT_SLUG = "getting-started/introduction";
 export type Metadata = {
   title?: string;
   order?: string;
+  maxTocDepth?: number;
 };
 
 export type MDXData = {
@@ -40,6 +41,10 @@ function readMDXFile(filePath: string) {
   const rawContent = fs.readFileSync(filePath, "utf-8");
   const { data: metadata, content } = matter(rawContent);
 
+  if (metadata.title === undefined) {
+    metadata.title = path.basename(filePath).split(".")[0];
+  }
+
   const toc = generateToc(rawContent);
 
   return {
@@ -50,7 +55,7 @@ function readMDXFile(filePath: string) {
 }
 
 async function getMDXData(dir: string): Promise<MDXData[]> {
-  const mdxFiles = await glob([`${dir}/**/*.mdx`]);
+  const mdxFiles = await glob([`${dir}/**/*.(mdx|md)`]);
 
   const ret = await Promise.all(
     mdxFiles.map(async (file) => {
@@ -126,7 +131,7 @@ function generateToc(content: string): Array<Heading> {
   let match = headingMatcher.exec(content);
   while (match !== null) {
     const level = match[1].length;
-    const title = match[2].trim();
+    const title = match[2].trim().replaceAll("\\_", "_");
     const slug = title
       .toLowerCase()
       .replace(/[^\w\s-]/g, "")

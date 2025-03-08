@@ -12,5 +12,8 @@ export const sidebarConfig = {
     {
       slug: "reference",
     },
+    {
+      slug: "api",
+    },
   ],
 };
