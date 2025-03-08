@@ -74,6 +74,7 @@ export const GroupSchema = (customTypes?: string[]) =>
 
 /**
  * A schema for a color token.
+ * Reference: https://tr.designtokens.org/format/#color
  *
  * @example
  * {
@@ -83,7 +84,6 @@ export const GroupSchema = (customTypes?: string[]) =>
  * }
  *
  * @returns The color token schema.
- * @link https://tr.designtokens.org/format/#color
  */
 export const ColorTokenSchema = createSchema(
   "color",
@@ -94,6 +94,7 @@ export const ColorTokenSchema = createSchema(
  * A schema for a dimension token.
  * The dimension token is an object with a value and a unit.
  * The unit can be "px" or "rem".
+ * Reference: https://tr.designtokens.org/format/#dimension
  *
  * @example
  * {
@@ -106,7 +107,6 @@ export const ColorTokenSchema = createSchema(
  * }
  *
  * @returns The dimension token schema.
- * @link https://tr.designtokens.org/format/#dimension
  */
 export const DimensionTokenSchema = createSchema(
   "dimension",
@@ -118,6 +118,7 @@ export const DimensionTokenSchema = createSchema(
 
 /**
  * A schema for a font family token.
+ * Reference: https://tr.designtokens.org/format/#fontfamily
  *
  * @example
  * {
@@ -127,7 +128,6 @@ export const DimensionTokenSchema = createSchema(
  * }
  *
  * @returns The font family token schema.
- * @link https://tr.designtokens.org/format/#fontfamily
  */
 export const FontFamilyTokenSchema = createSchema(
   "fontFamily",
@@ -136,6 +136,7 @@ export const FontFamilyTokenSchema = createSchema(
 
 /**
  * A schema for a font weight token.
+ * Reference: https://tr.designtokens.org/format/#fontweight
  *
  * @example
  * {
@@ -145,7 +146,6 @@ export const FontFamilyTokenSchema = createSchema(
  * }
  *
  * @returns The font weight token schema.
- * @link https://tr.designtokens.org/format/#fontweight
  */
 export const FontWeightTokenSchema = createSchema(
   "fontWeight",
@@ -161,8 +161,7 @@ export const FontWeightTokenSchema = createSchema(
 /**
  * Helper constant for font weight values.
  * The keys are the font weight values and the values are the possible names.
- *
- * @link https://tr.designtokens.org/format/#font-weight
+ * Reference: https://tr.designtokens.org/format/#font-weight
  */
 export const fontWeightValues = {
   100: ["thin", "hairline"],
@@ -181,6 +180,7 @@ export const fontWeightValues = {
  * A schema for a duration token.
  * The duration token is an object with a value and a unit.
  * The unit can be "ms" or "s".
+ * Reference: https://tr.designtokens.org/format/#duration
  *
  * @example
  * {
@@ -193,7 +193,6 @@ export const fontWeightValues = {
  * }
  *
  * @returns The duration token schema.
- * @link https://tr.designtokens.org/format/#duration
  */
 export const DurationTokenSchema = createSchema(
   "duration",
@@ -207,6 +206,7 @@ export const DurationTokenSchema = createSchema(
  * A schema for a cubic bezier token.
  * The cubic bezier token is an array of 4 numbers.
  * The first and third numbers must be between 0 and 1.
+ * Reference: https://tr.designtokens.org/format/#cubic-bezier
  *
  * @example
  * {
@@ -215,7 +215,6 @@ export const DurationTokenSchema = createSchema(
  * }
  *
  * @returns The cubic bezier token schema.
- * @link https://tr.designtokens.org/format/#cubic-bezier
  */
 export const CubicBezierTokenSchema = createSchema(
   "cubicBezier",
@@ -237,6 +236,7 @@ export const CubicBezierTokenSchema = createSchema(
 
 /**
  * A schema for a number token.
+ * Reference: https://tr.designtokens.org/format/#number
  *
  * @example
  * {
@@ -246,7 +246,6 @@ export const CubicBezierTokenSchema = createSchema(
  * }
  *
  * @returns The number token schema.
- * @link https://tr.designtokens.org/format/#number
  */
 export const NumberTokenSchema = createSchema(
   "number",
@@ -336,6 +335,7 @@ const SingleShadowValueSchema = z
 
 /**
  * A schema for a shadow token.
+ * Reference: https://tr.designtokens.org/format/#shadow
  *
  * @example
  * {
@@ -351,7 +351,6 @@ const SingleShadowValueSchema = z
  * }
  *
  * @returns The shadow token schema.
- * @link https://tr.designtokens.org/format/#shadow
  */
 export const ShadowTokenSchema = createSchema(
   "shadow",
@@ -377,6 +376,7 @@ export const shadowTokenPropertyTypes: Record<string, string> = {
  *  Because it says "If a number value outside of that range is given, it MUST be considered as if it were clamped to the range [0, 1]".
  *  So, it is assumed that the position can be any number.
  *  However, it is recommended to use a number between 0 and 1.
+ * Reference: https://tr.designtokens.org/format/#gradient
  *
  * @example
  * {
@@ -394,7 +394,6 @@ export const shadowTokenPropertyTypes: Record<string, string> = {
  * }
  *
  * @returns The gradient token schema.
- * @link https://tr.designtokens.org/format/#gradient
  */
 export const GradientTokenSchema = createSchema(
   "gradient",
@@ -415,6 +414,7 @@ export const gradientTokenPropertyTypes: Record<string, string> = {
 
 /**
  * A schema for a typography token.
+ * Reference: https://tr.designtokens.org/format/#typography
  *
  * @example
  * {
@@ -430,7 +430,6 @@ export const gradientTokenPropertyTypes: Record<string, string> = {
  * }
  *
  * @returns The typography token schema.
- * @link https://tr.designtokens.org/format/#typography
  */
 export const TypographyTokenSchema = createSchema(
   "typography",

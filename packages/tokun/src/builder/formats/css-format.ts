@@ -18,8 +18,9 @@ export const CSS_EXTENSION = "com.tokun.css";
  * is used to take transformed values (recommended for better CSS output).
  * Otherwise, the `value` and `resolvedValue` will be used.
  *
- * @link https://www.w3.org/TR/CSS22/syndata.html#value-def-identifier
- * @link https://drafts.csswg.org/css-variables/#defining-variables
+ * Reference:
+ *  - https://www.w3.org/TR/CSS22/syndata.html#value-def-identifier
+ *  - https://drafts.csswg.org/css-variables/#defining-variables
  */
 export const cssFormat: Format = {
   name: "css",
