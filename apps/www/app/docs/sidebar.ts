@@ -7,6 +7,9 @@ export const sidebarConfig = {
       slug: "tips",
     },
     {
+      slug: "examples",
+    },
+    {
       slug: "reference",
     },
   ],

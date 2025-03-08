@@ -1,6 +1,6 @@
-# 🥷 tokun
+# 🥷 Tokun
 
-> 🧪 tokun is in the experimental phase. Everything might change!
+> 🧪 Tokun is in the experimental phase. Everything might change!
 
 A simple, and easy-to-use tool for working with design tokens with powerups.
 
@@ -9,7 +9,7 @@ A simple, and easy-to-use tool for working with design tokens with powerups.
 - Support config file
 - Built-in support for [DTCG Format](https://tr.designtokens.org/format/)
 - Validators and schemas for [DTCG Format](https://tr.designtokens.org/format/)
-- You can add custom loaders, transforms, formats, validators (and override built-in ones)
+- You can add custom loaders, transforms, platforms, validators (and override built-in ones)
 - CSS format support
 
 ```bash

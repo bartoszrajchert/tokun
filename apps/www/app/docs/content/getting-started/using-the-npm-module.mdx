@@ -3,4 +3,32 @@ title: "Using the NPM Module"
 order: 4
 ---
 
-TODO: Add content
+# Using the NPM Module
+
+Recommended way to use Tokun is via CLI, however, using this as a NPM Module might be useful when you want to do a lot of custom scripts, or use it in the browser.
+Tokun provides an API for seamless interaction.
+
+## Installation
+
+To use Tokun API, install it as a dependency (or devDependencies).
+
+```bash
+npm install tokun
+```
+
+## Quick start
+
+See below simple way to use Tokun module
+
+```js
+import { build } from 'tokun';
+
+const value = ...;
+
+// Build default to CSS.
+const tokens = build({
+  data: JSON.parse(value)
+});
+
+tokens.forEach(console.log);
+```
