@@ -1,5 +1,19 @@
 # tokun
 
+## 0.2.0
+
+### Minor Changes
+
+- 6f8b637: API changes:
+
+  - Remove tinyglob from `build` method
+  - Merge browser's and node's `build` method
+  - Fix `defineConfig` method
+  - Minor fixes
+  - Export `toFlat`
+
+- 076e809: Add file header
+
 ## 0.1.2
 
 ### Patch Changes
