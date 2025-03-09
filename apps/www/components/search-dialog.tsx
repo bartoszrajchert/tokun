@@ -2,6 +2,7 @@
 
 import { SearchIcon } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import {
@@ -16,6 +17,7 @@ export default function SearchDialog() {
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState([]);
   const [open, setOpen] = React.useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     async function loadPagefind() {
@@ -31,47 +33,7 @@ export default function SearchDialog() {
           // @ts-ignore
           window.pagefind = {
             search: () => ({
-              results: [
-                {
-                  id: "en_8bceec9",
-                  data: async function data() {
-                    return {
-                      url: "/docs/",
-                      excerpt: "Documentation page.",
-                      meta: {
-                        title: "Documentation",
-                        image: "/weka.png",
-                      },
-                      sub_results: [
-                        {
-                          title: "Introduction",
-                          url: "/getting-started/introduction",
-                          excerpt:
-                            "A small snippet of the <mark>static</mark> content, with the search term(s) highlighted in &lt;mark&gt; elements",
-                        },
-                        {
-                          title: "Basic usage",
-                          url: "/getting-started/basic-usage",
-                          excerpt:
-                            "A snippet of the <mark>static</mark> content, scoped between this anchor and the next one",
-                        },
-                      ],
-                    };
-                  },
-                },
-                {
-                  id: "en_6fceec8",
-                  data: async function data() {
-                    return {
-                      url: "/playground/",
-                      excerpt: "Test Tokun in the playgorund",
-                      meta: {
-                        title: "Playground",
-                      },
-                    };
-                  },
-                },
-              ],
+              results: mockResults,
             }),
           };
           console.log(e);
@@ -105,6 +67,10 @@ export default function SearchDialog() {
 
     handleSearch();
   }, [query]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <>
@@ -143,6 +109,12 @@ function Result({ result }: { result: any }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
 
+  function cleanLink(url: string) {
+    return url
+      .replaceAll("_next/static/chunks/app/", "")
+      .replaceAll(".html", "");
+  }
+
   useEffect(() => {
     async function fetchData() {
       const data = await result.data();
@@ -155,7 +127,7 @@ function Result({ result }: { result: any }) {
 
   return (
     <CommandItem value={result.id}>
-      <Link href={data.url}>
+      <Link href={cleanLink(data.url)}>
         <h3>{data.meta.title}</h3>
         <p
           className="text-foreground/60"
@@ -165,3 +137,50 @@ function Result({ result }: { result: any }) {
     </CommandItem>
   );
 }
+
+/**
+ * Mock results for the search dialog.
+ * Used only in development mode.
+ */
+const mockResults = [
+  {
+    id: "en_8bceec9",
+    data: async function data() {
+      return {
+        url: "/docs/",
+        excerpt:
+          "A small snippet of the <mark>static</mark> content, with the search term(s) highlighted in &lt;mark&gt; elements",
+        meta: {
+          title: "Documentation",
+          image: "/weka.png",
+        },
+        sub_results: [
+          {
+            title: "Introduction",
+            url: "/getting-started/introduction",
+            excerpt:
+              "A small snippet of the <mark>static</mark> content, with the search term(s) highlighted in &lt;mark&gt; elements",
+          },
+          {
+            title: "Basic usage",
+            url: "/getting-started/basic-usage",
+            excerpt:
+              "A snippet of the <mark>static</mark> content, scoped between this anchor and the next one",
+          },
+        ],
+      };
+    },
+  },
+  {
+    id: "en_6fceec8",
+    data: async function data() {
+      return {
+        url: "/playground/",
+        excerpt: "Test Tokun in the playgorund",
+        meta: {
+          title: "Playground",
+        },
+      };
+    },
+  },
+];
