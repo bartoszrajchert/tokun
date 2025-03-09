@@ -34,7 +34,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <MainNav config={groupBySlug(docs)} />
-          <div className="m-auto px-8">{children}</div>
+          <div className="m-auto px-6 sm:px-8">{children}</div>
         </ThemeProvider>
       </body>
     </html>
