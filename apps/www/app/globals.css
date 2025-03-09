@@ -114,4 +114,8 @@
   section > ::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--scrollbar));
   }
+
+  mark {
+    @apply bg-muted-foreground text-accent rounded-md px-0.5 font-bold;
+  }
 }
