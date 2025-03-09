@@ -2,4 +2,9 @@
 "tokun": minor
 ---
 
-Change "build" API, remove tinyglob from "build" method, unify browser and nodes "build" method, fix "defineConfig" method, minor fixes
+API changes:
+- Remove tinyglob from `build` method
+- Merge browser's and node's `build` method
+- Fix `defineConfig` method
+- Minor fixes
+- Export `toFlat`
