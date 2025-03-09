@@ -41,10 +41,10 @@ export default function PrevNextPage({ data }: { data: MDXData[] }) {
           <Button
             variant="outline"
             size="lg"
-            className="h-fit w-full min-w-[120px] justify-start px-4 py-3 text-right"
+            className="h-full w-full min-w-[120px] justify-end px-4 py-3 text-right"
           >
             <div className="space-y-1">
-              <p className="text-foreground/60">Next</p>
+              <p className="text-foreground/60">Previous</p>
               <div className="flex items-center gap-1">
                 <ChevronLeftIcon />
                 <p>{prev.metadata.title}</p>
@@ -60,10 +60,10 @@ export default function PrevNextPage({ data }: { data: MDXData[] }) {
           <Button
             variant="outline"
             size="lg"
-            className="h-fit w-full min-w-[120px] justify-end px-4 py-3 text-left"
+            className="h-full w-full min-w-[120px] justify-start whitespace-normal px-4 py-3 text-left"
           >
-            <div className="space-y-1">
-              <p className="text-foreground/60">Previous</p>
+            <div className="w-full space-y-1">
+              <p className="text-foreground/60">Next</p>
               <div className="flex items-center gap-1">
                 <p>{next.metadata.title}</p>
                 <ChevronRightIcon />

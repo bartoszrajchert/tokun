@@ -26,7 +26,7 @@ export function MainNav({ config }: MainNavProps) {
   return (
     <Drawer open={isDrawerOpen} onOpenChange={setDrawerOpen}>
       <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 dark:border-border sticky top-0 z-50 w-full border-b backdrop-blur">
-        <nav className="m-auto flex h-14 items-center justify-between px-8">
+        <nav className="m-auto flex h-14 items-center justify-between px-6 sm:px-8">
           <div className="mr-4 flex">
             <Link
               href="/"
@@ -152,9 +152,9 @@ export function MobileDrawerContent({ config }: MobileDrawerContentProps) {
 
   return (
     <DrawerContent>
-      <div className="px-4 py-6">
+      <div className="max-h-[80svh] overflow-auto px-4 py-8">
         <DrawerTitle>Navigation</DrawerTitle>
-        <nav className={cn("flex flex-col gap-4 py-4 text-sm", "md:hidden")}>
+        <nav className={cn("flex flex-col gap-4 py-4 text-sm")}>
           <Link
             href="/playground"
             className={cn(
