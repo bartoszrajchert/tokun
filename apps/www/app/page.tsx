@@ -9,14 +9,14 @@ export default function Home() {
   const content = readFileSync(filePath, "utf-8");
 
   return (
-    <div className="flex h-[calc(100vh-80px)] items-center justify-center p-8">
-      <div className="my-auto flex w-full flex-col-reverse items-center justify-center gap-8 lg:w-[900px] lg:flex-row">
-        <figure className="bg-accent w-full rounded-xl px-4 shadow-lg lg:w-fit">
-          <figcaption className="text-foreground/60 pt-3 text-center text-sm">
+    <div className="flex items-center justify-center py-8 sm:h-[calc(100vh-80px)]">
+      <div className="my-auto flex w-full flex-col-reverse items-center justify-center gap-8 lg:w-[1000px] lg:flex-row">
+        <figure className="bg-accent w-full overflow-auto rounded-xl px-6 pb-3 shadow-lg">
+          <figcaption className="text-foreground/60 py-3 text-center text-sm">
             {filePath.split("/").slice(-1)[0]}
           </figcaption>
-          <pre>
-            <Code className="text-sm">{content}</Code>
+          <pre className="w-fit">
+            <Code>{content}</Code>
           </pre>
         </figure>
         <div className="w-full space-y-4">

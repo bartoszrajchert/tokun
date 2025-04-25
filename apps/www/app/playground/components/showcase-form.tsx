@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import atomOneDark from "react-syntax-highlighter/dist/cjs/styles/hljs/atom-one-dark";
 import { build } from "tokun";
 import {
   FormatName,
@@ -13,6 +11,7 @@ import {
 } from "tokun/utils";
 import { dtcgValidator, ValidatorError } from "tokun/validators";
 
+import { Code } from "@/components/code";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -83,18 +82,11 @@ export default function ShowcaseForm({ example }: { example: string }) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
             />
-            <div className="bg-muted rounded-md border">
+            <div className="bg-muted overflow-auto rounded-md border p-2">
               {parsed && parsed[0] && (
-                <SyntaxHighlighter
-                  language="json"
-                  style={atomOneDark}
-                  customStyle={{
-                    fontSize: "14px",
-                    background: "hsl(var(--muted))",
-                  }}
-                >
-                  {parsed[0].content}
-                </SyntaxHighlighter>
+                <pre className="w-fit">
+                  <Code>{parsed[0].content}</Code>
+                </pre>
               )}
             </div>
           </div>
