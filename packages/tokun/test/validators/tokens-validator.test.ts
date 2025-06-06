@@ -23,7 +23,6 @@ describe("tokensValidator", () => {
     };
 
     const result = dtcgValidator(validTokenGroup);
-    console.log(result);
 
     expect(result.errors).toHaveLength(0);
     expect(result.warnings).toHaveLength(0);

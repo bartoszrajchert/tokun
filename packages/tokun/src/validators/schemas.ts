@@ -1,6 +1,6 @@
 import { TOKEN_TYPES } from "utils/helpers.js";
 import { hexColorWithAlphaRegex, tokenReferenceRegex } from "utils/regexes.js";
-import { z } from "zod";
+import { z } from "zod/v4-mini";
 import { Token, TokenType } from "../types/definitions.js";
 import { TypeValidators } from "./types.js";
 
@@ -11,66 +11,71 @@ import { TypeValidators } from "./types.js";
  * @param value The value of the token.
  * @returns The token schema.
  */
-export function createSchema<T extends string, V extends z.ZodType<any, any>>(
-  type: T,
-  value: V,
-) {
+export function createSchema<
+  T extends string,
+  V extends z.ZodMiniType<any, any>,
+>(type: T, value: V) {
   return z.strictObject({
     $value: z.union([ReferenceValueSchema, value]), // $value is the Token signature
     $type: z.optional(z.literal(type)),
     $description: z.optional(z.string()),
-    $extensions: z.optional(z.record(z.unknown())),
+    $extensions: z.optional(z.record(z.string(), z.unknown())),
   });
 }
 
 export const ReferenceValueSchema = z
   .string()
-  .refine((value) => tokenReferenceRegex.test(value));
+  .check(z.refine((value) => tokenReferenceRegex.test(value)));
 
 export const StrictStringSchema = z
   .string()
-  .refine(
-    (value) =>
-      tokenReferenceRegex.test(value) ||
-      (!value.includes("{") && !value.includes("}")),
+  .check(
+    z.refine(
+      (value) =>
+        tokenReferenceRegex.test(value) ||
+        (!value.includes("{") && !value.includes("}")),
+    ),
   );
 
 export const GroupSchema = (customTypes?: string[]) =>
   z
-    .object({
+    .looseObject({
       $type: z.optional(
         z
           .string()
-          .refine(
-            (value) =>
-              TOKEN_TYPES.includes(value as TokenType) ||
-              (customTypes !== undefined && customTypes.includes(value)),
+          .check(
+            z.refine(
+              (value) =>
+                TOKEN_TYPES.includes(value as TokenType) ||
+                (customTypes !== undefined && customTypes.includes(value)),
+            ),
           ),
       ),
       $description: z.optional(z.string()),
-      $extensions: z.optional(z.record(z.unknown())),
+      $extensions: z.optional(z.record(z.string(), z.unknown())),
     })
-    .passthrough()
-    .refine((value) => {
-      const keys = Object.keys(value);
+    .check(
+      z.refine((value) => {
+        const keys = Object.keys(value);
 
-      if (keys.length === 0) {
-        return true;
-      }
-
-      for (const key of keys) {
-        if (
-          key.startsWith("$") &&
-          key !== "$type" &&
-          key !== "$description" &&
-          key !== "$extensions"
-        ) {
-          return false;
+        if (keys.length === 0) {
+          return true;
         }
-      }
 
-      return true;
-    });
+        for (const key of keys) {
+          if (
+            key.startsWith("$") &&
+            key !== "$type" &&
+            key !== "$description" &&
+            key !== "$extensions"
+          ) {
+            return false;
+          }
+        }
+
+        return true;
+      }),
+    );
 
 /**
  * A schema for a color token.
@@ -87,7 +92,7 @@ export const GroupSchema = (customTypes?: string[]) =>
  */
 export const ColorTokenSchema = createSchema(
   "color",
-  z.string().refine((value) => hexColorWithAlphaRegex.test(value)),
+  z.string().check(z.refine((value) => hexColorWithAlphaRegex.test(value))),
 );
 
 /**
@@ -150,11 +155,13 @@ export const FontFamilyTokenSchema = createSchema(
 export const FontWeightTokenSchema = createSchema(
   "fontWeight",
   z.union([
-    z.number().int().min(1).max(1000),
-    z.string().refine((value) => {
-      const keys = Object.values(fontWeightValues);
-      return keys.some((key) => key.includes(value));
-    }),
+    z.number().check(z.int(), z.gte(1), z.lte(1000)),
+    z.string().check(
+      z.refine((value) => {
+        const keys = Object.values(fontWeightValues);
+        return keys.some((key) => key.includes(value));
+      }),
+    ),
   ]),
 );
 
@@ -218,10 +225,9 @@ export const DurationTokenSchema = createSchema(
  */
 export const CubicBezierTokenSchema = createSchema(
   "cubicBezier",
-  z
-    .array(z.union([z.number(), ReferenceValueSchema]))
-    .length(4, "The cubic bezier must have 4 values.")
-    .refine((value) => {
+  z.array(z.union([z.number(), ReferenceValueSchema])).check(
+    z.length(4, "The cubic bezier must have 4 values."),
+    z.refine((value) => {
       // Skipping the check if the value is a string
       // because it is previously validated by the ReferenceValueSchema
       if (typeof value[0] === "string" || typeof value[2] === "string") {
@@ -232,6 +238,7 @@ export const CubicBezierTokenSchema = createSchema(
         value[0]! >= 0 && value[0]! <= 1 && value[2]! >= 0 && value[2]! <= 1
       );
     }),
+  ),
 );
 
 /**
@@ -249,9 +256,11 @@ export const CubicBezierTokenSchema = createSchema(
  */
 export const NumberTokenSchema = createSchema(
   "number",
-  z.number().refine((value) => typeof value === "number", {
-    message: "The value must be a number.",
-  }),
+  z.number().check(
+    z.refine((value) => typeof value === "number", {
+      message: "The value must be a number.",
+    }),
+  ),
 );
 
 export const strokePredefinedValues = [
@@ -268,12 +277,16 @@ export const lineCapPredefinedValues = ["butt", "round", "square"] as const;
 export const StrokeStyleTokenSchema = createSchema(
   "strokeStyle",
   z.union([
-    z.string().refine((value: any) => strokePredefinedValues.includes(value)),
+    z
+      .string()
+      .check(z.refine((value: any) => strokePredefinedValues.includes(value))),
     z.strictObject({
-      dashArray: z.array(DimensionTokenSchema.shape.$value),
+      dashArray: z.array(DimensionTokenSchema.def.shape.$value),
       lineCap: z
         .string()
-        .refine((value: any) => lineCapPredefinedValues.includes(value)),
+        .check(
+          z.refine((value: any) => lineCapPredefinedValues.includes(value)),
+        ),
     }),
   ]),
 );
@@ -286,14 +299,16 @@ export const BorderTokenSchema = createSchema(
   "border",
   z
     .strictObject({
-      color: ColorTokenSchema.shape.$value,
-      width: DimensionTokenSchema.shape.$value,
-      style: StrokeStyleTokenSchema.shape.$value,
+      color: ColorTokenSchema.def.shape.$value,
+      width: DimensionTokenSchema.def.shape.$value,
+      style: StrokeStyleTokenSchema.def.shape.$value,
     })
-    .refine((value) => typeof value === "object", {
-      message:
-        "The border value must be an object with the correct properties.",
-    }),
+    .check(
+      z.refine((value) => typeof value === "object", {
+        message:
+          "The border value must be an object with the correct properties.",
+      }),
+    ),
 );
 export const borderTokenPropertyTypes: Record<string, string> = {
   color: "color",
@@ -305,14 +320,16 @@ export const TransitionTokenSchema = createSchema(
   "transition",
   z
     .strictObject({
-      duration: DurationTokenSchema.shape.$value,
-      delay: DurationTokenSchema.shape.$value,
-      timingFunction: CubicBezierTokenSchema.shape.$value,
+      duration: DurationTokenSchema.def.shape.$value,
+      delay: DurationTokenSchema.def.shape.$value,
+      timingFunction: CubicBezierTokenSchema.def.shape.$value,
     })
-    .refine((value) => typeof value === "object", {
-      message:
-        "The transition value must be an object with the correct properties.",
-    }),
+    .check(
+      z.refine((value) => typeof value === "object", {
+        message:
+          "The transition value must be an object with the correct properties.",
+      }),
+    ),
 );
 export const transitionTokenPropertyTypes: Record<string, string> = {
   duration: "duration",
@@ -322,16 +339,19 @@ export const transitionTokenPropertyTypes: Record<string, string> = {
 
 const SingleShadowValueSchema = z
   .strictObject({
-    color: ColorTokenSchema.shape.$value,
-    offsetX: DimensionTokenSchema.shape.$value,
-    offsetY: DimensionTokenSchema.shape.$value,
-    blur: DimensionTokenSchema.shape.$value,
-    spread: DimensionTokenSchema.shape.$value,
+    color: ColorTokenSchema.def.shape.$value,
+    offsetX: DimensionTokenSchema.def.shape.$value,
+    offsetY: DimensionTokenSchema.def.shape.$value,
+    blur: DimensionTokenSchema.def.shape.$value,
+    spread: DimensionTokenSchema.def.shape.$value,
     inset: z.optional(z.boolean()),
   })
-  .refine((value) => typeof value === "object", {
-    message: "The shadow value must be an object with the correct properties.",
-  });
+  .check(
+    z.refine((value) => typeof value === "object", {
+      message:
+        "The shadow value must be an object with the correct properties.",
+    }),
+  );
 
 /**
  * A schema for a shadow token.
@@ -400,8 +420,8 @@ export const GradientTokenSchema = createSchema(
   z.array(
     z.union([
       z.strictObject({
-        color: ColorTokenSchema.shape.$value,
-        position: NumberTokenSchema.shape.$value,
+        color: ColorTokenSchema.def.shape.$value,
+        position: NumberTokenSchema.def.shape.$value,
       }),
       ReferenceValueSchema,
     ]),
@@ -435,16 +455,18 @@ export const TypographyTokenSchema = createSchema(
   "typography",
   z
     .strictObject({
-      fontFamily: FontFamilyTokenSchema.shape.$value,
-      fontSize: DimensionTokenSchema.shape.$value,
-      fontWeight: FontWeightTokenSchema.shape.$value,
-      letterSpacing: DimensionTokenSchema.shape.$value,
-      lineHeight: NumberTokenSchema.shape.$value,
+      fontFamily: FontFamilyTokenSchema.def.shape.$value,
+      fontSize: DimensionTokenSchema.def.shape.$value,
+      fontWeight: FontWeightTokenSchema.def.shape.$value,
+      letterSpacing: DimensionTokenSchema.def.shape.$value,
+      lineHeight: NumberTokenSchema.def.shape.$value,
     })
-    .refine((value) => typeof value === "object", {
-      message:
-        "The typography value must be an object with the correct properties.",
-    }),
+    .check(
+      z.refine((value) => typeof value === "object", {
+        message:
+          "The typography value must be an object with the correct properties.",
+      }),
+    ),
 );
 export const typographyTokenPropertyTypes: Record<string, TokenType> = {
   fontFamily: "fontFamily",

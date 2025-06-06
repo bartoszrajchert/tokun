@@ -1,5 +1,4 @@
 import { green, red, yellow } from "kleur/colors";
-import { assign, isEqual } from "radash";
 import { Config, PlatformWithoutString } from "types/define-config.js";
 import { Token } from "types/definitions.js";
 import {
@@ -16,6 +15,7 @@ import {
 import { FlattenTokens } from "utils/to-flat.js";
 import { Transform, TransformGroup } from "utils/types.js";
 
+import { assign, isEqual } from "utils/object-utils.js";
 import { defaultFileHeader } from "./file-headers/default-file-header.js";
 import { cssFormat } from "./formats/css-format.js";
 import { dtcgJsonLoader } from "./loaders/dtcg-json-loader.js";

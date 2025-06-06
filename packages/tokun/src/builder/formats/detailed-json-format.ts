@@ -1,4 +1,3 @@
-import { get } from "radash";
 import {
   ReferenceValue,
   StrictToken,
@@ -15,6 +14,7 @@ import {
   replacer,
   unwrapReference,
 } from "utils/helpers.js";
+import { get } from "utils/object-utils.js";
 import { traverseTokens } from "utils/traverse-tokens.js";
 import { Format } from "utils/types.js";
 
