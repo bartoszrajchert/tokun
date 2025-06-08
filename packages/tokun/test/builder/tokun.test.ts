@@ -69,7 +69,7 @@ describe("parseDesignTokens", () => {
         {
           type: "name",
           name: "test",
-          transitive: true,
+
           transformer: (name: string) => name.toUpperCase(),
         },
       ],
