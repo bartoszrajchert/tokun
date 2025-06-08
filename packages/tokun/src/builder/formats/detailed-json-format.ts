@@ -8,13 +8,13 @@ import {
   TokenType,
   TokenValue,
 } from "types/definitions.js";
+import { get } from "utils/object-utils.js";
 import {
   isReference,
   isValueComposite,
   replacer,
   unwrapReference,
-} from "utils/helpers.js";
-import { get } from "utils/object-utils.js";
+} from "utils/token-utils.js";
 import { traverseTokens } from "utils/traverse-tokens.js";
 import { Format } from "utils/types.js";
 

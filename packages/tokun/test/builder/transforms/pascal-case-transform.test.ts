@@ -1,5 +1,5 @@
 import { pascalCaseTransform } from "builder/transforms/pascal-case-transform.js";
-import { applyTransform } from "utils/helpers.js";
+import { applyTransform } from "utils/token-utils.js";
 import { describe, expect, it } from "vitest";
 
 describe("Test pascal-case-transform", () => {

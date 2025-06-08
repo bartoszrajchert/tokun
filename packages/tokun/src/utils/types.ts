@@ -2,7 +2,6 @@ import { Token, TokenGroup } from "types/definitions.js";
 import { FlattenTokens } from "./to-flat.js";
 
 export type Transform = {
-  transitive: boolean;
   name: string;
   filter?: (arg: Token) => boolean;
 } & (TokenTransform | NameTransform);

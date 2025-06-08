@@ -1,25 +1,38 @@
 import { green, red, yellow } from "kleur/colors";
-import { Config, PlatformWithoutString } from "types/define-config.js";
-import { Token } from "types/definitions.js";
 import {
-  findInRegistry,
-  isReference,
-  isTokenComposite,
-  unwrapReference,
-} from "utils/helpers.js";
+  Config,
+  ConfigOptions,
+  PlatformWithoutString,
+} from "types/define-config.js";
+import { Token, TokenGroup, TokenValue } from "types/definitions.js";
+import { assign, isEqual } from "utils/object-utils.js";
 import {
   formatRegistry,
   loaderRegistry,
   transformRegistry,
 } from "utils/registry.js";
 import { FlattenTokens } from "utils/to-flat.js";
-import { Transform, TransformGroup } from "utils/types.js";
-
-import { assign, isEqual } from "utils/object-utils.js";
+import {
+  findInRegistry,
+  isReference,
+  isTokenComposite,
+  unwrapReference,
+} from "utils/token-utils.js";
+import { Loader, Transform, TransformGroup } from "utils/types.js";
 import { defaultFileHeader } from "./file-headers/default-file-header.js";
 import { cssFormat } from "./formats/css-format.js";
 import { dtcgJsonLoader } from "./loaders/dtcg-json-loader.js";
 import { cssTransforms } from "./transforms/index.js";
+
+type BuildOutput = {
+  name: string;
+  content: string;
+};
+
+type TokenTransformer = {
+  (value: string): string;
+  (token: Token): Token;
+};
 
 /**
  * Build design tokens.
@@ -27,99 +40,102 @@ import { cssTransforms } from "./transforms/index.js";
  * @param config Configuration object.
  * @returns Array of objects with name and content properties.
  */
-export function build(config: Config) {
+export function build(config: Config): BuildOutput[] {
   const { data, options } = config;
 
-  if (data === undefined) {
-    throw new Error("Provide data.");
+  if (!data) {
+    throw new Error("Please provide data.");
   }
 
   const mergedData = dataToObject(data);
 
-  // Default build.
-  if (options === undefined) {
+  if (!options) {
     return buildDesignTokens({
       obj: dtcgJsonLoader.loadFn({ content: mergedData }),
-      // TODO: think if this is not useful
-      // validator: dtcgValidator,
       platforms: [
         {
           name: "css",
           format: cssFormat,
           transforms: [cssTransforms],
-          outputs: [
-            {
-              name: "output.css",
-            },
-          ],
+          outputs: [{ name: "output.css" }],
         },
       ],
     });
   }
 
-  let { loader, platforms, validator, customValidator } = options;
+  const { loader, platforms, validator, customValidator } = options;
 
-  if (typeof loader === "string") {
-    loader = findInRegistry(loader, loaderRegistry);
-  }
-
-  platforms = platforms.map((platform) => {
-    if (typeof platform.format === "string") {
-      platform.format = findInRegistry(platform.format, formatRegistry);
-    }
-
-    if (platform.transforms) {
-      platform.transforms = platform.transforms.map((transform) => {
-        if (typeof transform === "string") {
-          return findInRegistry(transform, transformRegistry);
-        }
-        return transform;
-      });
-    }
-
-    return platform;
-  });
+  const resolvedLoader = resolveLoader(loader);
+  const resolvedPlatforms = resolvePlatforms(platforms);
 
   if (validator) {
-    const { errors, warnings } = validator(mergedData, customValidator);
-
-    if (errors.length > 0) {
-      errors.forEach(({ message }) => {
-        console.error(red(`! ${message}`));
-      });
-      throw new Error("Provided content is not a valid token group.");
-    }
-
-    if (warnings.length > 0) {
-      const uniqueWarnings = Array.from(new Set(warnings));
-      uniqueWarnings.forEach((message) => {
-        console.warn(yellow(message));
-      });
-    }
+    validateTokens(mergedData, validator, customValidator);
   }
 
   return buildDesignTokens({
-    obj: loader.loadFn({ content: mergedData }),
-    platforms: platforms as PlatformWithoutString[],
+    obj: resolvedLoader.loadFn({ content: mergedData }),
+    platforms: resolvedPlatforms,
   });
 }
 
-function dataToObject(data: Config["data"]) {
+function resolvePlatforms(
+  platforms: ConfigOptions["platforms"],
+): PlatformWithoutString[] {
+  return platforms.map((platform) => ({
+    ...platform,
+    format:
+      typeof platform.format === "string"
+        ? findInRegistry(platform.format, formatRegistry)
+        : platform.format,
+    transforms:
+      platform.transforms?.map((transform) =>
+        typeof transform === "string"
+          ? findInRegistry(transform, transformRegistry)
+          : transform,
+      ) ?? [],
+  }));
+}
+
+function resolveLoader(loader: ConfigOptions["loader"]): Loader {
+  return typeof loader === "string"
+    ? findInRegistry(loader, loaderRegistry)
+    : loader;
+}
+
+function validateTokens(
+  data: TokenGroup,
+  validator: NonNullable<ConfigOptions["validator"]>,
+  customValidator?: ConfigOptions["customValidator"],
+): void {
+  const { errors, warnings } = validator(data, customValidator);
+
+  if (errors.length > 0) {
+    errors.forEach(({ message }) => console.error(red(`! ${message}`)));
+    throw new Error("Provided content is not a valid token group.");
+  }
+
+  if (warnings.length > 0) {
+    const uniqueWarnings = Array.from(new Set(warnings));
+    uniqueWarnings.forEach((message) => console.warn(yellow(message)));
+  }
+}
+
+function dataToObject(data: Config["data"]): TokenGroup {
   if (typeof data === "string") {
-    JSON.parse(data);
+    return JSON.parse(data);
   }
 
   if (Array.isArray(data)) {
-    const parsedData = (data as object[] | string[]).map((d) => {
-      return typeof d === "string" ? JSON.parse(d) : d;
-    });
-
-    return parsedData.reduce((acc, content) => {
-      return assign(acc, content);
-    }, {});
+    const parsedData = data.map((d) =>
+      typeof d === "string" ? JSON.parse(d) : d,
+    );
+    return parsedData.reduce(
+      (acc, content) => assign(acc, content),
+      {} as TokenGroup,
+    );
   }
 
-  return data;
+  return data as TokenGroup;
 }
 
 function buildDesignTokens({
@@ -128,175 +144,175 @@ function buildDesignTokens({
 }: {
   obj: FlattenTokens;
   platforms: PlatformWithoutString[];
-}) {
-  const output: {
-    name: string;
-    content: string;
-  }[] = [];
+}): BuildOutput[] {
+  const output: BuildOutput[] = [];
 
   for (const format of platforms) {
-    const parsedJson = obj;
-
-    const transformed = format.transforms
-      ? format.transforms.reduce((acc, transform) => {
-          acc.forEach((token, name) => {
-            if (isTransformGroup(transform)) {
-              transform.transforms.forEach((transform) => {
-                transformToken({
-                  transform: transform,
-                  token: token,
-                  tokenName: name,
-                  flattenTokens: acc,
-                });
-              });
-
-              return acc;
-            }
-
-            transformToken({
-              transform: transform,
-              token: token,
-              tokenName: name,
-              flattenTokens: acc,
-            });
-          });
-
-          return acc;
-        }, parsedJson)
-      : parsedJson;
-
-    const formats = format.outputs.map((output) => {
-      let tokens = transformed;
-
-      if (output.filter) {
-        const filteredTokens = new Map(
-          [...transformed].filter(([path, token]) => {
-            if (output.filter) return output.filter({ token, path });
-          }),
-        );
-
-        tokens = filteredTokens;
-      }
-
-      return {
-        name: output.name,
-        content: format.format.formatter({
-          tokens: tokens,
-          config: format.config ?? {},
-          fileHeader: output.fileHeader ?? defaultFileHeader,
-        }),
-      };
-    });
+    const transformedTokens = applyTransforms(obj, format.transforms);
+    const formats = generateFormats(transformedTokens, format);
 
     console.log(green(`✓ ${format.format.name} format parsed`));
     output.push(...formats);
   }
 
   console.log();
-
   return output;
+}
+
+function applyTransforms(
+  tokens: FlattenTokens,
+  transforms?: (Transform | TransformGroup)[],
+): FlattenTokens {
+  if (!transforms) return tokens;
+
+  return transforms.reduce((acc, transform) => {
+    acc.forEach((token, name) => {
+      if (isTransformGroup(transform)) {
+        transform.transforms.forEach((t) =>
+          transformToken({
+            transform: t,
+            token,
+            tokenName: name,
+            flattenTokens: acc,
+          }),
+        );
+        return;
+      }
+      transformToken({ transform, token, tokenName: name, flattenTokens: acc });
+    });
+    return acc;
+  }, tokens);
+}
+
+function generateFormats(
+  tokens: FlattenTokens,
+  format: PlatformWithoutString,
+): BuildOutput[] {
+  return format.outputs.map((output) => {
+    const filteredTokens = output.filter
+      ? new Map(
+          [...tokens].filter(([path, token]) =>
+            output.filter?.({ token, path }),
+          ),
+        )
+      : tokens;
+
+    return {
+      name: output.name,
+      content: format.format.formatter({
+        tokens: filteredTokens,
+        config: format.config ?? {},
+        fileHeader: output.fileHeader ?? defaultFileHeader,
+      }),
+    };
+  });
 }
 
 const isTransformGroup = (
   arg: Transform | TransformGroup,
-): arg is TransformGroup => {
-  return arg.hasOwnProperty("transforms");
-};
+): arg is TransformGroup => arg.hasOwnProperty("transforms");
 
-const transformToken = ({
-  transform,
-  token,
-  tokenName: name,
-  flattenTokens: acc,
-}: {
+function transformToken(args: {
   transform: Transform;
   token: Token;
   tokenName: string;
   flattenTokens: FlattenTokens;
-}) => {
-  if (transform.filter && !transform.filter(token)) {
-    // If the token is filtered out, skip it.
-    return;
-  }
+}): void {
+  const { transform, token, tokenName: name, flattenTokens: acc } = args;
+
+  if (transform.filter && !transform.filter(token)) return;
 
   if (transform.type === "name") {
-    const transformedName = transform.transformer(name);
+    handleNameTransform(transform, token, name, acc);
+  } else if (transform.type === "token") {
+    handleTokenTransform(transform, token, name, acc);
+  }
+}
 
-    const transformedReferenceValue = (value: unknown) => {
-      if (isReference(value)) {
-        const transformedValue = transform.transformer(unwrapReference(value));
-        if (transformedValue !== value) {
-          return `{${transformedValue}}`;
-        }
-      }
+function handleNameTransform(
+  transform: Transform,
+  token: Token,
+  name: string,
+  acc: FlattenTokens,
+): void {
+  const transformedName = transform.transformer(name as Token & string);
+  const transformedValue = transformReferenceValue(
+    token.$value,
+    transform.transformer as TokenTransformer,
+  );
 
-      return value;
-    };
-
-    const transformCompositeValue = (value: object) => {
-      return Object.entries(value).reduce((acc, [key, value]) => {
-        return {
-          ...acc,
-          [key]: transformedReferenceValue(value),
-        };
-      }, {} as any);
-    };
-
-    if (isReference(token.$value)) {
-      const transformedValue = transform.transformer(
-        unwrapReference(token.$value),
-      );
-
-      if (transformedValue !== token.$value) {
-        token.$value = `{${transformedValue}}`;
-      }
-    }
-
-    if (
-      !Array.isArray(token.$value) &&
-      typeof token.$value === "object" &&
-      isTokenComposite(token)
-    ) {
-      const transformedValue = Object.entries(token.$value).reduce(
-        (acc, [key, value]) => {
-          return {
-            ...acc,
-            [key]: isReference(value)
-              ? `{${transform.transformer(unwrapReference(value))}}`
-              : value,
-          };
-        },
-        {} as any,
-      );
-
-      if (!isEqual(transformedValue, token.$value)) {
-        token.$value = transformedValue;
-      }
-    }
-
-    if (Array.isArray(token.$value) && isTokenComposite(token)) {
-      const transformedValue = token.$value.map((value) =>
-        isReference(value)
-          ? `{${transform.transformer(unwrapReference(value))}}`
-          : transformCompositeValue(value),
-      );
-
-      if (!isEqual(transformedValue, token.$value)) {
-        token.$value = transformedValue;
-      }
-    }
-
-    if (transformedName !== name) {
-      acc.set(transformedName, token);
-      acc.delete(name);
-    }
+  if (!isEqual(transformedValue, token.$value)) {
+    token.$value = transformedValue as TokenValue;
   }
 
-  if (transform.type === "token") {
-    const transformedToken = transform.transformer(token);
-
-    if (!isEqual(transformedToken, token)) {
-      acc.set(name, transformedToken);
-    }
+  if (transformedName !== name) {
+    acc.set(transformedName as string, token);
+    acc.delete(name);
   }
-};
+}
+
+function handleTokenTransform(
+  transform: Transform,
+  token: Token,
+  name: string,
+  acc: FlattenTokens,
+): void {
+  const transformedToken = transform.transformer(token as Token & string);
+  if (!isEqual(transformedToken, token)) {
+    acc.set(name, transformedToken as Token);
+  }
+}
+
+function transformReferenceValue(
+  value: unknown,
+  transformer: TokenTransformer,
+): unknown {
+  if (isReference(value)) {
+    const transformedValue = transformer(unwrapReference(value));
+    return transformedValue !== value ? `{${transformedValue}}` : value;
+  }
+
+  if (Array.isArray(value) && isTokenComposite({ $value: value } as Token)) {
+    return value.map((v) =>
+      isReference(v)
+        ? `{${transformer(unwrapReference(v))}}`
+        : transformCompositeValue(v, transformer),
+    );
+  } else if (Array.isArray(value)) {
+    return value.map((v) =>
+      isReference(v) ? `{${transformer(unwrapReference(v))}}` : v,
+    );
+  }
+
+  if (
+    !Array.isArray(value) &&
+    typeof value === "object" &&
+    value !== null &&
+    isTokenComposite({ $value: value } as Token)
+  ) {
+    return Object.entries(value as Record<string, unknown>).reduce(
+      (acc, [key, val]) => ({
+        ...acc,
+        [key]: isReference(val)
+          ? `{${transformer(unwrapReference(val))}}`
+          : transformCompositeValue(val as object, transformer),
+      }),
+      {} as Record<string, unknown>,
+    );
+  }
+
+  return value;
+}
+
+function transformCompositeValue(
+  value: object,
+  transformer: TokenTransformer,
+): object {
+  return Object.entries(value as Record<string, unknown>).reduce(
+    (acc, [key, val]) => ({
+      ...acc,
+      [key]: transformReferenceValue(val, transformer),
+    }),
+    {} as Record<string, unknown>,
+  );
+}

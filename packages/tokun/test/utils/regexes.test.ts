@@ -1,7 +1,4 @@
-import {
-  hexColorWithAlphaRegex,
-  tokenReferenceRegex,
-} from "utils/token-utils.js";
+import { hexColorWithAlphaRegex, tokenReferenceRegex } from "utils/regexes.js";
 import { describe, expect, it } from "vitest";
 
 describe("Test regexes", () => {

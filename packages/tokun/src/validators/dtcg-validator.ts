@@ -1,5 +1,5 @@
-import { isReference, unwrapReference } from "utils/helpers.js";
 import { FlattenTokens, toFlat } from "utils/to-flat.js";
+import { isReference, unwrapReference } from "utils/token-utils.js";
 import { traverseTokens } from "utils/traverse-tokens.js";
 import { TokenGroup, TokenType } from "../types/definitions.js";
 import { GroupSchema, dtcgJsonSchemas } from "./schemas.js";
