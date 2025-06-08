@@ -91,23 +91,8 @@ describe("Test schema single token", () => {
     expect(() => DimensionTokenSchema.parse(res)).toThrowError();
   });
 
-  it.each([
-    "Arial",
-    "{fontFamily.unknown}",
-    ["Arial", "sans-serif"],
-    ["{fontFamily.unknown}", "sans-serif"],
-  ])("test font family token %s", (fontFamily) => {
-    const res = {
-      $type: "fontFamily",
-      $value: fontFamily,
-      $description: "The primary font family of the application.",
-    };
-
-    expect(() => FontFamilyTokenSchema.parse(res)).not.toThrowError();
-  });
-
-  it.each([16, "{fontFamily.unknown", ["{fontFamily.unknown"]])(
-    "test invalid font family token %s",
+  it.each(["Arial", "{fontFamily.unknown}", ["Arial", "sans-serif"]])(
+    "test font family token %s",
     (fontFamily) => {
       const res = {
         $type: "fontFamily",
@@ -115,9 +100,24 @@ describe("Test schema single token", () => {
         $description: "The primary font family of the application.",
       };
 
-      expect(() => FontFamilyTokenSchema.parse(res)).toThrowError();
+      expect(() => FontFamilyTokenSchema.parse(res)).not.toThrowError();
     },
   );
+
+  it.each([
+    16,
+    "{fontFamily.unknown",
+    ["{fontFamily.unknown"],
+    ["{fontFamily.unknown}", "sans-serif"],
+  ])("test invalid font family token %s", (fontFamily) => {
+    const res = {
+      $type: "fontFamily",
+      $value: fontFamily,
+      $description: "The primary font family of the application.",
+    };
+
+    expect(() => FontFamilyTokenSchema.parse(res)).toThrowError();
+  });
 
   it.each([
     "thin",

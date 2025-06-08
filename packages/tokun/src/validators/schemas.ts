@@ -1,5 +1,8 @@
-import { TOKEN_TYPES } from "utils/helpers.js";
-import { hexColorWithAlphaRegex, tokenReferenceRegex } from "utils/regexes.js";
+import {
+  hexColorWithAlphaRegex,
+  TOKEN_TYPES,
+  tokenReferenceRegex,
+} from "utils/token-utils.js";
 import { z } from "zod/v4-mini";
 import { Token, TokenType } from "../types/definitions.js";
 import { TypeValidators } from "./types.js";
@@ -29,13 +32,7 @@ export const ReferenceValueSchema = z
 
 export const StrictStringSchema = z
   .string()
-  .check(
-    z.refine(
-      (value) =>
-        tokenReferenceRegex.test(value) ||
-        (!value.includes("{") && !value.includes("}")),
-    ),
-  );
+  .check(z.refine((value) => !value.includes("{") && !value.includes("}")));
 
 export const GroupSchema = (customTypes?: string[]) =>
   z
