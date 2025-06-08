@@ -14,7 +14,7 @@ export default function BreadcrumbPathname() {
   const pathname = usePathname();
 
   return (
-    <Breadcrumb className="mt-8 mb-4">
+    <Breadcrumb className="mb-4 mt-8">
       <BreadcrumbList>
         {pathname.split("/").map((path, index) => {
           if (path === "") {
