@@ -1,8 +1,14 @@
 import { Code } from "@/components/code";
 import { Button } from "@/components/ui/button";
+import { Metadata } from "next";
 import Link from "next/link";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+
+export const metadata: Metadata = {
+  title: "Tokun",
+  description: "Build themes. Easy.",
+};
 
 export default function Home() {
   const filePath = path.resolve("../../examples/templates/basic/config.mjs");
