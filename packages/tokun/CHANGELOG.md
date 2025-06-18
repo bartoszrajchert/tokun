@@ -1,5 +1,12 @@
 # tokun
 
+## 0.2.1
+
+### Patch Changes
+
+- d85f544: Remove `radash`, update `zod`
+- edddd1c: Fix `dtcg-json-loader`, fix a bug related to composition tokens, minor adjustments
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,16 @@
 # docs
 
+## 0.2.1
+
+### Patch Changes
+
+- 989989b: Minor adjustments
+- 7375e8b: Minor UI adjustments and fixes
+- fb7247d: Fix page titles and add support for descriptions in MDX files
+- Updated dependencies [d85f544]
+- Updated dependencies [edddd1c]
+  - tokun@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
