@@ -50,6 +50,13 @@
         "$description": "Secondary color"
       }
     },
+    "gradient": {
+      "$type": "gradient",
+      "$value": [
+        { "color": "{brand.color}", "position": 0 },
+        { "color": "{brand.color.black}", "position": 1 }
+      ]
+    },
     "typography": {
       "$description": "Typography alias",
       "header": {
