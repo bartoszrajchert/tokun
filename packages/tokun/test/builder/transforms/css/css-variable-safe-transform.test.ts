@@ -1,5 +1,5 @@
 import { cssVariableSafeTransform } from "builder/transforms/css/css-variable-safe-transform.js";
-import { applyTransform } from "utils/helpers.js";
+import { applyTransform } from "utils/token-utils.js";
 import { describe, expect, it } from "vitest";
 
 describe("cssVariableSafeTransform", () => {

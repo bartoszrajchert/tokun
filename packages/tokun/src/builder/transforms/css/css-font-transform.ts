@@ -1,13 +1,12 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { ReferenceValue, Token, TypographyToken } from "types/definitions.js";
-import { isReference, stringifyDimensionValue } from "utils/helpers.js";
-import { RESOLVED_EXTENSION } from "utils/to-flat.js";
+import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssFontTransform: Transform = {
   name: "css-font",
   type: "token",
-  transitive: true,
   transformer: (unknownToken: Token) => {
     const transformed: {
       value?: string;

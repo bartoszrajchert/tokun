@@ -1,5 +1,5 @@
 import { Token, TokenGroup, TokenGroupProperties } from "types/definitions.js";
-import { isToken } from "./helpers.js";
+import { isToken } from "./token-utils.js";
 
 export function traverseTokens(
   value: unknown,

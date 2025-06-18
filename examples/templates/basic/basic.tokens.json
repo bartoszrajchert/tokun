@@ -50,12 +50,19 @@
         "$description": "Secondary color"
       }
     },
+    "gradient": {
+      "$type": "gradient",
+      "$value": [
+        { "color": "{brand.color}", "position": 0 },
+        { "color": "{brand.color.black}", "position": 1 }
+      ]
+    },
     "typography": {
       "$description": "Typography alias",
       "header": {
         "$type": "typography",
         "$value": {
-          "fontFamily": ["{brand.typography.header.fontFamily}", "serif"],
+          "fontFamily": "{brand.typography.header.fontFamily}",
           "fontSize": "{brand.typography.header.fontSize}",
           "fontWeight": "{brand.typography.header.fontWeight}",
           "letterSpacing": {

@@ -1,29 +1,26 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { DimensionToken, ReferenceValue, Token } from "types/definitions.js";
-import { isReference, stringifyDimensionValue } from "utils/helpers.js";
-import { RESOLVED_EXTENSION } from "utils/to-flat.js";
+import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssDimensionTransform: Transform = {
   name: "css-dimension",
   type: "token",
-  transitive: true,
-  transformer: (unknownToken: Token) => {
-    if (unknownToken.$type !== "dimension") {
-      return unknownToken;
+  transformer: (token: Token) => {
+    if (token.$type !== "dimension") {
+      return token;
     }
 
-    const token = unknownToken as DimensionToken;
-
-    const transformed: {
+    const cssExtension: {
       value?: string;
       resolvedValue?: string;
     } = {};
 
     if (!isReference(token.$value)) {
-      transformed.value = stringifyDimensionValue(token.$value);
+      cssExtension.value = stringifyDimensionValue(token.$value);
     } else {
-      transformed.value = token.$value;
+      cssExtension.value = token.$value;
     }
 
     if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {
@@ -32,14 +29,14 @@ export const cssDimensionTransform: Transform = {
         ReferenceValue
       >;
 
-      transformed.resolvedValue = stringifyDimensionValue(resolvedValue);
+      cssExtension.resolvedValue = stringifyDimensionValue(resolvedValue);
     }
 
-    if (Object.keys(transformed).length > 0) {
+    if (Object.keys(cssExtension).length > 0) {
       if (!token.$extensions) {
         token.$extensions = {};
       }
-      token.$extensions[CSS_EXTENSION] = transformed;
+      token.$extensions[CSS_EXTENSION] = cssExtension;
     }
 
     return token;

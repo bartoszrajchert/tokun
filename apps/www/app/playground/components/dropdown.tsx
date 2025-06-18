@@ -30,7 +30,7 @@ export function Dropdown({
           <Button
             id="formatButton"
             variant="outline"
-            className="w-full justify-between mt-1"
+            className="mt-1 w-full justify-between"
           >
             {value ? value : placeholder} <ChevronsUpDown />
           </Button>

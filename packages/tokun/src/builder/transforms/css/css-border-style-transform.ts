@@ -1,4 +1,5 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import {
   BorderToken,
   ReferenceValue,
@@ -6,37 +7,35 @@ import {
   Token,
 } from "types/definitions.js";
 
-import { isReference, stringifyDimensionValue } from "utils/helpers.js";
-import { RESOLVED_EXTENSION } from "utils/to-flat.js";
+import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssBorderStyleTransform: Transform = {
   name: "css-border",
   type: "token",
-  transitive: true,
-  transformer: (unknownToken: Token) => {
-    if (unknownToken.$type === "border") {
-      return cssBorderTransform(unknownToken);
+  transformer: (token: Token) => {
+    if (token.$type === "border") {
+      return cssBorderTransform(token);
     }
 
-    if (unknownToken.$type === "strokeStyle") {
-      return cssStrokeStyleTransform(unknownToken);
+    if (token.$type === "strokeStyle") {
+      return cssStrokeStyleTransform(token);
     }
 
-    return unknownToken;
+    return token;
   },
 };
 
 const cssBorderTransform = (token: BorderToken) => {
-  const transformed: {
+  const cssExtension: {
     value?: string;
     resolvedValue?: string;
   } = {};
 
   if (isReference(token.$value)) {
-    transformed.value = token.$value;
+    cssExtension.value = token.$value;
   } else {
-    transformed.value = `${stringifyDimensionValue(token.$value.width)} ${token.$value.style} ${token.$value.color}`;
+    cssExtension.value = `${stringifyDimensionValue(token.$value.width)} ${token.$value.style} ${token.$value.color}`;
   }
 
   if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {
@@ -45,14 +44,14 @@ const cssBorderTransform = (token: BorderToken) => {
       ReferenceValue
     >;
 
-    transformed.resolvedValue = `${stringifyDimensionValue(resolvedValue.width)} ${resolvedValue.style} ${resolvedValue.color}`;
+    cssExtension.resolvedValue = `${stringifyDimensionValue(resolvedValue.width)} ${resolvedValue.style} ${resolvedValue.color}`;
   }
 
-  if (Object.keys(transformed).length > 0) {
+  if (Object.keys(cssExtension).length > 0) {
     if (!token.$extensions) {
       token.$extensions = {};
     }
-    token.$extensions[CSS_EXTENSION] = transformed;
+    token.$extensions[CSS_EXTENSION] = cssExtension;
   }
 
   return token;

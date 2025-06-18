@@ -60,7 +60,7 @@ describe("cssFormat", () => {
   --color-primary: #ff0000; /* Color primary */
   --color-secondary: #111111;
   --typography-heading: bold 16px/1.5 Arial; /* Typography heading */
-  --typography-heading-letter-spacing: 1px; /* Typography heading */
+  --typography-heading-letter-spacing: 1px; /* Letter spacing of "--typography-heading" CSS variable */
 }`,
     );
   });
@@ -112,6 +112,30 @@ describe("cssFormat", () => {
     );
   });
 
+  it("should handle value when outputReferences is false", () => {
+    const tokens: FlattenTokens = new Map([
+      [
+        "color-primary",
+        {
+          $value: "#ff0000",
+          $extensions: {
+            [CSS_EXTENSION]: { value: "#ff0000" },
+          },
+        },
+      ],
+    ]);
+
+    const config = { outputReferences: false };
+
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
+
+    expect(result).toBe(`:root {\n  --color-primary: #ff0000;\n}`);
+  });
+
   it("should handle typography tokens with letter-spacing", () => {
     const tokens: FlattenTokens = new Map([
       [
@@ -144,7 +168,7 @@ describe("cssFormat", () => {
     });
 
     expect(result).toBe(
-      `:root {\n  --typography-heading: bold 16px/1.5 Arial;\n  --typography-heading-letter-spacing: 1px;\n}`,
+      `:root {\n  --typography-heading: bold 16px/1.5 Arial;\n  --typography-heading-letter-spacing: 1px; /* Letter spacing of "--typography-heading" CSS variable */\n}`,
     );
   });
 

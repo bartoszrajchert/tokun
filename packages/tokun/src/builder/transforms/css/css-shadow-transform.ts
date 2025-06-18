@@ -1,30 +1,27 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { ReferenceValue, ShadowToken, Token } from "types/definitions.js";
-import { isReference, stringifyDimensionValue } from "utils/helpers.js";
-import { RESOLVED_EXTENSION } from "utils/to-flat.js";
+import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssShadowTransform: Transform = {
   name: "css-shadow",
   type: "token",
-  transitive: true,
-  transformer: (unknownToken: Token) => {
-    const transformed: {
+  transformer: (token: Token) => {
+    const cssExtension: {
       value?: string;
       resolvedValue?: string;
     } = {};
 
-    if (unknownToken.$type !== "shadow") {
-      return unknownToken;
+    if (token.$type !== "shadow") {
+      return token;
     }
 
-    const token = unknownToken as ShadowToken;
-
     if (isReference(token.$value)) {
-      transformed.value = token.$value;
+      cssExtension.value = token.$value;
     } else {
       if (Array.isArray(token.$value)) {
-        transformed.value = token.$value
+        cssExtension.value = token.$value
           .map((shadow) =>
             isReference(shadow)
               ? shadow
@@ -32,7 +29,7 @@ export const cssShadowTransform: Transform = {
           )
           .join(", ");
       } else {
-        transformed.value = `${stringifyDimensionValue(token.$value.offsetX)} ${stringifyDimensionValue(token.$value.offsetY)} ${stringifyDimensionValue(token.$value.blur)} ${stringifyDimensionValue(token.$value.spread)} ${token.$value.color}${token.$value.inset ? " inset" : ""}`;
+        cssExtension.value = `${stringifyDimensionValue(token.$value.offsetX)} ${stringifyDimensionValue(token.$value.offsetY)} ${stringifyDimensionValue(token.$value.blur)} ${stringifyDimensionValue(token.$value.spread)} ${token.$value.color}${token.$value.inset ? " inset" : ""}`;
       }
     }
 
@@ -42,7 +39,7 @@ export const cssShadowTransform: Transform = {
         ReferenceValue
       >;
       if (Array.isArray(resolvedValue)) {
-        transformed.resolvedValue = resolvedValue
+        cssExtension.resolvedValue = resolvedValue
           .map((shadow) =>
             isReference(shadow)
               ? shadow
@@ -50,15 +47,15 @@ export const cssShadowTransform: Transform = {
           )
           .join(", ");
       } else {
-        transformed.resolvedValue = `${stringifyDimensionValue(resolvedValue.offsetX)} ${stringifyDimensionValue(resolvedValue.offsetY)} ${stringifyDimensionValue(resolvedValue.blur)} ${stringifyDimensionValue(resolvedValue.spread)} ${resolvedValue.color}${resolvedValue.inset ? " inset" : ""}`;
+        cssExtension.resolvedValue = `${stringifyDimensionValue(resolvedValue.offsetX)} ${stringifyDimensionValue(resolvedValue.offsetY)} ${stringifyDimensionValue(resolvedValue.blur)} ${stringifyDimensionValue(resolvedValue.spread)} ${resolvedValue.color}${resolvedValue.inset ? " inset" : ""}`;
       }
     }
 
-    if (Object.keys(transformed).length > 0) {
+    if (Object.keys(cssExtension).length > 0) {
       if (!token.$extensions) {
         token.$extensions = {};
       }
-      token.$extensions[CSS_EXTENSION] = transformed;
+      token.$extensions[CSS_EXTENSION] = cssExtension;
     }
 
     return token;

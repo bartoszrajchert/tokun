@@ -1,29 +1,26 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { GradientToken, ReferenceValue, Token } from "types/definitions.js";
-import { isReference } from "utils/helpers.js";
-import { RESOLVED_EXTENSION } from "utils/to-flat.js";
+import { isReference } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssGradientTransform: Transform = {
   name: "css-gradient",
   type: "token",
-  transitive: true,
-  transformer: (unknownToken: Token) => {
-    const transformed: {
+  transformer: (token: Token) => {
+    const cssExtension: {
       value?: string;
       resolvedValue?: string;
     } = {};
 
-    if (unknownToken.$type !== "gradient") {
-      return unknownToken;
+    if (token.$type !== "gradient") {
+      return token;
     }
 
-    const token = unknownToken as GradientToken;
-
     if (isReference(token.$value)) {
-      transformed.value = token.$value;
+      cssExtension.value = token.$value;
     } else {
-      transformed.value = `linear-gradient(90deg, ${token.$value.map((gradient) => (isReference(gradient) ? gradient : `${gradient.color} ${calcPosition(gradient.position)}`)).join(", ")})`;
+      cssExtension.value = `linear-gradient(90deg, ${token.$value.map((gradient) => (isReference(gradient) ? gradient : `${gradient.color} ${calcPosition(gradient.position)}`)).join(", ")})`;
     }
 
     if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {
@@ -31,14 +28,14 @@ export const cssGradientTransform: Transform = {
         GradientToken["$value"],
         ReferenceValue
       >;
-      transformed.resolvedValue = `linear-gradient(90deg, ${resolvedValue.map((gradient) => (isReference(gradient) ? gradient : `${gradient.color} ${calcPosition(gradient.position)}`)).join(", ")})`;
+      cssExtension.resolvedValue = `linear-gradient(90deg, ${resolvedValue.map((gradient) => (isReference(gradient) ? gradient : `${gradient.color} ${calcPosition(gradient.position)}`)).join(", ")})`;
     }
 
-    if (Object.keys(transformed).length > 0) {
+    if (Object.keys(cssExtension).length > 0) {
       if (!token.$extensions) {
         token.$extensions = {};
       }
-      token.$extensions[CSS_EXTENSION] = transformed;
+      token.$extensions[CSS_EXTENSION] = cssExtension;
     }
 
     return token;

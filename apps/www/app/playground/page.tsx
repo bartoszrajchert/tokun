@@ -3,7 +3,9 @@ import path from "path";
 import ShowcaseForm from "./components/showcase-form";
 
 export const metadata = {
-  title: "Playground",
+  title: "Playground | Tokun",
+  description:
+    "Play with Tokun here. Enter your JSON object set the format and loader and see the tokens generated.",
 };
 
 export default function Page() {

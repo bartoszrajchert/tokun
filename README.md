@@ -1,5 +1,8 @@
 # 🥷 Tokun
 
+[![Bundlephobia](https://badgen.net/bundlephobia/min/tokun)](https://bundlephobia.com/result?p=tokun)
+[![Bundlephobia](https://badgen.net/bundlephobia/minzip/tokun)](https://bundlephobia.com/result?p=tokun)
+
 > 🧪 Tokun is in the experimental phase. Everything might change!
 
 A simple, and easy-to-use tool for working with design tokens with powerups.

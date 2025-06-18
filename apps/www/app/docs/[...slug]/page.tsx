@@ -32,7 +32,8 @@ export async function generateMetadata({ params }: Props) {
   const { title } = post.metadata;
 
   return {
-    title,
+    title: `${title} | Tokun`,
+    description: post.metadata.description,
   };
 }
 

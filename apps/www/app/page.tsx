@@ -1,8 +1,14 @@
 import { Code } from "@/components/code";
 import { Button } from "@/components/ui/button";
+import { Metadata } from "next";
 import Link from "next/link";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+
+export const metadata: Metadata = {
+  title: "Tokun",
+  description: "Build themes. Easy.",
+};
 
 export default function Home() {
   const filePath = path.resolve("../../examples/templates/basic/config.mjs");
@@ -11,7 +17,7 @@ export default function Home() {
   return (
     <div className="flex items-center justify-center py-8 sm:h-[calc(100vh-80px)]">
       <div className="my-auto flex w-full flex-col-reverse items-center justify-center gap-8 lg:w-[1000px] lg:flex-row">
-        <figure className="bg-accent w-full overflow-auto rounded-xl px-6 pb-3 shadow-lg">
+        <figure className="bg-accent border-border w-full overflow-auto rounded-xl border px-6 pb-3 shadow-lg">
           <figcaption className="text-foreground/60 py-3 text-center text-sm">
             {filePath.split("/").slice(-1)[0]}
           </figcaption>

@@ -1,5 +1,5 @@
-import { isReference, stringifyDimensionValue } from "utils/helpers.js";
-import { RESOLVED_EXTENSION } from "utils/to-flat.js";
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
+import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
 import { Format } from "utils/types.js";
 
 type CSSRoot = Record<
@@ -82,7 +82,7 @@ function resolveTokenValue(
   if (Object.keys(extension).length > 0) {
     value = config.outputReferences
       ? String(extension.value)
-      : String(extension.resolvedValue);
+      : String(extension.resolvedValue ?? extension.value);
   } else if (config.outputReferences) {
     // Fall back to token's `$value` when outputting references
     value = String(token.$value);
@@ -130,7 +130,7 @@ function handleTypographyToken(
 
   cssRoot[letterSpacingVariableName] = {
     value: createVariable(letterSpacingValue),
-    description: token.$description,
+    description: `Letter spacing of "--${path}" CSS variable`,
   };
 }
 

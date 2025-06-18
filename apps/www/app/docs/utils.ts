@@ -9,6 +9,7 @@ export const DEFAULT_SLUG = "getting-started/introduction";
 
 export type Metadata = {
   title?: string;
+  description?: string;
   order?: string;
   maxTocDepth?: number;
 };

@@ -1,8 +1,8 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { cssGradientTransform } from "builder/transforms/css/css-gradient-transform.js";
 import { GradientToken, Token } from "types/definitions.js";
-import { applyTransform } from "utils/helpers.js";
-import { RESOLVED_EXTENSION } from "utils/to-flat.js";
+import { applyTransform } from "utils/token-utils.js";
 import { describe, expect, it } from "vitest";
 
 describe("cssGradientTransform", () => {
