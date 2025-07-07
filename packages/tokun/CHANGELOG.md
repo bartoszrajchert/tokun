@@ -1,5 +1,13 @@
 # tokun
 
+## 0.2.2
+
+### Patch Changes
+
+- 3c55e84: Fix recursive dir creation when using CLI
+- f5b24b3: Fix `duration` transform
+- 6c4ee11: Remove the need for redundant directory structure in config files, enhance error handling in composition tokens, add more unit tests
+
 ## 0.2.1
 
 ### Patch Changes

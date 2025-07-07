@@ -1,5 +1,11 @@
 # examples
 
+## 0.1.2
+
+### Patch Changes
+
+- 6c4ee11: Remove the need for redundant directory structure in config files, enhance error handling in composition tokens, add more unit tests
+
 ## 0.1.1
 
 ### Patch Changes
