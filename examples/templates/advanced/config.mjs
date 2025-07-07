@@ -1,9 +1,9 @@
 import {
-  cssDimensionTransform,
   cssFontTransform,
   cssFormat,
   cssGradientTransform,
   cssShadowTransform,
+  cssUnitTransform,
   cssVariableSafeTransform,
   dtcgJsonLoader,
   flattenJsonFormat,
@@ -85,7 +85,7 @@ export default {
         format: cssFormat,
         transforms: [
           kebabCaseTransform,
-          cssDimensionTransform,
+          cssUnitTransform,
           cssVariableSafeTransform,
           cssFontTransform,
           cssShadowTransform,
@@ -106,11 +106,7 @@ export default {
       {
         name: "json",
         format: flattenJsonFormat,
-        transforms: [
-          kebabCaseTransform,
-          cssFontTransform,
-          cssDimensionTransform,
-        ],
+        transforms: [kebabCaseTransform, cssFontTransform, cssUnitTransform],
         outputs: [
           {
             name: "dist/sample-flatten.json",

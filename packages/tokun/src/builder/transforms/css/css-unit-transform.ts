@@ -1,14 +1,14 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { DimensionToken, ReferenceValue, Token } from "types/definitions.js";
-import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
+import { isReference, stringifyUnitValue } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
-export const cssDimensionTransform: Transform = {
-  name: "css-dimension",
+export const cssUnitTransform: Transform = {
+  name: "css-unit",
   type: "token",
   transformer: (token: Token) => {
-    if (token.$type !== "dimension") {
+    if (token.$type !== "dimension" && token.$type !== "duration") {
       return token;
     }
 
@@ -18,7 +18,7 @@ export const cssDimensionTransform: Transform = {
     } = {};
 
     if (!isReference(token.$value)) {
-      cssExtension.value = stringifyDimensionValue(token.$value);
+      cssExtension.value = stringifyUnitValue(token.$value);
     } else {
       cssExtension.value = token.$value;
     }
@@ -29,7 +29,7 @@ export const cssDimensionTransform: Transform = {
         ReferenceValue
       >;
 
-      cssExtension.resolvedValue = stringifyDimensionValue(resolvedValue);
+      cssExtension.resolvedValue = stringifyUnitValue(resolvedValue);
     }
 
     if (Object.keys(cssExtension).length > 0) {

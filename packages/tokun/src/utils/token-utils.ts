@@ -1,6 +1,7 @@
 import {
   BorderToken,
   DimensionToken,
+  DurationToken,
   GradientToken,
   ReferenceValue,
   ShadowToken,
@@ -167,7 +168,9 @@ export function applyTransform(transform: Transform, input: string | Token) {
  * @param value - The value of the dimension token.
  * @returns The stringified value.
  */
-export function stringifyDimensionValue(value: DimensionToken["$value"]) {
+export function stringifyUnitValue(
+  value: DimensionToken["$value"] | DurationToken["$value"],
+) {
   if (typeof value === "object" && value !== null) {
     return `${value.value}${value.unit}`;
   }

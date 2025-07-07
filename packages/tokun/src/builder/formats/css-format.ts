@@ -1,5 +1,5 @@
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
+import { isReference, stringifyUnitValue } from "utils/token-utils.js";
 import { Format } from "utils/types.js";
 
 type CSSRoot = Record<
@@ -116,8 +116,8 @@ function handleTypographyToken(
 ) {
   const letterSpacingVariableName = `${createVariableName(path)}-letter-spacing`;
   const letterSpacingValue = config.outputReferences
-    ? stringifyDimensionValue(token.$value.letterSpacing)
-    : stringifyDimensionValue(
+    ? stringifyUnitValue(token.$value.letterSpacing)
+    : stringifyUnitValue(
         token.$extensions?.[RESOLVED_EXTENSION]?.letterSpacing ??
           token.$value.letterSpacing,
       );

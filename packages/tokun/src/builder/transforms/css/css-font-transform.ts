@@ -1,7 +1,7 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { ReferenceValue, Token, TypographyToken } from "types/definitions.js";
-import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
+import { isReference, stringifyUnitValue } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssFontTransform: Transform = {
@@ -22,7 +22,7 @@ export const cssFontTransform: Transform = {
     if (isReference(token.$value)) {
       transformed.value = token.$value;
     } else {
-      transformed.value = `${token.$value.fontWeight} ${stringifyDimensionValue(token.$value.fontSize)}/${token.$value.lineHeight} ${token.$value.fontFamily}`;
+      transformed.value = `${token.$value.fontWeight} ${stringifyUnitValue(token.$value.fontSize)}/${token.$value.lineHeight} ${token.$value.fontFamily}`;
     }
 
     if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {
@@ -30,7 +30,7 @@ export const cssFontTransform: Transform = {
         TypographyToken["$value"],
         ReferenceValue
       >;
-      transformed.resolvedValue = `${resolvedValue.fontWeight} ${stringifyDimensionValue(resolvedValue.fontSize)}/${resolvedValue.lineHeight} ${resolvedValue.fontFamily}`;
+      transformed.resolvedValue = `${resolvedValue.fontWeight} ${stringifyUnitValue(resolvedValue.fontSize)}/${resolvedValue.lineHeight} ${resolvedValue.fontFamily}`;
     }
 
     if (Object.keys(transformed).length > 0) {

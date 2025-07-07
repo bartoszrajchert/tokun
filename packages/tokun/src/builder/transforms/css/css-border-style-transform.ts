@@ -7,7 +7,7 @@ import {
   Token,
 } from "types/definitions.js";
 
-import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
+import { isReference, stringifyUnitValue } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssBorderStyleTransform: Transform = {
@@ -35,7 +35,7 @@ const cssBorderTransform = (token: BorderToken) => {
   if (isReference(token.$value)) {
     cssExtension.value = token.$value;
   } else {
-    cssExtension.value = `${stringifyDimensionValue(token.$value.width)} ${token.$value.style} ${token.$value.color}`;
+    cssExtension.value = `${stringifyUnitValue(token.$value.width)} ${token.$value.style} ${token.$value.color}`;
   }
 
   if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {
@@ -44,7 +44,7 @@ const cssBorderTransform = (token: BorderToken) => {
       ReferenceValue
     >;
 
-    cssExtension.resolvedValue = `${stringifyDimensionValue(resolvedValue.width)} ${resolvedValue.style} ${resolvedValue.color}`;
+    cssExtension.resolvedValue = `${stringifyUnitValue(resolvedValue.width)} ${resolvedValue.style} ${resolvedValue.color}`;
   }
 
   if (Object.keys(cssExtension).length > 0) {

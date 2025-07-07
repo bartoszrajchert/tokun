@@ -1,7 +1,7 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { ReferenceValue, ShadowToken, Token } from "types/definitions.js";
-import { isReference, stringifyDimensionValue } from "utils/token-utils.js";
+import { isReference, stringifyUnitValue } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssShadowTransform: Transform = {
@@ -25,11 +25,11 @@ export const cssShadowTransform: Transform = {
           .map((shadow) =>
             isReference(shadow)
               ? shadow
-              : `${stringifyDimensionValue(shadow.offsetX)} ${stringifyDimensionValue(shadow.offsetY)} ${stringifyDimensionValue(shadow.blur)} ${stringifyDimensionValue(shadow.spread)} ${shadow.color}${shadow.inset ? " inset" : ""}`,
+              : `${stringifyUnitValue(shadow.offsetX)} ${stringifyUnitValue(shadow.offsetY)} ${stringifyUnitValue(shadow.blur)} ${stringifyUnitValue(shadow.spread)} ${shadow.color}${shadow.inset ? " inset" : ""}`,
           )
           .join(", ");
       } else {
-        cssExtension.value = `${stringifyDimensionValue(token.$value.offsetX)} ${stringifyDimensionValue(token.$value.offsetY)} ${stringifyDimensionValue(token.$value.blur)} ${stringifyDimensionValue(token.$value.spread)} ${token.$value.color}${token.$value.inset ? " inset" : ""}`;
+        cssExtension.value = `${stringifyUnitValue(token.$value.offsetX)} ${stringifyUnitValue(token.$value.offsetY)} ${stringifyUnitValue(token.$value.blur)} ${stringifyUnitValue(token.$value.spread)} ${token.$value.color}${token.$value.inset ? " inset" : ""}`;
       }
     }
 
@@ -43,11 +43,11 @@ export const cssShadowTransform: Transform = {
           .map((shadow) =>
             isReference(shadow)
               ? shadow
-              : `${stringifyDimensionValue(shadow.offsetX)} ${stringifyDimensionValue(shadow.offsetY)} ${stringifyDimensionValue(shadow.blur)} ${stringifyDimensionValue(shadow.spread)} ${shadow.color}${shadow.inset ? " inset" : ""}`,
+              : `${stringifyUnitValue(shadow.offsetX)} ${stringifyUnitValue(shadow.offsetY)} ${stringifyUnitValue(shadow.blur)} ${stringifyUnitValue(shadow.spread)} ${shadow.color}${shadow.inset ? " inset" : ""}`,
           )
           .join(", ");
       } else {
-        cssExtension.resolvedValue = `${stringifyDimensionValue(resolvedValue.offsetX)} ${stringifyDimensionValue(resolvedValue.offsetY)} ${stringifyDimensionValue(resolvedValue.blur)} ${stringifyDimensionValue(resolvedValue.spread)} ${resolvedValue.color}${resolvedValue.inset ? " inset" : ""}`;
+        cssExtension.resolvedValue = `${stringifyUnitValue(resolvedValue.offsetX)} ${stringifyUnitValue(resolvedValue.offsetY)} ${stringifyUnitValue(resolvedValue.blur)} ${stringifyUnitValue(resolvedValue.spread)} ${resolvedValue.color}${resolvedValue.inset ? " inset" : ""}`;
       }
     }
 

@@ -4,11 +4,11 @@ import { flattenJsonFormat } from "../builder/formats/flatten-json-format.js";
 import { dtcgJsonLoader } from "../builder/loaders/dtcg-json-loader.js";
 import { camelCaseTransform } from "../builder/transforms/camel-case-transform.js";
 import { cssBorderStyleTransform } from "../builder/transforms/css/css-border-style-transform.js";
-import { cssDimensionTransform } from "../builder/transforms/css/css-dimension-transform.js";
 import { cssFontTransform } from "../builder/transforms/css/css-font-transform.js";
 import { cssGradientTransform } from "../builder/transforms/css/css-gradient-transform.js";
 import { cssShadowTransform } from "../builder/transforms/css/css-shadow-transform.js";
 import { cssTransforms } from "../builder/transforms/css/css-transforms.js";
+import { cssUnitTransform } from "../builder/transforms/css/css-unit-transform.js";
 import { cssVariableSafeTransform } from "../builder/transforms/css/css-variable-safe-transform.js";
 import { kebabCaseTransform } from "../builder/transforms/kebab-case-transform.js";
 import { pascalCaseTransform } from "../builder/transforms/pascal-case-transform.js";
@@ -40,7 +40,7 @@ export const transformRegistry = [
   cssShadowTransform,
   cssGradientTransform,
   cssFontTransform,
-  cssDimensionTransform,
+  cssUnitTransform,
   cssBorderStyleTransform,
 ];
 export const transformNames = [
