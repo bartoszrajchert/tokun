@@ -1,6 +1,6 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { cssDimensionTransform } from "builder/transforms/css/css-dimension-transform.js";
+import { cssUnitTransform } from "builder/transforms/css/css-unit-transform.js";
 import { DimensionToken, Token } from "types/definitions.js";
 import { applyTransform } from "utils/token-utils.js";
 import { describe, expect, it } from "vitest";
@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 describe("cssDimensionTransform", () => {
   it("should return the token unchanged if $type is not 'dimension'", () => {
     const token: Token = { $type: "color", $value: "#000000" };
-    const result = applyTransform(cssDimensionTransform, token);
+    const result = applyTransform(cssUnitTransform, token);
     expect(result).toEqual(token);
   });
 
@@ -20,7 +20,7 @@ describe("cssDimensionTransform", () => {
         unit: "px",
       },
     };
-    const result = applyTransform(cssDimensionTransform, token);
+    const result = applyTransform(cssUnitTransform, token);
 
     // @ts-expect-error
     expect(result.$extensions?.[CSS_EXTENSION]?.value).toBe("10px");
@@ -28,7 +28,7 @@ describe("cssDimensionTransform", () => {
 
   it("should transform a dimension token with reference", () => {
     const token: DimensionToken = { $type: "dimension", $value: "{reference}" };
-    const result = applyTransform(cssDimensionTransform, token);
+    const result = applyTransform(cssUnitTransform, token);
 
     // @ts-expect-error
     expect(result.$extensions?.[CSS_EXTENSION]?.value).toBe("{reference}");
@@ -45,7 +45,7 @@ describe("cssDimensionTransform", () => {
         },
       },
     };
-    const result = applyTransform(cssDimensionTransform, token);
+    const result = applyTransform(cssUnitTransform, token);
 
     // @ts-expect-error
     expect(result.$extensions?.[CSS_EXTENSION]?.resolvedValue).toBe("20px");
@@ -59,7 +59,7 @@ describe("cssDimensionTransform", () => {
         unit: "px",
       },
     };
-    const result = applyTransform(cssDimensionTransform, token);
+    const result = applyTransform(cssUnitTransform, token);
 
     // @ts-expect-error
     expect(result.$extensions).toHaveProperty(CSS_EXTENSION);
@@ -67,7 +67,7 @@ describe("cssDimensionTransform", () => {
 
   it("should not modify the token if no transformation is needed", () => {
     const token: DimensionToken = { $type: "dimension", $value: "{reference}" };
-    const result = applyTransform(cssDimensionTransform, token);
+    const result = applyTransform(cssUnitTransform, token);
     expect(result).toEqual(token);
   });
 
@@ -79,7 +79,7 @@ describe("cssDimensionTransform", () => {
         unit: "px",
       },
     };
-    const result = applyTransform(cssDimensionTransform, token);
+    const result = applyTransform(cssUnitTransform, token);
 
     // @ts-expect-error
     expect(result.$extensions?.[CSS_EXTENSION]?.value).toBe("15px");
@@ -93,7 +93,7 @@ describe("cssDimensionTransform", () => {
         unit: "rem",
       },
     };
-    const result = applyTransform(cssDimensionTransform, token);
+    const result = applyTransform(cssUnitTransform, token);
 
     // @ts-expect-error
     expect(result.$extensions?.[CSS_EXTENSION]?.value).toBe("1.5rem");
