@@ -3,8 +3,8 @@
 import { Command } from "commander";
 import { red } from "kleur/colors";
 import packageJson from "../../package.json" with { type: "json" };
+import { logger } from "../utils/logger.js";
 import { runBuild } from "./build.js";
-import { logger } from "./utils/logger.js";
 import { runValidate } from "./validate.js";
 
 const handleSigTerm = () => process.exit(0);

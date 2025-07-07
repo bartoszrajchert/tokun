@@ -1,10 +1,10 @@
-import { green, red, yellow } from "kleur/colors";
 import {
   Config,
   ConfigOptions,
   PlatformWithoutString,
 } from "types/define-config.js";
 import { Token, TokenGroup, TokenValue } from "types/definitions.js";
+import { logger } from "utils/logger.js";
 import { assign, isEqual } from "utils/object-utils.js";
 import {
   formatRegistry,
@@ -110,13 +110,13 @@ function validateTokens(
   const { errors, warnings } = validator(data, customValidator);
 
   if (errors.length > 0) {
-    errors.forEach(({ message }) => console.error(red(`! ${message}`)));
+    errors.forEach(({ message }) => logger.error(`! ${message}`));
     throw new Error("Provided content is not a valid token group.");
   }
 
   if (warnings.length > 0) {
     const uniqueWarnings = Array.from(new Set(warnings));
-    uniqueWarnings.forEach((message) => console.warn(yellow(message)));
+    uniqueWarnings.forEach((message) => logger.warn(message));
   }
 }
 
@@ -151,11 +151,11 @@ function buildDesignTokens({
     const transformedTokens = applyTransforms(obj, format.transforms);
     const formats = generateFormats(transformedTokens, format);
 
-    console.log(green(`✓ ${format.format.name} format parsed`));
+    logger.success(`✓ ${format.format.name} format parsed`);
     output.push(...formats);
   }
 
-  console.log();
+  logger.break();
   return output;
 }
 

@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import prompts from "prompts";
 import { glob } from "tinyglobby";
 import { generateConfig } from "utils/generate-config.js";
+import { logger } from "utils/logger.js";
 import { formatNames, loaderNames } from "utils/registry.js";
 import { startMessage } from "./helpers.js";
 
@@ -83,7 +84,7 @@ async function readConfigFile(configPath: string) {
 
   for (const { name, content } of finishedBuild) {
     const dir = path.dirname(name);
-    console.log(`Writing to ${name}`);
+    logger.log(`Writing to ${name}`);
 
     if (!existsSync(dir)) {
       mkdirSync(dir), { recursive: true };
@@ -97,7 +98,7 @@ async function readConfigFile(configPath: string) {
  * Read input file and run parse.
  */
 async function readInputFile(filePath: string, outputFilePath: string) {
-  console.log(filePath);
+  logger.log(filePath);
 
   const response = await prompts([
     {
@@ -129,7 +130,7 @@ async function readInputFile(filePath: string, outputFilePath: string) {
 
   for (const { name, content } of finishedBuild) {
     const dir = path.dirname(name);
-    console.log(`Writing to ${name}`);
+    logger.log(`Writing to ${name}`);
 
     if (!existsSync(dir)) {
       mkdirSync(dir), { recursive: true };
