@@ -87,7 +87,7 @@ async function readConfigFile(configPath: string) {
     logger.log(`Writing to ${name}`);
 
     if (!existsSync(dir)) {
-      mkdirSync(dir), { recursive: true };
+      mkdirSync(dir, { recursive: true });
     }
 
     await writeFile(name, content);
