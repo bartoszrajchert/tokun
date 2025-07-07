@@ -1,5 +1,15 @@
 # docs
 
+## 0.2.2
+
+### Patch Changes
+
+- dacce98: Update Next.js
+- Updated dependencies [3c55e84]
+- Updated dependencies [f5b24b3]
+- Updated dependencies [6c4ee11]
+  - tokun@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes
