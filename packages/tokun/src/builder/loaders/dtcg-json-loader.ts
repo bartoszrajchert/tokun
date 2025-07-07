@@ -88,7 +88,7 @@ function resolveReference(
 
   const ref = tokens.get(unwrapReference(value));
   if (!ref) {
-    return null;
+    throw new Error(`Reference ${unwrapReference(value)} not found`);
   }
 
   // If the value is a reference, resolve it first

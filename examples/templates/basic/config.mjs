@@ -1,6 +1,6 @@
 /** @type {import('tokun/types').Config} */
 export default {
-  data: ["templates/basic/basic.tokens.json"],
+  data: ["basic.tokens.json"],
   options: {
     loader: "dtcg-json",
     platforms: [
@@ -10,10 +10,10 @@ export default {
         transforms: ["kebab-case", "css-transforms"],
         outputs: [
           {
-            name: "dist/basic/vars.css",
+            name: "dist/vars.css",
           },
         ],
-        config: { outputReferences: true },
+        config: { outputReferences: false },
       },
     ],
   },

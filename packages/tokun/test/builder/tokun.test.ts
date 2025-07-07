@@ -4,7 +4,7 @@ import { Loader } from "utils/types.js";
 import { dtcgValidator } from "validators/dtcg-validator.js";
 import { describe, expect, it, vi } from "vitest";
 
-describe("parseDesignTokens", () => {
+describe("parseDesignTokens with mocks", () => {
   const mockParser: Loader = {
     name: "test",
     loadFn: vi.fn().mockReturnValue(new Map()),
@@ -118,6 +118,127 @@ describe("parseDesignTokens", () => {
       {
         name: "test.json",
         content: "formatted",
+      },
+    ]);
+  });
+});
+
+describe("parseDesignTokens", () => {
+  it("should parse and format valid tokens", () => {
+    const validObj = {
+      brand: {
+        color: {
+          $type: "color",
+          "": {
+            $value: "#123456",
+            $description: "Default color",
+          },
+          white: {
+            $value: "#ffffff",
+            $description: "White color",
+          },
+          black: {
+            $value: "#000000",
+            $description: "Black color",
+          },
+        },
+        typography: {
+          header: {
+            fontFamily: {
+              $type: "fontFamily",
+              $value: ["Arial", "sans-serif"],
+            },
+            fontSize: {
+              $type: "dimension",
+              $value: {
+                value: 24,
+                unit: "px",
+              },
+            },
+            fontWeight: {
+              $type: "fontWeight",
+              $value: 500,
+            },
+          },
+        },
+      },
+      alias: {
+        $description: "Alias",
+        color: {
+          $description: "Color alias",
+          primary: {
+            $type: "color",
+            $value: "{brand.color.white}",
+            $description: "Primary color",
+          },
+          secondary: {
+            $type: "color",
+            $value: "{brand.color.black}",
+            $description: "Secondary color",
+          },
+        },
+        gradient: {
+          $type: "gradient",
+          $value: [
+            { color: "{brand.color}", position: 0 },
+            { color: "{brand.color.black}", position: 1 },
+          ],
+        },
+        typography: {
+          $description: "Typography alias",
+          header: {
+            $type: "typography",
+            $value: {
+              fontFamily: "{brand.typography.header.fontFamily}",
+              fontSize: "{brand.typography.header.fontSize}",
+              fontWeight: "{brand.typography.header.fontWeight}",
+              letterSpacing: {
+                value: 0.1,
+                unit: "rem",
+              },
+              lineHeight: 1.2,
+            },
+            $description: "Header typography",
+          },
+        },
+      },
+    };
+
+    const result = build({
+      data: validObj,
+      options: {
+        loader: "dtcg-json",
+        platforms: [
+          {
+            name: "css",
+            format: "css",
+            transforms: ["kebab-case", "css-transforms"],
+            outputs: [{ name: "test.css" }],
+            config: { outputReferences: true },
+          },
+        ],
+      },
+    });
+
+    expect(result).toEqual([
+      {
+        name: "test.css",
+        content: `/**
+ * File generated automatically, do not edit manually
+ */
+:root {
+  --alias-color-primary: var(--brand-color-white); /* Primary color */
+  --alias-color-secondary: var(--brand-color-black); /* Secondary color */
+  --alias-gradient: linear-gradient(90deg, var(--brand-color) 0%, var(--brand-color-black) 100%);
+  --alias-typography-header: var(--brand-typography-header-font-weight) var(--brand-typography-header-font-size)/1.2 var(--brand-typography-header-font-family); /* Header typography */
+  --alias-typography-header-letter-spacing: 0.1rem; /* Letter spacing of "--alias-typography-header" CSS variable */
+  --brand-color: #123456; /* Default color */
+  --brand-color-black: #000000; /* Black color */
+  --brand-color-white: #ffffff; /* White color */
+  --brand-typography-header-font-family: Arial,sans-serif;
+  --brand-typography-header-font-size: 24px;
+  --brand-typography-header-font-weight: 500;
+}`,
       },
     ]);
   });

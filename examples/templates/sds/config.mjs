@@ -9,7 +9,7 @@ import {
 
 /** @type {import('tokun/types').Config} */
 export default {
-  data: ["templates/sds/sds.tokens.json"],
+  data: ["sds.tokens.json"],
   options: {
     loader: dtcgJsonLoader,
     platforms: [
@@ -19,11 +19,11 @@ export default {
         transforms: [kebabCaseTransform, cssTransforms],
         outputs: [
           {
-            name: "dist/sds/output.css",
+            name: "dist/output.css",
             filter: ({ path }) => !path.includes("typography"),
           },
           {
-            name: "dist/sds/typography.css",
+            name: "dist/typography.css",
             filter: ({ path }) => path.includes("typography"),
           },
         ],
@@ -35,7 +35,7 @@ export default {
         transforms: [camelCaseTransform],
         outputs: [
           {
-            name: "dist/sds/output-flatten.json",
+            name: "dist/output-flatten.json",
           },
         ],
       },

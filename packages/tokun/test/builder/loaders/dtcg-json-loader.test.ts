@@ -337,6 +337,76 @@ describe("Test DTCG JSON Loader", () => {
     });
   });
 
+  it("should throw error for invalid reference in token", () => {
+    const content = {
+      color: {
+        $type: "color",
+        $value: "{colorr}",
+      },
+    } satisfies TokenGroup;
+
+    expect(() => dtcgJsonLoader.loadFn({ content })).toThrowError();
+  });
+
+  it.each([
+    [
+      "object",
+      {
+        typography: {
+          $type: "typography",
+          $value: {
+            fontFamily: "{wrong}",
+            fontSize: "{wrong}",
+            fontWeight: "{wrong}",
+            lineHeight: 1.5,
+            letterSpacing: {
+              value: 0.1,
+              unit: "px",
+            },
+          },
+        },
+      },
+    ],
+    [
+      "direct",
+      {
+        shadow: {
+          $type: "shadow",
+          $value: "{wrong}",
+        },
+      },
+    ],
+    [
+      "array",
+      {
+        primaryFontFamily: {
+          $type: "fontFamily",
+          $value: ["{wrong}"],
+        },
+      },
+    ],
+  ])(
+    "should throw error for invalid reference in composite token — %s",
+    (_, content) => {
+      expect(() =>
+        dtcgJsonLoader.loadFn({ content: content as TokenGroup }),
+      ).toThrowError(`Reference wrong not found`);
+    },
+  );
+
+  it("should throw error when circular reference is found", () => {
+    const content = {
+      color: {
+        $type: "color",
+        $value: "{color}",
+      },
+    } satisfies TokenGroup;
+
+    expect(() => dtcgJsonLoader.loadFn({ content })).toThrowError(
+      "Maximum call stack size exceeded",
+    );
+  });
+
   it.todo(
     "should throw error for invalid JSON content and provide error message",
   );

@@ -15,10 +15,7 @@ import { z } from "zod";
 
 /** @type {import('tokun/types').Config} */
 export default {
-  data: [
-    "templates/advanced/tokens/theme/*.tokens.json",
-    "templates/advanced/tokens/base.tokens.json",
-  ],
+  data: ["tokens/theme/*.tokens.json", "tokens/base.tokens.json"],
   options: {
     loader: dtcgJsonLoader,
     validator: dtcgValidator,
@@ -96,11 +93,11 @@ export default {
         ],
         outputs: [
           {
-            name: "dist/advanced/sample.css",
+            name: "dist/sample.css",
             filter: ({ path }) => !path.includes("typography"),
           },
           {
-            name: "dist/advanced/sample-typography.css",
+            name: "dist/sample-typography.css",
             filter: ({ path }) => path.includes("typography"),
           },
         ],
@@ -116,7 +113,7 @@ export default {
         ],
         outputs: [
           {
-            name: "dist/advanced/sample-flatten.json",
+            name: "dist/sample-flatten.json",
           },
         ],
       },

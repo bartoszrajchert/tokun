@@ -3,7 +3,7 @@ import {
   ConfigOptions,
   PlatformWithoutString,
 } from "types/define-config.js";
-import { Token, TokenGroup, TokenValue } from "types/definitions.js";
+import { Token, TokenGroup, TokenType, TokenValue } from "types/definitions.js";
 import { logger } from "utils/logger.js";
 import { assign, isEqual } from "utils/object-utils.js";
 import {
@@ -235,9 +235,15 @@ function handleNameTransform(
   name: string,
   acc: FlattenTokens,
 ): void {
+  if (!token.$type) {
+    logger.error(`! Token ${name} has no type`);
+    throw new Error(`Token ${name} has no type`);
+  }
+
   const transformedName = transform.transformer(name as Token & string);
   const transformedValue = transformReferenceValue(
     token.$value,
+    token.$type,
     transform.transformer as TokenTransformer,
   );
 
@@ -265,6 +271,7 @@ function handleTokenTransform(
 
 function transformReferenceValue(
   value: unknown,
+  type: TokenType,
   transformer: TokenTransformer,
 ): unknown {
   if (isReference(value)) {
@@ -272,11 +279,11 @@ function transformReferenceValue(
     return transformedValue !== value ? `{${transformedValue}}` : value;
   }
 
-  if (Array.isArray(value) && isTokenComposite({ $value: value } as Token)) {
+  if (Array.isArray(value) && isTokenComposite({ $type: type } as Token)) {
     return value.map((v) =>
       isReference(v)
         ? `{${transformer(unwrapReference(v))}}`
-        : transformCompositeValue(v, transformer),
+        : transformCompositeValue(v, type, transformer),
     );
   } else if (Array.isArray(value)) {
     return value.map((v) =>
@@ -288,17 +295,9 @@ function transformReferenceValue(
     !Array.isArray(value) &&
     typeof value === "object" &&
     value !== null &&
-    isTokenComposite({ $value: value } as Token)
+    isTokenComposite({ $type: type } as Token)
   ) {
-    return Object.entries(value as Record<string, unknown>).reduce(
-      (acc, [key, val]) => ({
-        ...acc,
-        [key]: isReference(val)
-          ? `{${transformer(unwrapReference(val))}}`
-          : transformCompositeValue(val as object, transformer),
-      }),
-      {} as Record<string, unknown>,
-    );
+    return transformCompositeValue(value, type, transformer);
   }
 
   return value;
@@ -306,12 +305,13 @@ function transformReferenceValue(
 
 function transformCompositeValue(
   value: object,
+  type: TokenType,
   transformer: TokenTransformer,
 ): object {
   return Object.entries(value as Record<string, unknown>).reduce(
     (acc, [key, val]) => ({
       ...acc,
-      [key]: transformReferenceValue(val, transformer),
+      [key]: transformReferenceValue(val, type, transformer),
     }),
     {} as Record<string, unknown>,
   );
