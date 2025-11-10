@@ -1,6 +1,6 @@
 import { TokenGroup } from "types/definitions.js";
+import { traverseTokens } from "utils/traverse-tokens.js";
 import { describe, expect, it, vi } from "vitest";
-import { traverseTokens } from "../../src/utils/traverse-tokens.js";
 
 describe("traverseTokens", () => {
   it("should call onToken for each token", () => {

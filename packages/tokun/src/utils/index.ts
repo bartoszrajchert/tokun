@@ -1,4 +1,3 @@
-export * from "./generate-config.js";
 export * from "./object-utils.js";
 export * from "./registry.js";
 export * from "./string-utils.js";

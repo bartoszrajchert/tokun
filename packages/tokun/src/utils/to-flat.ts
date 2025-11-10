@@ -1,5 +1,4 @@
 import { Token, TokenGroup } from "types/definitions.js";
-import { isReference, unwrapReference } from "./token-utils.js";
 import { traverseTokens } from "./traverse-tokens.js";
 
 export type FlattenTokens = Map<string, Token>;
