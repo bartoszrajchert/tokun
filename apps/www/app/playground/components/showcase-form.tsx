@@ -1,14 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { build } from "tokun";
-import {
-  FormatName,
-  formatNames,
-  generateConfig,
-  LoaderName,
-  loaderNames,
-} from "tokun/utils";
+import { build } from "tokun/browser";
+import { FormatName, formatNames, LoaderName, loaderNames } from "tokun/utils";
 import { dtcgValidator, ValidatorError } from "tokun/validators";
 
 import { Code } from "@/components/code";
@@ -32,10 +26,27 @@ export default function ShowcaseForm({ example }: { example: string }) {
   const [value, setValue] = useState<string>(example);
 
   async function handleParse() {
-    const config = generateConfig({
+    const config = {
       loader: loader as LoaderName,
-      format: format as FormatName,
-    });
+      platforms: [
+        {
+          name: "playground",
+          format: format as FormatName,
+          transforms:
+            format === "css" || format === "scss" ? ["css-transforms"] : [],
+          outputs: [
+            {
+              name:
+                format === "scss"
+                  ? "tokens.scss"
+                  : format === "css"
+                    ? "tokens.css"
+                    : "tokens.out",
+            },
+          ],
+        },
+      ],
+    };
 
     try {
       const tokens = build({

@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npm run build:pagefind",
+    "build": "next build && bun run build:pagefind",
     "build:pagefind": "pagefind --site out --output-path out/_next/static/chunks/app/pagefind",
-    "start": "npx serve@latest out",
+    "start": "bunx serve@latest out",
     "lint": "next lint",
     "typedoc": "typedoc && node ./scripts/typedoc/remove-index.mjs"
   },
@@ -53,11 +53,5 @@
     "typedoc-plugin-frontmatter": "^1.3.0",
     "typedoc-plugin-markdown": "^4.7.0",
     "typescript": "^5"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/react": "19.1.8",
-      "@types/react-dom": "19.1.6"
-    }
   }
 }

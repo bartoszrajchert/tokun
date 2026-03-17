@@ -9,8 +9,13 @@
   "module": "dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/builder/index.d.ts",
+      "browser": "./dist/browser/index.js",
       "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/builder/browser/index.d.ts",
+      "default": "./dist/browser/index.js"
     },
     "./validators": {
       "types": "./dist/validators/index.d.ts",
@@ -29,8 +34,10 @@
     "url": "https://github.com/bartoszrajchert/tokun"
   },
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup",
+    "dev": "bun --watch run build",
+    "build": "rm -rf ./dist && bun run build:js && bun run build:types",
+    "build:js": "bun build ./src/builder/index.ts --outdir ./dist --format esm --target node && bun build ./src/builder/browser/index.ts --outdir ./dist/browser --format esm --target browser && bun build ./src/validators/index.ts --outdir ./dist/validators --format esm --target node && bun build ./src/utils/index.ts --outdir ./dist/utils --format esm --target node && bun build ./src/cli/index.ts --outdir ./dist/cli --format esm --target node",
+    "build:types": "bunx tsc -p tsconfig.build.json",
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "echo 'Add lint script here'"

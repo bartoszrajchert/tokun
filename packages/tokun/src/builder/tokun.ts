@@ -14,6 +14,7 @@ import {
 import { FlattenTokens } from "utils/to-flat.js";
 import {
   findInRegistry,
+  getTokenValue,
   isReference,
   isTokenComposite,
   unwrapReference,
@@ -49,8 +50,10 @@ export function build(config: Config): BuildOutput[] {
 
   const mergedData = dataToObject(data);
 
+  let result: BuildOutput[];
+
   if (!options) {
-    return buildDesignTokens({
+    result = buildDesignTokens({
       obj: dtcgJsonLoader.loadFn({ content: mergedData }),
       platforms: [
         {
@@ -61,21 +64,23 @@ export function build(config: Config): BuildOutput[] {
         },
       ],
     });
+  } else {
+    const { loader, platforms, validator, customValidator } = options;
+
+    const resolvedLoader = resolveLoader(loader);
+    const resolvedPlatforms = resolvePlatforms(platforms);
+
+    if (validator) {
+      validateTokens(mergedData, validator, customValidator);
+    }
+
+    result = buildDesignTokens({
+      obj: resolvedLoader.loadFn({ content: mergedData }),
+      platforms: resolvedPlatforms,
+    });
   }
 
-  const { loader, platforms, validator, customValidator } = options;
-
-  const resolvedLoader = resolveLoader(loader);
-  const resolvedPlatforms = resolvePlatforms(platforms);
-
-  if (validator) {
-    validateTokens(mergedData, validator, customValidator);
-  }
-
-  return buildDesignTokens({
-    obj: resolvedLoader.loadFn({ content: mergedData }),
-    platforms: resolvedPlatforms,
-  });
+  return result;
 }
 
 function resolvePlatforms(
@@ -241,13 +246,14 @@ function handleNameTransform(
   }
 
   const transformedName = transform.transformer(name as Token & string);
+  const tokenValue = getTokenValue(token);
   const transformedValue = transformReferenceValue(
-    token.$value,
+    tokenValue,
     token.$type,
     transform.transformer as TokenTransformer,
   );
 
-  if (!isEqual(transformedValue, token.$value)) {
+  if ("$value" in token && !isEqual(transformedValue, tokenValue)) {
     token.$value = transformedValue as TokenValue;
   }
 
