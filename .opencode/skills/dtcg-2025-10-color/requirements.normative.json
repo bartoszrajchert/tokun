@@ -1,0 +1,22 @@
+[
+  {
+    "heading_path": "Design Tokens Color Module 2025.10 > 1. Conformance",
+    "section_path": "conformance",
+    "text": "1. Conformance As well as sections marked as non-normative, all authoring guidelines, diagrams, examples, and notes in this specification are non-normative. Everything else in this specification is normative. The key words MAY , MUST , and MUST NOT in this document are to be interpreted as described in BCP 14 [ RFC2119 ] [ RFC8174 ] when, and only when, they appear in all capitals, as shown here."
+  },
+  {
+    "heading_path": "Design Tokens Color Module 2025.10 > 4. Color type > 4.1 Format",
+    "section_path": "color-type/format/the-none-keyword",
+    "text": "4.1 Format For color tokens, the $type property MUST be set to the string color . The $value property can then be used to specify the details of the color, The $value object contains the following properties: colorSpace (required): A string that specifies the color space or color model . For supported color spaces, see the supported color spaces section below. components (required): An array representing the color components . The number of components depends on the color space. Each element of the array MUST be either: A number The 'none' keyword alpha (optional): A number that represents the alpha value of the color. This value is between 0 and 1 , where 0 is fully transparent and 1 is fully opaque. If omitted, the alpha value of the color MUST be assumed to be 1 (fully opaque). hex (optional): A string that represents a fallback value of the color. The fallback color MUST be formatted in 6 digit CSS hex color notation format to avoid conflicts with the provided alpha value."
+  },
+  {
+    "heading_path": "Design Tokens Color Module 2025.10 > 4. Color type > 4.1 Format > 4.1.1 The none keyword",
+    "section_path": "color-type/format/the-none-keyword/using-the-none-keyword",
+    "text": "4.1.1 The none keyword When specifying a color in some color spaces, a value of 0 could be ambiguous. For example, in the HSL color space, colors with a hue of 0 are red; while a single color like hsl(0, 0, 50) would not be rendered as red, it may be treated as a completely desaturated red when interpolated with other colors. Therefore, in certain color spaces, 0 is insufficient to indicate that there is no value for a given component. CSS Color Module Level 4 has introduced the none keyword to indicate that a component is missing, or not applicable. For example, in the HSL color space, the none keyword may be used to indicate that there is no angle value for the color; a color with a hue value of none MAY be rendered differently from a color with a hue angle of 0 , or result in different colors when interpolating ."
+  },
+  {
+    "heading_path": "Design Tokens Color Module 2025.10 > 4. Color type > 4.1 Format > 4.1.1 The none keyword > 4.1.1.1 Using the none keyword",
+    "section_path": "color-type/format/the-none-keyword/using-the-none-keyword",
+    "text": "4.1.1.1 Using the none keyword The none keyword MAY be used in the components array to indicate that a component is not applicable or not specified. Contrast this with the following example where the Hue is specified as 0 : While both examples will render as white, the first example is more explicit about the fact that the hue is not applicable. This is important when interpolating between colors or mixing colors, where using colors with components of 0 or none can yield different results."
+  }
+]

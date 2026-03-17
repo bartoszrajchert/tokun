@@ -1,7 +1,11 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { GradientToken, ReferenceValue, Token } from "types/definitions.js";
-import { isReference } from "utils/token-utils.js";
+import { Token, TokenReference } from "types/definitions.js";
+import {
+  getTokenValue,
+  isReference,
+  isTokenReference,
+} from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssGradientTransform: Transform = {
@@ -17,18 +21,18 @@ export const cssGradientTransform: Transform = {
       return token;
     }
 
-    if (isReference(token.$value)) {
-      cssExtension.value = token.$value;
-    } else {
-      cssExtension.value = `linear-gradient(90deg, ${token.$value.map((gradient) => (isReference(gradient) ? gradient : `${gradient.color} ${calcPosition(gradient.position)}`)).join(", ")})`;
+    const tokenValue = getTokenValue(token);
+    if (isTokenReference(tokenValue)) {
+      cssExtension.value = stringifyReference(tokenValue);
+    } else if (Array.isArray(tokenValue)) {
+      cssExtension.value = toCssGradient(tokenValue);
     }
 
     if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {
-      const resolvedValue = token.$extensions[RESOLVED_EXTENSION] as Exclude<
-        GradientToken["$value"],
-        ReferenceValue
-      >;
-      cssExtension.resolvedValue = `linear-gradient(90deg, ${resolvedValue.map((gradient) => (isReference(gradient) ? gradient : `${gradient.color} ${calcPosition(gradient.position)}`)).join(", ")})`;
+      const resolvedValue = token.$extensions[RESOLVED_EXTENSION];
+      if (Array.isArray(resolvedValue)) {
+        cssExtension.resolvedValue = toCssGradient(resolvedValue);
+      }
     }
 
     if (Object.keys(cssExtension).length > 0) {
@@ -42,10 +46,43 @@ export const cssGradientTransform: Transform = {
   },
 };
 
-const calcPosition = (position: number | ReferenceValue): string => {
-  if (isReference(position)) {
-    return position;
+function toCssGradient(value: unknown[]): string {
+  return `linear-gradient(90deg, ${value
+    .map((gradient) => {
+      if (isTokenReference(gradient)) {
+        return stringifyReference(gradient);
+      }
+
+      if (typeof gradient !== "object" || gradient === null) {
+        return String(gradient);
+      }
+
+      const gradientStop = gradient as {
+        color: unknown;
+        position: unknown;
+      };
+
+      return `${String(gradientStop.color)} ${calcPosition(gradientStop.position)}`;
+    })
+    .join(", ")})`;
+}
+
+const calcPosition = (position: unknown): string => {
+  if (isTokenReference(position)) {
+    return stringifyReference(position);
+  }
+
+  if (typeof position !== "number") {
+    return String(position);
   }
 
   return `${position * 100}%`;
 };
+
+function stringifyReference(reference: TokenReference): string {
+  if (isReference(reference)) {
+    return reference;
+  }
+
+  return reference.$ref;
+}

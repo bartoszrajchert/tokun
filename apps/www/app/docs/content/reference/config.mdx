@@ -5,6 +5,32 @@ order: 2
 
 # Config
 
-🚧 The page is under construction.
+Tokun config is defined with `defineConfig` and can be merged with `extendConfig`.
 
-See examples on Tokun [repository](https://github.com/bartoszrajchert/tokun/tree/main/examples).
+```ts
+import { defineConfig } from "tokun";
+import { dtcgValidator } from "tokun/validators";
+
+export default defineConfig({
+  data: "./tokens/base.tokens.json",
+  options: {
+    loader: "dtcg-json",
+    validator: dtcgValidator,
+    platforms: [
+      {
+        name: "css",
+        format: "css",
+        transforms: ["css-transforms"],
+        outputs: [{ name: "tokens.css" }],
+      },
+    ],
+  },
+});
+```
+
+Key fields:
+
+- `data`: token input (object, JSON string, or arrays of them)
+- `options.loader`: loader name or custom loader
+- `options.validator`: validation function (for example `dtcgValidator`)
+- `options.platforms`: output targets with `format`, `transforms`, and `outputs`

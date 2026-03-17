@@ -74,6 +74,33 @@ describe("traverseTokens", () => {
     );
   });
 
+  it("should handle $root tokens as group-level tokens", () => {
+    const onToken = vi.fn();
+    const onGroup = vi.fn();
+    const tokens: TokenGroup = {
+      group1: {
+        $root: { $type: "color", $value: "#fff" },
+        nested: { $type: "color", $value: "#000" },
+      },
+    };
+
+    traverseTokens(tokens, { onToken, onGroup });
+
+    expect(onToken).toHaveBeenCalledTimes(2);
+    expect(onToken).toHaveBeenCalledWith(
+      { $type: "color", $value: "#fff" },
+      "group1",
+      "color",
+      undefined,
+    );
+    expect(onToken).toHaveBeenCalledWith(
+      { $type: "color", $value: "#000" },
+      "group1.nested",
+      "color",
+      undefined,
+    );
+  });
+
   it("should throw an error for non-object values", () => {
     const onToken = vi.fn();
     const onGroup = vi.fn();

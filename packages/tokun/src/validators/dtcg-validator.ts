@@ -1,5 +1,14 @@
 import { FlattenTokens, toFlat } from "utils/to-flat.js";
-import { isReference, unwrapReference } from "utils/token-utils.js";
+import {
+  getByJsonPointer,
+  getTokenValue,
+  hasUnallowedCharactersInName,
+  isJsonPointerReferenceObject,
+  isReference,
+  isToken,
+  pointerToTokenPath,
+  unwrapReference,
+} from "utils/token-utils.js";
 import { traverseTokens } from "utils/traverse-tokens.js";
 import { TokenGroup, TokenType } from "../types/definitions.js";
 import { GroupSchema, dtcgJsonSchemas } from "./schemas.js";
@@ -34,7 +43,11 @@ export function dtcgValidator(
 
   const { flatten } = toFlat(value as TokenGroup);
 
-  const { errors: refErrors } = validateRules(flatten, rules);
+  const { errors: refErrors } = validateRules(
+    flatten,
+    value as TokenGroup,
+    rules,
+  );
   if (refErrors.length > 0) {
     return {
       errors: refErrors,
@@ -93,7 +106,7 @@ function validateGroup(
       const result = schema.validator(token);
       if (!result) {
         errors.push({
-          message: `Invalid token value at ${path} (${lastType}). The value is: ${JSON.stringify(token.$value)}`,
+          message: `Invalid token value at ${path} (${lastType}). The value is: ${JSON.stringify(getTokenValue(token))}`,
           name: "invalidTokenValue",
           path,
           value: lastType,
@@ -110,6 +123,22 @@ function validateGroup(
           name: "invalidGroup",
           path,
         });
+        return;
+      }
+
+      for (const key of Object.keys(group)) {
+        if (key.startsWith("$")) {
+          continue;
+        }
+
+        if (hasUnallowedCharactersInName(key)) {
+          errors.push({
+            message: `Invalid token/group name "${key}" at ${path}`,
+            name: "invalidName",
+            path: path ? `${path}.${key}` : key,
+            value: key,
+          });
+        }
       }
     },
   });
@@ -127,13 +156,14 @@ function validateGroup(
  */
 function validateRules(
   flatten: FlattenTokens,
+  root: TokenGroup,
   customRules: RuleValidators = [],
 ): { errors: ValidatorError[] } {
   const finalErrors: ValidatorError[] = [];
 
   const alleRules: RuleValidators = [
-    isReferencedTokenExists,
-    hasSameType,
+    (tokens) => isReferencedTokenExists(tokens, root),
+    (tokens) => hasSameType(tokens, root),
     ...customRules,
   ];
 
@@ -149,101 +179,141 @@ function validateRules(
   };
 }
 
-function isReferencedTokenExists(flatten: FlattenTokens): {
+type CollectedReference = {
+  value: string | { $ref: string };
+  path: string;
+};
+
+function collectReferences(
+  value: unknown,
+  path: string,
+  output: CollectedReference[],
+) {
+  if (isReference(value) || isJsonPointerReferenceObject(value)) {
+    output.push({ value, path });
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => {
+      collectReferences(entry, `${path}[${index}]`, output);
+    });
+    return;
+  }
+
+  if (typeof value === "object" && value !== null) {
+    Object.entries(value).forEach(([key, nestedValue]) => {
+      collectReferences(nestedValue, `${path}.${key}`, output);
+    });
+  }
+}
+
+function isReferencedTokenExists(
+  flatten: FlattenTokens,
+  root: TokenGroup,
+): {
   errors: ValidatorError[];
 } {
   const errors: ValidatorError[] = [];
 
-  flatten.forEach(({ $value: value }, key) => {
-    if (isReference(value)) {
-      const reference = unwrapReference(value);
+  flatten.forEach((token, key) => {
+    const references: CollectedReference[] = [];
+    collectReferences(getTokenValue(token), key, references);
 
-      if (!flatten.has(reference)) {
-        errors.push({
-          message: `The reference "${value}" does not exist in "${key}"`,
-          name: "referenceNotFound",
-          path: key,
-          value: value,
-        });
-        return;
-      }
-    }
+    references.forEach((reference) => {
+      if (isReference(reference.value)) {
+        const resolvedPath = unwrapReference(reference.value);
 
-    if (Array.isArray(value)) {
-      value.forEach((val, index) => {
-        if (isReference(val)) {
-          const reference = unwrapReference(val);
-
-          if (!flatten.has(reference)) {
-            errors.push({
-              message: `The reference "${val}" does not exist in "${key}[${index}]"`,
-              name: "referenceNotFound",
-              path: `${key}[${index}]`,
-              value: val,
-            });
-          }
-        }
-      });
-
-      return;
-    }
-
-    if (typeof value === "object") {
-      Object.entries(value).forEach(([property, val]) => {
-        if (isReference(val)) {
-          const reference = unwrapReference(val);
-
-          if (!flatten.has(reference)) {
-            errors.push({
-              message: `The reference "${val}" does not exist in "${key}", property "${property}"`,
-              name: "referenceNotFound",
-              path: `${key}.${property}`,
-              value: val,
-            });
-          }
-        }
-
-        if (Array.isArray(val)) {
-          val.forEach((v, index) => {
-            if (isReference(v)) {
-              const reference = unwrapReference(v);
-
-              if (!flatten.has(reference)) {
-                errors.push({
-                  message: `The reference "${v}" does not exist in "${key}", property "${property}[${index}]"`,
-                  name: "referenceNotFound",
-                  path: `${key}.${property}[${index}]`,
-                  value: v,
-                });
-              }
-            }
+        if (!flatten.has(resolvedPath)) {
+          errors.push({
+            message: `The reference "${reference.value}" does not exist in "${reference.path}"`,
+            name: "referenceNotFound",
+            path: reference.path,
+            value: reference.value,
           });
         }
-      });
-      return;
-    }
+
+        return;
+      }
+
+      if (!isJsonPointerReferenceObject(reference.value)) {
+        return;
+      }
+
+      const pointerValue = reference.value.$ref;
+      const resolved = getByJsonPointer(root, pointerValue);
+
+      if (resolved === undefined) {
+        errors.push({
+          message: `The reference "${pointerValue}" does not exist in "${reference.path}"`,
+          name: "referenceNotFound",
+          path: reference.path,
+          value: pointerValue,
+        });
+      }
+    });
   });
 
   return { errors };
 }
 
-function hasSameType(flatten: FlattenTokens): { errors: ValidatorError[] } {
+function getReferencedTokenFromPointer(
+  pointer: string,
+  root: TokenGroup,
+  flatten: FlattenTokens,
+) {
+  const referencedValue = getByJsonPointer(root, pointer);
+
+  if (referencedValue === undefined) {
+    return undefined;
+  }
+
+  if (typeof referencedValue === "object" && referencedValue !== null) {
+    if (isToken(referencedValue)) {
+      return flatten.get(pointerToTokenPath(pointer as `#/${string}`));
+    }
+
+    if (pointer.endsWith("/$value")) {
+      return flatten.get(pointerToTokenPath(pointer as `#/${string}`));
+    }
+  }
+
+  return undefined;
+}
+
+function hasSameType(
+  flatten: FlattenTokens,
+  root: TokenGroup,
+): { errors: ValidatorError[] } {
   const errors: ValidatorError[] = [];
 
-  flatten.forEach(({ $value: value, $type: type }, key) => {
-    if (isReference(value)) {
-      const referencedToken = flatten.get(unwrapReference(value));
-      if (!referencedToken) return;
+  flatten.forEach((token, key) => {
+    const { $type: type } = token;
+    const tokenValue = getTokenValue(token);
 
-      if (referencedToken.$type !== type) {
-        errors.push({
-          message: `The reference "${value}" must have the same type. Got "${referencedToken?.$type}" but expected "${type} in ${key}"`,
-          name: "referenceTypeMismatch",
-          path: key,
-          value: { expected: type, got: referencedToken.$type },
-        });
-        return;
-      }
+    let referencedToken;
+
+    if (isReference(tokenValue)) {
+      referencedToken = flatten.get(unwrapReference(tokenValue));
+    } else if (isJsonPointerReferenceObject(tokenValue)) {
+      referencedToken = getReferencedTokenFromPointer(
+        tokenValue.$ref,
+        root,
+        flatten,
+      );
+    }
+
+    if (!referencedToken || !type) {
+      return;
+    }
+
+    if (referencedToken.$type !== type) {
+      errors.push({
+        message: `The reference must have the same type. Got "${referencedToken.$type}" but expected "${type}" in ${key}`,
+        name: "referenceTypeMismatch",
+        path: key,
+        value: { expected: type, got: referencedToken.$type },
+      });
     }
   });
 

@@ -161,7 +161,11 @@
             "value": 0,
             "unit": "px"
           },
-          "color": "#00000040"
+          "color": {
+            "colorSpace": "srgb",
+            "components": [0, 0, 0],
+            "alpha": 0.25
+          }
         },
         "$type": "shadow",
         "$description": "Small shadow"
@@ -184,7 +188,11 @@
             "value": 0,
             "unit": "px"
           },
-          "color": "#00000040"
+          "color": {
+            "colorSpace": "srgb",
+            "components": [0, 0, 0],
+            "alpha": 0.25
+          }
         },
         "$type": "shadow",
         "$description": "Large shadow"

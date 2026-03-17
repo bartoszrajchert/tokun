@@ -1,0 +1,67 @@
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
+import { Token } from "types/definitions.js";
+import {
+  getTokenValue,
+  isReference,
+  isTokenReference,
+} from "utils/token-utils.js";
+import { Format, FormatConfig } from "utils/types.js";
+import { CSS_EXTENSION } from "./css-format.js";
+
+/**
+ * SCSS formatter.
+ * Generates `$variable-name: value;` output.
+ */
+export const scssFormat: Format = {
+  name: "scss",
+  formatter: ({ tokens, config, fileHeader }) => {
+    config.outputReferences = config.outputReferences ?? false;
+    const lines: string[] = [];
+
+    const fileHeaderText = fileHeader.fileHeader().join("\n// ");
+    if (fileHeaderText !== "") {
+      lines.push(`// ${fileHeaderText}`);
+    }
+
+    tokens.forEach((token, path) => {
+      const variableName = `$${path.replace(/\./g, "-")}`;
+      const value = resolveScssValue(token, path, config);
+      const comment = token.$description ? ` // ${token.$description}` : "";
+      lines.push(`${variableName}: ${value};${comment}`);
+    });
+
+    return lines.join("\n") + "\n";
+  },
+};
+
+function resolveScssValue(
+  token: Token,
+  path: string,
+  config: FormatConfig,
+): string {
+  const extension =
+    (token.$extensions?.[CSS_EXTENSION] as Record<string, string>) ?? {};
+  const tokenValue = getTokenValue(token);
+
+  if (Object.keys(extension).length > 0) {
+    return config.outputReferences
+      ? String(extension.value)
+      : String(extension.resolvedValue ?? extension.value);
+  }
+
+  if (config.outputReferences) {
+    return isTokenReference(tokenValue) && !isReference(tokenValue)
+      ? tokenValue.$ref
+      : String(tokenValue);
+  }
+
+  if (token.$extensions?.[RESOLVED_EXTENSION]) {
+    return String(token.$extensions[RESOLVED_EXTENSION]);
+  }
+
+  if (!isTokenReference(tokenValue)) {
+    return String(tokenValue);
+  }
+
+  throw new Error(`No resolved value found in ${path}`);
+}

@@ -241,6 +241,108 @@ describe("cssFormat", () => {
     expect(result).toBe(`:root {\n  --color-primary: #ff0000;\n}`);
   });
 
+  it("should apply prefix to CSS variable names", () => {
+    const tokens: FlattenTokens = new Map([
+      [
+        "color-primary",
+        {
+          $value: "#ff0000",
+        },
+      ],
+    ]);
+
+    const config = { outputReferences: false, prefix: "ds" };
+
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
+
+    expect(result).toBe(`:root {\n  --ds-color-primary: #ff0000;\n}`);
+  });
+
+  it("should use custom selector", () => {
+    const tokens: FlattenTokens = new Map([
+      [
+        "color-primary",
+        {
+          $value: "#ff0000",
+        },
+      ],
+    ]);
+
+    const config = { outputReferences: false, selector: ".dark-theme" };
+
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
+
+    expect(result).toBe(`.dark-theme {\n  --color-primary: #ff0000;\n}`);
+  });
+
+  it("should output $deprecated comment", () => {
+    const tokens: FlattenTokens = new Map([
+      [
+        "color-old",
+        {
+          $value: "#ff0000",
+          $deprecated: true,
+        },
+      ],
+      [
+        "color-legacy",
+        {
+          $value: "#00ff00",
+          $deprecated: "Use color-new instead",
+        },
+      ],
+    ]);
+
+    const config = { outputReferences: false };
+
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
+
+    expect(result).toBe(
+      `:root {\n  --color-old: #ff0000; /* @deprecated */\n  --color-legacy: #00ff00; /* @deprecated Use color-new instead */\n}`,
+    );
+  });
+
+  it("should apply prefix to references in values", () => {
+    const tokens: FlattenTokens = new Map([
+      [
+        "color-primary",
+        {
+          $value: "{color-secondary}",
+          $extensions: {
+            [CSS_EXTENSION]: {
+              value: "{color-secondary}",
+              resolvedValue: "#00ff00",
+            },
+          },
+        },
+      ],
+    ]);
+
+    const config = { outputReferences: true, prefix: "ds" };
+
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
+
+    expect(result).toBe(
+      `:root {\n  --ds-color-primary: var(--ds-color-secondary);\n}`,
+    );
+  });
+
   it("should handle composite values", () => {
     const tokens: FlattenTokens = new Map([
       [

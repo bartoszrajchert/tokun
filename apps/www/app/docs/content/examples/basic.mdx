@@ -5,6 +5,30 @@ order: 1
 
 # Examples — Basic
 
-🚧 The page is under construction.
+The basic template is intentionally small and shows strict DTCG 2025.10 usage:
 
-See examples on Tokun [repository](https://github.com/bartoszrajchert/tokun/tree/main/examples).
+- structured color values (`colorSpace` + `components`)
+- group root tokens with `$root`
+- curly-brace aliases
+- gradient positions in the `[0, 1]` range
+
+Source: `examples/templates/basic/basic.tokens.json`
+
+```json
+{
+  "brand": {
+    "color": {
+      "$type": "color",
+      "$root": {
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.0706, 0.2039, 0.3373],
+          "hex": "#123456"
+        }
+      }
+    }
+  }
+}
+```
+
+For more complete setups, see the advanced template.

@@ -1,12 +1,24 @@
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { isReference, stringifyUnitValue } from "utils/token-utils.js";
-import { Format } from "utils/types.js";
+import {
+  ColorToken,
+  StructuredColor,
+  Token,
+  TypographyToken,
+} from "types/definitions.js";
+import {
+  getTokenValue,
+  isReference,
+  isTokenReference,
+  stringifyUnitValue,
+} from "utils/token-utils.js";
+import { Format, FormatConfig } from "utils/types.js";
 
 type CSSRoot = Record<
   string,
   {
     value: string;
     description?: string;
+    deprecated?: boolean | string;
   }
 >;
 
@@ -26,11 +38,13 @@ export const cssFormat: Format = {
   name: "css",
   formatter: ({ tokens, config, fileHeader }) => {
     config.outputReferences = config.outputReferences ?? false;
+    const prefix = config.prefix as string | undefined;
+    const selector = (config.selector as string) ?? ":root";
     const cssRoot: CSSRoot = {};
 
     tokens.forEach((token, path) => {
-      const variableName = createVariableName(path);
-      const resolvedValue = resolveTokenValue(token, path, config);
+      const variableName = createVariableName(path, prefix);
+      const resolvedValue = resolveTokenValue(token, path, config, prefix);
 
       // Ensure no duplicate variables
       if (cssRoot[variableName]) {
@@ -40,22 +54,32 @@ export const cssFormat: Format = {
       cssRoot[variableName] = {
         value: resolvedValue,
         description: token.$description,
+        deprecated: token.$deprecated,
       };
 
       // Handle `letter-spacing` for typography tokens as a separate CSS variable
-      if (token.$type === "typography" && !isReference(token.$value)) {
-        handleTypographyToken(cssRoot, token, path, config);
+      if (
+        token.$type === "typography" &&
+        !isTokenReference(getTokenValue(token))
+      ) {
+        handleTypographyToken(
+          cssRoot,
+          token as TypographyToken,
+          path,
+          config,
+          prefix,
+        );
       }
     });
 
     const fileHeaderText = fileHeader.fileHeader().join("\n * ");
 
     if (fileHeaderText === "") {
-      return formatCSSOutput(cssRoot);
+      return formatCSSOutput(cssRoot, selector);
     }
 
     return `${formatFileHeader(fileHeaderText)}
-${formatCSSOutput(cssRoot)}`;
+${formatCSSOutput(cssRoot, selector)}`;
   },
 };
 
@@ -63,20 +87,17 @@ ${formatCSSOutput(cssRoot)}`;
  * Resolves the value of a token, giving precedence to custom extensions if available.
  * Uses `outputReferences` setting to determine if references or resolved values are used.
  * Wraps the resolved value in a CSS variable format.
- *
- * @param token - Token to resolve value from
- * @param path - Path of the token
- * @param config - Configuration specifying output reference usage
- * @returns The resolved value as a CSS variable
- * @throws Error if no resolved value is found
  */
 function resolveTokenValue(
-  token: any,
+  token: Token,
   path: string,
-  config: { outputReferences: boolean },
+  config: FormatConfig,
+  prefix?: string,
 ): string {
-  const extension = token.$extensions?.[CSS_EXTENSION] ?? {};
+  const extension =
+    (token.$extensions?.[CSS_EXTENSION] as Record<string, string>) ?? {};
   let value;
+  const tokenValue = getTokenValue(token);
 
   // Check for custom extension's `value` and `resolvedValue`
   if (Object.keys(extension).length > 0) {
@@ -85,41 +106,120 @@ function resolveTokenValue(
       : String(extension.resolvedValue ?? extension.value);
   } else if (config.outputReferences) {
     // Fall back to token's `$value` when outputting references
-    value = String(token.$value);
+    value = stringifyTokenValue(token);
   } else if (token.$extensions?.[RESOLVED_EXTENSION]) {
     // Use resolved extension if available
     value = String(token.$extensions[RESOLVED_EXTENSION]);
-  } else if (!isReference(token.$value)) {
+  } else if (!isTokenReference(tokenValue)) {
     // Final fallback to `value` if it's not a reference
-    value = String(token.$value);
+    value = stringifyTokenValue(token);
   } else {
     throw new Error(`No resolved value found in ${path}`);
   }
 
-  return createVariable(value); // Wrap the value as a CSS variable
+  return createVariable(value, prefix); // Wrap the value as a CSS variable
+}
+
+/**
+ * Convert a token value to a CSS-compatible string.
+ */
+function stringifyTokenValue(token: Token): string {
+  const tokenValue = getTokenValue(token);
+
+  if (typeof tokenValue === "object" && tokenValue !== null) {
+    if ("colorSpace" in tokenValue) {
+      return structuredColorToCSS(tokenValue as StructuredColor);
+    }
+
+    if ("$ref" in tokenValue) {
+      return tokenValue.$ref;
+    }
+  }
+
+  return String(tokenValue);
+}
+
+/**
+ * Convert a structured color to CSS color function syntax.
+ */
+function structuredColorToCSS(color: StructuredColor): string {
+  if (color.hex) {
+    return color.hex;
+  }
+
+  const components = color.components.join(" ");
+  const alpha =
+    color.alpha !== undefined && color.alpha !== 1 ? ` / ${color.alpha}` : "";
+
+  switch (color.colorSpace) {
+    case "srgb":
+      return `color(srgb ${components}${alpha})`;
+    case "srgb-linear":
+      return `color(srgb-linear ${components}${alpha})`;
+    case "display-p3":
+      return `color(display-p3 ${components}${alpha})`;
+    case "a98-rgb":
+      return `color(a98-rgb ${components}${alpha})`;
+    case "prophoto-rgb":
+      return `color(prophoto-rgb ${components}${alpha})`;
+    case "rec2020":
+      return `color(rec2020 ${components}${alpha})`;
+    case "xyz-d65":
+      return `color(xyz-d65 ${components}${alpha})`;
+    case "xyz-d50":
+      return `color(xyz-d50 ${components}${alpha})`;
+    case "hsl":
+      return `hsl(${color.components[0]} ${color.components[1]}% ${color.components[2]}%${alpha})`;
+    case "hwb":
+      return `hwb(${color.components[0]} ${color.components[1]}% ${color.components[2]}%${alpha})`;
+    case "lab":
+      return `lab(${components}${alpha})`;
+    case "lch":
+      return `lch(${components}${alpha})`;
+    case "oklab":
+      return `oklab(${components}${alpha})`;
+    case "oklch":
+      return `oklch(${components}${alpha})`;
+    default:
+      return `color(${color.colorSpace} ${components}${alpha})`;
+  }
 }
 
 /**
  * Handles the special case for typography tokens by creating
  * a `letter-spacing` CSS variable, if necessary.
- *
- * @param cssRoot - Root CSS object to store variables
- * @param token - Typography token with letterSpacing property
- * @param path - Path of the typography token
- * @param config - Configuration specifying output reference usage
  */
 function handleTypographyToken(
   cssRoot: CSSRoot,
-  token: any,
+  token: TypographyToken,
   path: string,
-  config: { outputReferences: boolean },
+  config: FormatConfig,
+  prefix?: string,
 ) {
-  const letterSpacingVariableName = `${createVariableName(path)}-letter-spacing`;
+  const tokenValue = getTokenValue(token);
+  if (isTokenReference(tokenValue)) return;
+  if (typeof tokenValue !== "object" || tokenValue === null) return;
+  if (
+    !("letterSpacing" in tokenValue) ||
+    tokenValue.letterSpacing === undefined
+  ) {
+    return;
+  }
+
+  const typographyValue = tokenValue as {
+    letterSpacing: unknown;
+  };
+
+  const letterSpacingVariableName = `${createVariableName(path, prefix)}-letter-spacing`;
   const letterSpacingValue = config.outputReferences
-    ? stringifyUnitValue(token.$value.letterSpacing)
+    ? stringifyUnitValue(typographyValue.letterSpacing as never)
     : stringifyUnitValue(
-        token.$extensions?.[RESOLVED_EXTENSION]?.letterSpacing ??
-          token.$value.letterSpacing,
+        (((
+          token.$extensions?.[RESOLVED_EXTENSION] as
+            | Record<string, unknown>
+            | undefined
+        )?.letterSpacing as typeof typographyValue.letterSpacing) ??
+          typographyValue.letterSpacing) as never,
       );
 
   if (cssRoot[letterSpacingVariableName]) {
@@ -129,23 +229,32 @@ function handleTypographyToken(
   }
 
   cssRoot[letterSpacingVariableName] = {
-    value: createVariable(letterSpacingValue),
+    value: createVariable(letterSpacingValue, prefix),
     description: `Letter spacing of "--${path}" CSS variable`,
   };
 }
 
 /**
  * Formats the CSS output by joining all CSS variables into a single string.
- *
- * @param cssRoot - Root CSS object containing variable definitions
- * @returns The formatted CSS output string
  */
-function formatCSSOutput(cssRoot: CSSRoot): string {
-  return `:root {\n${Object.entries(cssRoot)
-    .map(
-      ([key, { value, description }]) =>
-        `  ${key}: ${value};${description ? ` /* ${description} */` : ""}`,
-    )
+function formatCSSOutput(cssRoot: CSSRoot, selector: string): string {
+  return `${selector} {\n${Object.entries(cssRoot)
+    .map(([key, { value, description, deprecated }]) => {
+      const comments: string[] = [];
+      if (deprecated) {
+        comments.push(
+          typeof deprecated === "string"
+            ? `@deprecated ${deprecated}`
+            : "@deprecated",
+        );
+      }
+      if (description) {
+        comments.push(description);
+      }
+      const comment =
+        comments.length > 0 ? ` /* ${comments.join(" | ")} */` : "";
+      return `  ${key}: ${value};${comment}`;
+    })
     .join("\n")}\n}`;
 }
 
@@ -161,25 +270,20 @@ function formatFileHeader(message: string): string {
 
 /**
  * Replaces reference patterns in a value with CSS variables.
- *
- * @param value - The value to convert to a CSS variable
- * @returns The modified value with CSS variable references
  */
-function createVariable(value: string): string {
+function createVariable(value: string, prefix?: string): string {
   return value.replace(
     /{(.*?)}/g,
-    (_, key) => `var(${createVariableName(key)})`,
+    (_, key) => `var(${createVariableName(key as string, prefix)})`,
   );
 }
 
 /**
  * Creates a CSS variable name from a given path.
- *
- * @param path - The path to create a variable name from
- * @returns The CSS variable name
  */
-function createVariableName(path: string): string {
-  return `--${cssEscape(path)}`;
+function createVariableName(path: string, prefix?: string): string {
+  const escaped = cssEscape(path);
+  return prefix ? `--${prefix}-${escaped}` : `--${escaped}`;
 }
 
 /**
@@ -187,7 +291,7 @@ function createVariableName(path: string): string {
  *
  * @link https://github.com/mathiasbynens/CSS.escape
  */
-function cssEscape(value: any) {
+function cssEscape(value: string) {
   const string = String(value);
   const length = string.length;
   let index = -1;
@@ -206,7 +310,7 @@ function cssEscape(value: any) {
 
   while (++index < length) {
     codeUnit = string.charCodeAt(index);
-    // Note: there’s no need to special-case astral symbols, surrogate
+    // Note: there's no need to special-case astral symbols, surrogate
     // pairs, or lone surrogates.
 
     // If the character is NULL (U+0000), then the REPLACEMENT CHARACTER

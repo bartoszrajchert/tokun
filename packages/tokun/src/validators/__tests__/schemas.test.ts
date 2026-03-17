@@ -15,32 +15,77 @@ import {
 } from "validators/schemas.js";
 import { describe, expect, it } from "vitest";
 
+const structuredBlack = {
+  colorSpace: "srgb",
+  components: [0, 0, 0],
+} as const;
+
+const structuredWhite = {
+  colorSpace: "srgb",
+  components: [1, 1, 1],
+} as const;
+
 describe("Test schema single token", () => {
-  it.each(["#000000", "#000", "#000000ff", "#000f", "{color.unknown}"])(
-    `test color token %s`,
-    (color) => {
-      const res = {
-        $type: "color",
-        $value: color,
-        $description: "The primary color of the application.",
-      };
+  it.each(["{color.unknown}"])(`test color token (reference) %s`, (color) => {
+    const res = {
+      $type: "color",
+      $value: color,
+      $description: "The primary color of the application.",
+    };
 
-      expect(() => ColorTokenSchema.parse(res)).not.toThrowError();
-    },
-  );
+    expect(() => ColorTokenSchema.parse(res)).not.toThrowError();
+  });
 
-  it.each([123456, "{color.unknown", "000000", "000", "000000ff", "000f"])(
-    "test invalid color token %s",
-    (color) => {
-      const res = {
-        $type: "color",
-        $value: color,
-        $description: "The primary color of the application.",
-      };
+  // Color token tests - structured color format (DTCG 2025.10)
+  it.each([
+    { colorSpace: "srgb", components: [1, 0, 0] },
+    { colorSpace: "srgb", components: [1, 0, 0], alpha: 0.5 },
+    { colorSpace: "display-p3", components: [1, 0.5, 0] },
+    { colorSpace: "oklch", components: [0.7, 0.15, 30], hex: "#ff0000" },
+    { colorSpace: "hsl", components: [120, 50, 50] },
+    { colorSpace: "lab", components: [50, "none", 30] },
+  ])(`test color token (structured) %s`, (color) => {
+    const res = {
+      $type: "color",
+      $value: color,
+    };
 
-      expect(() => ColorTokenSchema.parse(res)).toThrowError();
-    },
-  );
+    expect(() => ColorTokenSchema.parse(res)).not.toThrowError();
+  });
+
+  it.each([
+    123456,
+    "#000000",
+    "#000",
+    "#000000ff",
+    "#000f",
+    "{color.unknown",
+    "000000",
+    "000",
+    "000000ff",
+    "000f",
+  ])("test invalid color token %s", (color) => {
+    const res = {
+      $type: "color",
+      $value: color,
+      $description: "The primary color of the application.",
+    };
+
+    expect(() => ColorTokenSchema.parse(res)).toThrowError();
+  });
+
+  it.each([
+    { colorSpace: "invalid-space", components: [1, 0, 0] },
+    { colorSpace: "srgb", components: [1, 0, 0], alpha: 2 },
+    { colorSpace: "srgb", components: [1, 0, 0], hex: "invalid" },
+  ])("test invalid structured color token %s", (color) => {
+    const res = {
+      $type: "color",
+      $value: color,
+    };
+
+    expect(() => ColorTokenSchema.parse(res)).toThrowError();
+  });
 
   it.each([
     {
@@ -216,8 +261,7 @@ describe("Test schema single token", () => {
     [0, 0, 0, 0],
     [1, 1, 1, 1],
     [0.5, 0.5, 0.5, 0.5],
-    ["{1}", "{2}", "{3}", "{4}"],
-    ["{cubicBezier.unknown}", 0.5, 0.5, 0.5],
+    [{ $ref: "#/curve/p1x" }, 0.2, { $ref: "#/curve/p2x" }, 0.4],
     "{cubicBezier.unknown}",
   ])("test cubic bezier token %s", (cubicBezier) => {
     const res = {
@@ -345,6 +389,23 @@ describe("Test schema single token", () => {
       lineCap: "square",
       unknown: "unknown",
     },
+    {
+      dashArray: [
+        { value: 1, unit: "px" },
+        { value: 2, unit: "px" },
+      ],
+      lineCap: "butt",
+      lineJoin: "round",
+    },
+    {
+      dashArray: [
+        { value: 1, unit: "px" },
+        { value: 2, unit: "px" },
+      ],
+      lineCap: "butt",
+      lineJoin: "miter",
+      lineWidth: { value: 2, unit: "px" },
+    },
     "{strokeStyle.unknown",
   ])(`test invalid stroke style token %s`, (strokeStyle) => {
     const res = {
@@ -357,7 +418,7 @@ describe("Test schema single token", () => {
   });
   it.each([
     {
-      color: "#000000",
+      color: structuredBlack,
       width: { value: 1, unit: "px" },
       style: "solid",
     },
@@ -367,12 +428,12 @@ describe("Test schema single token", () => {
       style: "solid",
     },
     {
-      color: "#000000",
+      color: structuredBlack,
       width: "{dimension.unknown}",
       style: "solid",
     },
     {
-      color: "#000000",
+      color: structuredBlack,
       width: { value: 1, unit: "px" },
       style: "{strokeStyle.unknown}",
     },
@@ -388,7 +449,7 @@ describe("Test schema single token", () => {
 
   it.each([
     {
-      color: "#000000",
+      color: structuredBlack,
       width: { value: 1, unit: "px" },
       style: "solid",
       extra: "extra",
@@ -451,14 +512,15 @@ describe("Test schema single token", () => {
 
     expect(() => TransitionTokenSchema.parse(res)).toThrowError();
   });
+
+  // Shadow tokens
   it.for([
     {
-      color: "#000000",
+      color: structuredBlack,
       offsetX: { value: 0, unit: "px" },
       offsetY: { value: 4, unit: "px" },
       blur: { value: 8, unit: "px" },
       spread: { value: 0, unit: "px" },
-      inset: false,
     },
     {
       color: "{color.unknown}",
@@ -467,22 +529,14 @@ describe("Test schema single token", () => {
       blur: { value: 8, unit: "px" },
       spread: { value: 0, unit: "px" },
       inset: false,
-    },
-    {
-      color: "{color.unknown}",
-      offsetX: { value: 0, unit: "px" },
-      offsetY: { value: 4, unit: "px" },
-      blur: { value: 8, unit: "px" },
-      spread: { value: 0, unit: "px" },
     },
     [
       {
-        color: "#000000",
+        color: structuredBlack,
         offsetX: { value: 0, unit: "px" },
         offsetY: { value: 4, unit: "px" },
         blur: { value: 8, unit: "px" },
         spread: { value: 0, unit: "px" },
-        inset: false,
       },
       {
         color: "{color.unknown}",
@@ -490,18 +544,16 @@ describe("Test schema single token", () => {
         offsetY: { value: 4, unit: "px" },
         blur: { value: 8, unit: "px" },
         spread: { value: 0, unit: "px" },
-        inset: false,
       },
     ],
     [
       "{shadow.unknown}",
       {
-        color: "#000000",
+        color: structuredBlack,
         offsetX: { value: 0, unit: "px" },
         offsetY: { value: 4, unit: "px" },
         blur: { value: 8, unit: "px" },
         spread: { value: 0, unit: "px" },
-        inset: false,
       },
     ],
   ])("test shadow token %s", (shadow) => {
@@ -516,23 +568,29 @@ describe("Test schema single token", () => {
 
   it.for([
     {
-      color: "#000000",
+      color: structuredBlack,
       offsetX: { value: 0, unit: "px" },
       offsetY: { value: 4, unit: "px" },
       blur: { value: 8, unit: "px" },
       spread: { value: 0, unit: "px" },
-      inset: false,
+      inset: "false",
+    },
+    {
+      color: structuredBlack,
+      offsetX: { value: 0, unit: "px" },
+      offsetY: { value: 4, unit: "px" },
+      blur: { value: 8, unit: "px" },
+      spread: { value: 0, unit: "px" },
       extra: "extra",
     },
     [
       "{shadow.unknown",
       {
-        color: "#000000",
+        color: structuredBlack,
         offsetX: { value: 0, unit: "px" },
         offsetY: { value: 4, unit: "px" },
         blur: { value: 8, unit: "px" },
         spread: { value: 0, unit: "px" },
-        inset: false,
       },
     ],
   ])("test invalid shadow token %s", (shadow) => {
@@ -547,22 +605,22 @@ describe("Test schema single token", () => {
 
   it.for([
     [
-      { color: "#000000", position: 0 },
-      { color: "#FFFFFF", position: 1 },
+      { color: structuredBlack, position: 0 },
+      { color: structuredWhite, position: 1 },
     ],
     [
       { color: "{color.unknown}", position: 0 },
-      { color: "#FFFFFF", position: 1 },
+      { color: structuredWhite, position: 1 },
     ],
     [
-      { color: "#000000", position: 0 },
+      { color: structuredBlack, position: 0 },
       { color: "{color.unknown}", position: 1 },
     ],
     [
       { color: "{color.unknown}", position: 0 },
       { color: "{color.unknown}", position: 1 },
     ],
-    ["{gradient.unknown}", { color: "#FFFFFF", position: 1 }],
+    ["{gradient.unknown}", { color: structuredWhite, position: 1 }],
   ])("test gradient token %s", (gradient) => {
     const res = {
       $type: "gradient",
@@ -576,9 +634,10 @@ describe("Test schema single token", () => {
   it.for([
     ["{color.unknown"],
     [
-      { color: "#000000", position: 0 },
-      { color: "#FFFFFF", position: 1, unknown: "unknown" },
+      { color: structuredBlack, position: 0 },
+      { color: structuredWhite, position: 1, unknown: "unknown" },
     ],
+    [{ color: structuredBlack, position: 2 }],
     ,
   ])("test invalid gradient token %s", (gradient) => {
     const res = {
@@ -590,6 +649,7 @@ describe("Test schema single token", () => {
     expect(() => GradientTokenSchema.parse(res)).toThrowError();
   });
 
+  // Typography tokens - DTCG 2025.10: letterSpacing and lineHeight optional, new props
   it.for([
     {
       fontFamily: "Arial",
@@ -682,6 +742,14 @@ describe("Test schema single token", () => {
       lineHeight: 1,
       letterSpacing: "0.5px",
     },
+    {
+      fontFamily: "Arial",
+      fontWeight: "bold",
+      fontSize: {
+        value: 16,
+        unit: "px",
+      },
+    },
     "{typography.unknown",
     {
       fontFamily: "Arial",
@@ -697,6 +765,19 @@ describe("Test schema single token", () => {
       },
       extra: "extra",
     },
+    // Invalid new property values
+    {
+      fontFamily: "Arial",
+      fontWeight: "bold",
+      fontSize: { value: 16, unit: "px" },
+      fontStyle: "oblique",
+    },
+    {
+      fontFamily: "Arial",
+      fontWeight: "bold",
+      fontSize: { value: 16, unit: "px" },
+      textCase: "none",
+    },
   ])("test invalid typography token %s", (typography) => {
     const res = {
       $type: "typography",
@@ -705,5 +786,24 @@ describe("Test schema single token", () => {
     };
 
     expect(() => TypographyTokenSchema.parse(res)).toThrowError();
+  });
+
+  // $deprecated property support
+  it("should accept $deprecated as boolean", () => {
+    const res = {
+      $type: "color",
+      $value: structuredBlack,
+      $deprecated: true,
+    };
+    expect(() => ColorTokenSchema.parse(res)).not.toThrowError();
+  });
+
+  it("should accept $deprecated as string", () => {
+    const res = {
+      $type: "color",
+      $value: structuredBlack,
+      $deprecated: "Use brand.primary instead",
+    };
+    expect(() => ColorTokenSchema.parse(res)).not.toThrowError();
   });
 });

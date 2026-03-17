@@ -5,11 +5,27 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import prompts from "prompts";
 import { glob } from "tinyglobby";
-import { generateConfig } from "utils/generate-config.js";
+import { Config } from "types/define-config.js";
 import { logger } from "utils/logger.js";
 import { isObject } from "utils/object-utils.js";
 import { formatNames, loaderNames } from "utils/registry.js";
+import { z } from "zod/v4-mini";
 import { startMessage } from "./helpers.js";
+
+const ConfigSchema = z.strictObject({
+  data: z.union([
+    z.string(),
+    z.array(z.string()),
+    z.looseObject({}),
+    z.array(z.union([z.string(), z.looseObject({})])),
+  ]),
+  options: z.optional(
+    z.looseObject({
+      loader: z.union([z.string(), z.looseObject({})]),
+      platforms: z.array(z.looseObject({})),
+    }),
+  ),
+});
 
 export async function runBuild({
   config,
@@ -54,9 +70,6 @@ export async function runBuild({
 /**
  * Read config file.
  *
- * TODO: handle .ts files
- * TODO: handle .json files
- *
  * @param configPath
  */
 async function readConfigFile(configPath: string) {
@@ -72,26 +85,50 @@ async function readConfigFile(configPath: string) {
 
   const absoluteConfigPath = path.resolve(globConfigPath[0]!);
   const absoluteConfigDir = path.dirname(absoluteConfigPath);
-  const fileURL = pathToFileURL(absoluteConfigPath).href;
-  const config = (await import(fileURL)).default;
 
-  // TODO: handle object and array of objects
+  let config: Config;
+
+  if (absoluteConfigPath.endsWith(".json")) {
+    const raw = readFileSync(absoluteConfigPath, "utf-8");
+    config = JSON.parse(raw);
+  } else {
+    const fileURL = pathToFileURL(absoluteConfigPath).href;
+    config = (await import(fileURL)).default;
+  }
+
+  const validation = ConfigSchema.safeParse(config);
+  if (!validation.success) {
+    throw new Error(
+      `Invalid config shape: ${JSON.stringify(z.prettifyError(validation.error))}`,
+    );
+  }
+
+  // If data is an object or array of objects, pass directly to build()
   if (
     isObject(config.data) ||
     (Array.isArray(config.data) && config.data.some(isObject))
   ) {
-    throw new Error(
-      "[TODO] Config data cannot be an object or an array of objects.",
-    );
+    const finishedBuild = build(config);
+
+    for (const { name: buildName, content } of finishedBuild) {
+      const name = `${absoluteConfigDir}/${buildName}`;
+      const dir = path.dirname(name);
+      logger.log(`Writing to ${name}`);
+
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+
+      await writeFile(name, content);
+    }
+    return;
   }
 
   const resolvedData = Array.isArray(config.data)
-    ? config.data.map((file: string) =>
-        path.resolve(`${absoluteConfigDir}/${file}`),
+    ? config.data.map((file) =>
+        path.resolve(`${absoluteConfigDir}/${file as string}`),
       )
     : [path.resolve(`${absoluteConfigDir}/${config.data}`)];
-
-  // TODO: validate config
 
   const tokenFiles = await glob(resolvedData, { absolute: true });
 
@@ -134,17 +171,20 @@ async function readInputFile(filePath: string, outputFilePath: string) {
     },
   ]);
 
-  const config = generateConfig({
-    loader: response.loader,
-    format: response.format,
-    name: outputFilePath,
-  });
-
   const data = await readFile(filePath, "utf-8");
 
   const finishedBuild = build({
-    ...config,
     data: [data],
+    options: {
+      loader: response.loader,
+      platforms: [
+        {
+          name: response.format,
+          format: response.format,
+          outputs: [{ name: outputFilePath }],
+        },
+      ],
+    },
   });
 
   for (const { name, content } of finishedBuild) {
@@ -152,11 +192,9 @@ async function readInputFile(filePath: string, outputFilePath: string) {
     logger.log(`Writing to ${name}`);
 
     if (!existsSync(dir)) {
-      mkdirSync(dir), { recursive: true };
+      mkdirSync(dir, { recursive: true });
     }
 
     await writeFile(name, content);
   }
 }
-
-function resolveData() {}

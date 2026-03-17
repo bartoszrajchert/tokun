@@ -8,61 +8,105 @@ type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 export type BaseProperties = {
   $description?: string;
-  $extensions?: Record<string, any>;
+  $extensions?: Record<string, unknown>;
+  $deprecated?: boolean | string;
 };
 
 export type ReferenceValue = `{${string}}`;
+export type JsonPointerReference = `#/${string}`;
+export type JsonPointerReferenceObject = {
+  $ref: JsonPointerReference;
+};
+export type TokenReference = ReferenceValue | JsonPointerReferenceObject;
+
+export type TokenType =
+  | "color"
+  | "dimension"
+  | "fontFamily"
+  | "fontWeight"
+  | "duration"
+  | "cubicBezier"
+  | "number"
+  | "strokeStyle"
+  | "border"
+  | "transition"
+  | "shadow"
+  | "gradient"
+  | "typography";
+
+export type ColorSpace =
+  | "srgb"
+  | "srgb-linear"
+  | "hsl"
+  | "hwb"
+  | "lab"
+  | "lch"
+  | "oklab"
+  | "oklch"
+  | "display-p3"
+  | "a98-rgb"
+  | "prophoto-rgb"
+  | "rec2020"
+  | "xyz-d65"
+  | "xyz-d50";
+
+export type StructuredColor = {
+  colorSpace: ColorSpace;
+  components: (number | "none")[];
+  alpha?: number;
+  hex?: string;
+};
 
 export type ColorToken = BaseProperties & {
   $type?: "color";
-  $value: `#${string}` | ReferenceValue;
+  $value: string | StructuredColor | TokenReference;
+};
+
+export type DimensionValue = {
+  value: number | JsonPointerReferenceObject;
+  unit: "px" | "rem" | JsonPointerReferenceObject;
 };
 
 export type DimensionToken = BaseProperties & {
   $type?: "dimension";
-  $value:
-    | {
-        value: number;
-        unit: "px" | "rem";
-      }
-    | ReferenceValue;
+  $value: DimensionValue | TokenReference;
 };
 
 export type FontFamilyToken = BaseProperties & {
   $type?: "fontFamily";
-  $value: string | (string | ReferenceValue)[] | ReferenceValue;
+  $value: string | (string | JsonPointerReferenceObject)[] | TokenReference;
 };
 
 export type FontWeightToken = BaseProperties & {
   $type?: "fontWeight";
-  $value: string | number | ReferenceValue;
+  $value: string | number | TokenReference;
+};
+
+export type DurationValue = {
+  value: number | JsonPointerReferenceObject;
+  unit: "ms" | "s" | JsonPointerReferenceObject;
 };
 
 export type DurationToken = BaseProperties & {
   $type?: "duration";
-  $value:
-    | {
-        value: number;
-        unit: "ms" | "s";
-      }
-    | ReferenceValue;
+  $value: DurationValue | TokenReference;
 };
 
 export type CubicBezierToken = BaseProperties & {
   $type?: "cubicBezier";
   $value:
     | [
-        number | ReferenceValue,
-        number | ReferenceValue,
-        number | ReferenceValue,
-        number | ReferenceValue,
+        number | JsonPointerReferenceObject,
+        number | JsonPointerReferenceObject,
+        number | JsonPointerReferenceObject,
+        number | JsonPointerReferenceObject,
       ]
-    | ReferenceValue;
+    | TokenReference;
 };
 
 export type NumberToken = BaseProperties & {
   $type?: "number";
-  $value: number | ReferenceValue;
+  $value: number | TokenReference;
 };
 
 export type StrokeStyleToken = BaseProperties & {
@@ -70,10 +114,10 @@ export type StrokeStyleToken = BaseProperties & {
   $value:
     | (typeof strokePredefinedValues)[number]
     | {
-        dashArray: DimensionToken["$value"][];
+        dashArray: (DimensionToken["$value"] | TokenReference)[];
         lineCap: (typeof lineCapPredefinedValues)[number];
       }
-    | ReferenceValue;
+    | TokenReference;
 };
 
 export type BorderToken = BaseProperties & {
@@ -84,7 +128,7 @@ export type BorderToken = BaseProperties & {
         style: StrokeStyleToken["$value"];
         color: ColorToken["$value"];
       }
-    | ReferenceValue;
+    | TokenReference;
 };
 
 export type TransitionToken = BaseProperties & {
@@ -95,7 +139,7 @@ export type TransitionToken = BaseProperties & {
         delay: DurationToken["$value"];
         timingFunction: CubicBezierToken["$value"];
       }
-    | ReferenceValue;
+    | TokenReference;
 };
 
 type ShadowValue =
@@ -105,13 +149,13 @@ type ShadowValue =
       offsetY: DimensionToken["$value"];
       blur: DimensionToken["$value"];
       spread: DimensionToken["$value"];
-      inset?: boolean;
+      inset?: boolean | JsonPointerReferenceObject;
     }
-  | ReferenceValue;
+  | TokenReference;
 
 export type ShadowToken = BaseProperties & {
   $type?: "shadow";
-  $value: ShadowValue | ShadowValue[] | ReferenceValue;
+  $value: ShadowValue | (ShadowValue | TokenReference)[] | TokenReference;
 };
 
 export type GradientToken = BaseProperties & {
@@ -122,9 +166,9 @@ export type GradientToken = BaseProperties & {
             color: ColorToken["$value"];
             position: NumberToken["$value"];
           }
-        | ReferenceValue
+        | TokenReference
       )[]
-    | ReferenceValue;
+    | TokenReference;
 };
 
 export type TypographyToken = BaseProperties & {
@@ -137,7 +181,13 @@ export type TypographyToken = BaseProperties & {
         letterSpacing: DimensionToken["$value"];
         lineHeight: NumberToken["$value"];
       }
-    | ReferenceValue;
+    | TokenReference;
+};
+
+export type JsonPointerReferenceToken = BaseProperties & {
+  $type?: TokenType;
+  $value?: unknown;
+  $ref: JsonPointerReference;
 };
 
 export type Token =
@@ -153,16 +203,16 @@ export type Token =
   | GradientToken
   | TypographyToken
   | StrokeStyleToken
-  | BorderToken;
+  | BorderToken
+  | JsonPointerReferenceToken;
 
 export type StrictToken = WithRequired<Token, "$type">;
 export type LooseToken = ModifyProperties<
   Token,
-  { $type: string; $value: any }
+  { $type: string; $value: unknown; $ref?: string }
 >;
 
-export type TokenType = Exclude<Token["$type"], undefined>;
-export type TokenValue = Token["$value"];
+export type TokenValue = Extract<Token, { $value: unknown }>["$value"];
 export type TokenCompositeValue = Exclude<
   | TypographyToken["$value"]
   | ShadowToken["$value"]
@@ -170,15 +220,18 @@ export type TokenCompositeValue = Exclude<
   | TransitionToken["$value"]
   | StrokeStyleToken["$value"]
   | BorderToken["$value"],
-  ReferenceValue
+  TokenReference
 >;
 
 export type TokenGroupProperties = {
+  $schema?: string;
   $type?: TokenType;
   $description?: string;
-  $extensions?: object;
+  $extensions?: Record<string, unknown>;
+  $deprecated?: boolean | string;
+  $extends?: ReferenceValue | JsonPointerReference;
 };
 
 export type TokenGroup = TokenGroupProperties & {
-  [key: string]: Token | TokenGroup | string;
+  [key: string]: Token | TokenGroup | unknown;
 };

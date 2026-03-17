@@ -2,13 +2,18 @@ import { TokenGroup } from "types/definitions.js";
 import { dtcgValidator } from "validators/dtcg-validator.js";
 import { describe, expect, it } from "vitest";
 
+const structuredBlack = {
+  colorSpace: "srgb",
+  components: [0, 0, 0],
+} as const;
+
 describe("tokensValidator", () => {
   it("should return no errors for a valid token group", () => {
     const validTokenGroup: TokenGroup = {
       colors: {
         token: {
           $type: "color",
-          $value: "#000000",
+          $value: structuredBlack,
         },
       },
       dimensions: {
@@ -33,7 +38,7 @@ describe("tokensValidator", () => {
       colors: {
         token: {
           $type: "color",
-          $value: "#000000",
+          $value: structuredBlack,
         },
       },
       dimensions: {
@@ -55,9 +60,8 @@ describe("tokensValidator", () => {
     const invalidTokenGroup: TokenGroup = {
       colors: {
         token: {
-          // @ts-expect-error
           $type: "unknown",
-          $value: "#000000",
+          $value: structuredBlack,
         },
       },
       dimensions: {
@@ -81,7 +85,7 @@ describe("tokensValidator", () => {
       colors: {
         token: {
           $type: "color",
-          $value: "#000000",
+          $value: structuredBlack,
         },
       },
       dimensions: {
@@ -104,7 +108,7 @@ describe("tokensValidator", () => {
         $unkown: {},
         token: {
           $type: "color",
-          $value: "#000000",
+          $value: structuredBlack,
         },
       },
       dimensions: {

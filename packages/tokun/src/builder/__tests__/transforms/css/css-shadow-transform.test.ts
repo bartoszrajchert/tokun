@@ -21,14 +21,13 @@ describe("cssShadowTransform", () => {
         blur: { value: 5, unit: "px" },
         spread: { value: 2, unit: "px" },
         color: "#000000",
-        inset: true,
       },
     };
     const result = applyTransform(cssShadowTransform, token);
 
     // @ts-expect-error
     expect(result.$extensions[CSS_EXTENSION].value).toBe(
-      "10px 10px 5px 2px #000000 inset",
+      "10px 10px 5px 2px #000000",
     );
   });
 
@@ -42,7 +41,6 @@ describe("cssShadowTransform", () => {
           blur: { value: 5, unit: "px" },
           spread: { value: 2, unit: "px" },
           color: "#000000",
-          inset: true,
         },
         {
           offsetX: { value: 5, unit: "px" },
@@ -50,7 +48,6 @@ describe("cssShadowTransform", () => {
           blur: { value: 2, unit: "px" },
           spread: { value: 1, unit: "px" },
           color: "#ffffff",
-          inset: false,
         },
       ],
     };
@@ -58,7 +55,7 @@ describe("cssShadowTransform", () => {
 
     // @ts-expect-error
     expect(result.$extensions[CSS_EXTENSION].value).toBe(
-      "10px 10px 5px 2px #000000 inset, 5px 5px 2px 1px #ffffff",
+      "10px 10px 5px 2px #000000, 5px 5px 2px 1px #ffffff",
     );
   });
 
@@ -82,7 +79,6 @@ describe("cssShadowTransform", () => {
         blur: { value: 5, unit: "px" },
         spread: { value: 2, unit: "px" },
         color: "#000000",
-        inset: true,
       },
       $extensions: {
         [RESOLVED_EXTENSION]: {
@@ -91,7 +87,6 @@ describe("cssShadowTransform", () => {
           blur: { value: 10, unit: "px" },
           spread: { value: 5, unit: "px" },
           color: "#111111",
-          inset: false,
         },
       },
     };

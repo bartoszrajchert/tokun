@@ -1,0 +1,127 @@
+[
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 3. Filetype > 3.1 Format",
+    "section_path": "filetype/format",
+    "text": "3.1 Format A resolver document MUST use standard JSON syntax ([ RFC8259 ]). Tools MAY support extensions such as JSONC or JSON5 so long as the document may be converted to normal JSON without affecting token values."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 3. Filetype > 3.2 File extension",
+    "section_path": "filetype/file-extension",
+    "text": "3.2 File extension Users SHOULD use the .resolver.json file extension to name resolver documents."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 3. Filetype > 3.3 MIME type",
+    "section_path": "filetype/mime-type",
+    "text": "3.3 MIME type When transmitting a resolver document over HTTP, users SHOULD use the expected application/json MIME type ([ RFC6838 ]) in the Content-Type header ([ RFC1341 ]). Users SHOULD NOT use a custom or unexpected MIME type."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.1 Root level properties > 4.1.1 Name",
+    "section_path": "syntax/root-level-properties/name",
+    "text": "4.1.1 Name The document MAY provide a human-readable name at the root level. This is helpful to distinguish one resolver document from another, in case the filename itself isn\u2019t enough."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.1 Root level properties > 4.1.2 Version",
+    "section_path": "syntax/root-level-properties/version",
+    "text": "4.1.2 Version The document MUST provide a version at the root level, and it MUST be 2025.10 . This is reserved for future versions in case breaking changes are introduced."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.1 Root level properties > 4.1.3 Description",
+    "section_path": "syntax/root-level-properties/description",
+    "text": "4.1.3 Description The document MAY provide a description at the root level. This may be used to add additional explanation or context not present in name ."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.1 Root level properties > 4.1.4 Sets",
+    "section_path": "syntax/root-level-properties/sets",
+    "text": "4.1.4 Sets A set is a collection of design tokens in DTCG format . A set MUST contain a sources array with tokens declared directly, or a reference object pointing to a JSON file containing design tokens, or any combination of the two. A set MAY include a description describing the purpose of the set. If the array declares multiple sources, they will be merged in array order, meaning if a token is declared multiple times, the last occurrence in the array will be the final value. Tools MUST respect array ordering."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.1 Root level properties > 4.1.5 Modifiers > 4.1.5.1 Contexts",
+    "section_path": "syntax/root-level-properties/modifiers/contexts",
+    "text": "4.1.5.1 Contexts A modifier MUST declare a contexts map of a string value to an array of token sources. The array of tokens sources MUST be a ReferenceObject , inline tokens, or any combination of the two. A modifier SHOULD have two or more contexts , since one is the equivalent of a set . A modifier MUST NOT have an empty contexts map. Tools SHOULD throw an error for modifiers with only 1 context. Tools MUST throw an error for modifiers with 0 contexts. Like sets , array order MUST be respected such that in case of conflict, the last occurrence of a token in the array produces the final value. A modifier MAY reference a set inside a context value. However a modifier MUST NOT reference any other modifier, not even another context inside the same modifier."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.1 Root level properties > 4.1.5 Modifiers > 4.1.5.2 Description",
+    "section_path": "syntax/root-level-properties/modifiers/description-0",
+    "text": "4.1.5.2 Description A modifier MAY declare a human-readable description ."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.1 Root level properties > 4.1.5 Modifiers > 4.1.5.3 Default",
+    "section_path": "syntax/root-level-properties/modifiers/default",
+    "text": "4.1.5.3 Default A modifier MAY declare a default value that MUST match one of the keys in contexts . Tools MUST throw an error if the value is not present in contexts ."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.1 Root level properties > 4.1.6 Resolution Order > 4.1.6.1 Inline sets and modifiers",
+    "section_path": "syntax/root-level-properties/resolution-order/inline-sets-and-modifiers",
+    "text": "4.1.6.1 Inline sets and modifiers In resolutionOrder , a set or modifier MAY be declared inline, so long as name and type keys are added to the object: Property Type Required Description name string Y A unique name that MUST NOT conflict with any other name in resolutionOrder . type \"set\" | \"modifier\" Y MUST be \"set\" or \"modifier\" according to the type. Tools MUST throw an error in the case where name or type are missing from an inline object, or if name is duplicated among any objects. Inline sets and modifiers MUST NOT be referenced in any way. Tools SHOULD throw an error when a reference object points to a resolution order item."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.2 Reference objects",
+    "section_path": "syntax/reference-objects/invalid-pointers",
+    "text": "4.2 Reference objects When referring to another JSON document or a structure within the same document, a reference object MUST be used. This is described in JSON Schema 2020-12 as an object with a key of $ref whose string is a valid JSON pointer as described in [ RFC6901 ]. Tools MUST resolve all reference objects in a resolver document. Reference objects MUST NOT be circular, neither referencing other pointers that reference itself, nor referencing any parent node of the reference object. Tools MUST support same-document reference objects, as that is the minimum requirement to support this resolver module. Beyond that, tools may make individual decisions to not support some URI types such as importing files on a local file system, or remote URIs over TCP/IP."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.2 Reference objects > 4.2.1 Invalid pointers",
+    "section_path": "syntax/reference-objects/invalid-pointers",
+    "text": "4.2.1 Invalid pointers A pointer MAY point anywhere within the same document, with the exception of the following: Only resolutionOrder may reference a modifier ( #/modifiers/\u2026 ). Sets and modifiers MUST NOT reference another modifier. Referencing a modifier from a set could cause inputs to apply conditional logic to a structure that can\u2019t support it, therefore it\u2019s not allowed. Referencing a modifier from another modifier would mean a single input applies to unexpected modifiers, therefore it\u2019s not allowed. A reference object MUST NOT point to anything in the resolutionOrder array ( #/resolutionOrder/\u2026 ). Resolution ordering, by its nature, references many other parts of the document. Duplicating any part of this will produce complex, hard-to-predict chains. Tools MUST throw an error if encountering any invalid pointers."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.2 Reference objects > 4.2.2 Extending",
+    "section_path": "syntax/reference-objects/extending",
+    "text": "4.2.2 Extending As JSON Schema 2020-12 allows, other keys MAY exist on a reference object alongside $ref . In these scenarios, the local keys alongside $ref MUST be treated as overrides. If a key alongside $ref declares an object or array, tools MUST flatten these shallowly, meaning objects and arrays are not merged."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.3 $extensions",
+    "section_path": "syntax/extensions",
+    "text": "4.3 $extensions An $extensions object MAY be added to any set , modifier , or inline set/modifier , to declare arbitrary metadata that is up to individual tools to either use or ignore. If provided, $extensions MUST be an object with the keys being vendor-specific namespaces. This allows multiple tools to use this metadata without conflict."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.4 $schema",
+    "section_path": "syntax/schema",
+    "text": "4.4 $schema A resolver document MAY include a URL to a JSON Schema document under $schema . One such schema is provided at https://www.designtokens.org/schemas/2025.10/resolver.json and is present in most examples. This does not affect resolution behavior, but provides user-friendly metadata and syntax checking for most code editors."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 4. Syntax > 4.5 $defs",
+    "section_path": "syntax/defs",
+    "text": "4.5 $defs Tools MAY allow defining structures in JSON Schema $defs but is not a requirement. However, tools MUST NOT throw an error when encountering $defs , and MUST ignore the key if it is not supported."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 5. Inputs",
+    "section_path": "inputs/case-sensitivity",
+    "text": "5. Inputs A resolver document only describes how conditional token values MAY be produced. But the conditions must still be provided somewhere. The term \u201cinput\u201d refers to any selection of context values passed to the tool. Tools MUST accept inputs as a JSON-serializable object, such as an object in JavaScript or a dictionary in Python . Tools that load a resolver that declares modifiers SHOULD throw an error if an accompanying input is not provided."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 5. Inputs > 5.1 Case sensitivity",
+    "section_path": "inputs/case-sensitivity",
+    "text": "5.1 Case sensitivity Inputs SHOULD be case-insensitive. For example, { \"theme\": \"dark\" } , { \"Theme\": \"Dark\" } , and { \"THEME\": \"DARK\" } SHOULD be equivalent. However, tools MAY make individual decisions on case sensitivity."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 5. Inputs > 5.2 Enforcing strings",
+    "section_path": "inputs/enforcing-strings",
+    "text": "5.2 Enforcing strings Inputs MUST have strings as their values. Tools MUST throw an error if an input contains a non-string value, such as { \"beta\": true } or { \"size\": 100 } ."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 6. Resolution logic",
+    "section_path": "resolution-logic/input-validation",
+    "text": "6. Resolution logic Tools MUST handle the resolution stages in order to produce the correct output. Input validation : verifying the input is valid for the given resolver document. Ordering : tracing the resolutionOrder array to produce the final tokens structure. Aliases : resolving token aliases in the final tokens structure. Resolution : the final end result"
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 6. Resolution logic > 6.1 Input validation",
+    "section_path": "resolution-logic/input-validation",
+    "text": "6.1 Input validation Tools MUST require all inputs match the provided modifier contexts. If a resolver does NOT declare any modifiers, skip this step and proceed to ordering . For every key in the input object: Verify it corresponds with a valid modifier. If it does not, throw an error. Verify that key\u2019s value corresponds with that modifier\u2019s allowed values. If it does not, throw an error. For every modifier in the resolver: If that resolver does NOT declare a default value, verify a key is provided in the input. If not, throw an error."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 6. Resolution logic > 6.2 Ordering",
+    "section_path": "resolution-logic/ordering",
+    "text": "6.2 Ordering Tools MUST iterate over the resolutionOrder array in order. For every item in the array, determine whether it\u2019s a set or modifier , flattening into a single tokens structure in array order. If the item is a set, combine the sources in array order to produce a single tokens structure. Otherwise, if the item is a modifier, select only the context that matches the input , combining the array in order to produce a single tokens structure. In case of a conflict, take the most recent occurrence in the array. Repeat until you\u2019ve reached the end of the resolutionOrder array. The final result will be a tokens structure that behaves the same as if it were one source to begin with."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 6. Resolution logic > 6.3 Aliases",
+    "section_path": "resolution-logic/aliases",
+    "text": "6.3 Aliases Aliases MUST NOT be resolved until this step. After the ordering has been flattened into a single tokens structure, the only remaining step is resolving aliases. Aliases are resolved the exact same way as outlined in the format : Deep aliases are allowed, so long as they\u2019re not circular An alias must point to the correct $type ."
+  },
+  {
+    "heading_path": "Design Tokens Resolver Module 2025.10 > 8. Conformance",
+    "section_path": "conformance",
+    "text": "8. Conformance As well as sections marked as non-normative, all authoring guidelines, diagrams, examples, and notes in this specification are non-normative. Everything else in this specification is normative. The key words MAY , MUST , MUST NOT , SHOULD , and SHOULD NOT in this document are to be interpreted as described in BCP 14 [ RFC2119 ] [ RFC8174 ] when, and only when, they appear in all capitals, as shown here. Tools implementing the Resolver Specification MUST : Support the Resolution Process : Implement the resolution logic as defined, including input validation, base set flattening, modifier application, aliasing, and conflict resolution. Validate Inputs : Ensure that provided modifier inputs match the defined modifiers and acceptable values. Resolve Aliases Correctly : Handle token references accurately, including recursive references and detection of circular dependencies. Preserve Token Properties : Maintain additional token properties (e.g., $extensions ) throughout the resolution process. Handle Errors Gracefully : Provide meaningful error messages for issues like invalid inputs or circular references."
+  }
+]

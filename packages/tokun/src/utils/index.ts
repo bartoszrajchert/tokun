@@ -4,3 +4,4 @@ export * from "./string-utils.js";
 export * from "./to-flat.js";
 export * from "./token-utils.js";
 export * from "./traverse-tokens.js";
+export type { FormatConfig } from "./types.js";

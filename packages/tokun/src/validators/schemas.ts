@@ -1,5 +1,7 @@
 import {
   hexColorWithAlphaRegex,
+  isJsonPointerReferenceObject,
+  jsonPointerReferenceRegex,
   TOKEN_TYPES,
   tokenReferenceRegex,
 } from "utils/token-utils.js";
@@ -18,17 +20,41 @@ export function createSchema<
   T extends string,
   V extends z.ZodMiniType<any, any>,
 >(type: T, value: V) {
-  return z.strictObject({
-    $value: z.union([ReferenceValueSchema, value]), // $value is the Token signature
+  const baseShape = {
     $type: z.optional(z.literal(type)),
     $description: z.optional(z.string()),
     $extensions: z.optional(z.record(z.string(), z.unknown())),
-  });
+    $deprecated: z.optional(z.union([z.boolean(), z.string()])),
+  };
+
+  return z.union([
+    z.strictObject({
+      ...baseShape,
+      $value: z.union([TokenValueReferenceSchema, value]),
+    }),
+    z.strictObject({
+      ...baseShape,
+      $ref: JsonPointerReferenceSchema,
+    }),
+  ]);
 }
 
 export const ReferenceValueSchema = z
   .string()
   .check(z.refine((value) => tokenReferenceRegex.test(value)));
+
+export const JsonPointerReferenceSchema = z
+  .string()
+  .check(z.refine((value) => jsonPointerReferenceRegex.test(value)));
+
+export const JsonPointerReferenceObjectSchema = z.strictObject({
+  $ref: JsonPointerReferenceSchema,
+});
+
+export const TokenValueReferenceSchema = z.union([
+  ReferenceValueSchema,
+  JsonPointerReferenceObjectSchema,
+]);
 
 export const StrictStringSchema = z
   .string()
@@ -37,6 +63,7 @@ export const StrictStringSchema = z
 export const GroupSchema = (customTypes?: string[]) =>
   z
     .looseObject({
+      $schema: z.optional(z.string()),
       $type: z.optional(
         z
           .string()
@@ -50,6 +77,11 @@ export const GroupSchema = (customTypes?: string[]) =>
       ),
       $description: z.optional(z.string()),
       $extensions: z.optional(z.record(z.string(), z.unknown())),
+      $deprecated: z.optional(z.union([z.boolean(), z.string()])),
+      $extends: z.optional(
+        z.union([ReferenceValueSchema, JsonPointerReferenceSchema]),
+      ),
+      $root: z.optional(z.unknown()),
     })
     .check(
       z.refine((value) => {
@@ -62,9 +94,13 @@ export const GroupSchema = (customTypes?: string[]) =>
         for (const key of keys) {
           if (
             key.startsWith("$") &&
+            key !== "$schema" &&
             key !== "$type" &&
             key !== "$description" &&
-            key !== "$extensions"
+            key !== "$extensions" &&
+            key !== "$deprecated" &&
+            key !== "$extends" &&
+            key !== "$root"
           ) {
             return false;
           }
@@ -74,92 +110,229 @@ export const GroupSchema = (customTypes?: string[]) =>
       }),
     );
 
-/**
- * A schema for a color token.
- * Reference: https://tr.designtokens.org/format/#color
- *
- * @example
- * {
- *  $type: "color",
- *  $value: "#000000",
- *  $description: "The primary color of the application."
- * }
- *
- * @returns The color token schema.
- */
-export const ColorTokenSchema = createSchema(
-  "color",
-  z.string().check(z.refine((value) => hexColorWithAlphaRegex.test(value))),
-);
+export const colorSpaces = [
+  "srgb",
+  "srgb-linear",
+  "hsl",
+  "hwb",
+  "lab",
+  "lch",
+  "oklab",
+  "oklch",
+  "display-p3",
+  "a98-rgb",
+  "prophoto-rgb",
+  "rec2020",
+  "xyz-d65",
+  "xyz-d50",
+] as const;
 
-/**
- * A schema for a dimension token.
- * The dimension token is an object with a value and a unit.
- * The unit can be "px" or "rem".
- * Reference: https://tr.designtokens.org/format/#dimension
- *
- * @example
- * {
- *  $type: "dimension",
- *  $value: {
- *    value: 16,
- *    unit: "px"
- *  },
- *  $description: "The size of the button."
- * }
- *
- * @returns The dimension token schema.
- */
-export const DimensionTokenSchema = createSchema(
-  "dimension",
-  z.strictObject({
-    value: z.number(),
-    unit: z.union([z.literal("px"), z.literal("rem")]),
+const colorSpaceSchema = z
+  .string()
+  .check(
+    z.refine((value: string) =>
+      (colorSpaces as readonly string[]).includes(value),
+    ),
+  );
+
+function validateComponent(
+  value: unknown,
+  {
+    min,
+    max,
+    exclusiveMax = false,
+  }: { min?: number; max?: number; exclusiveMax?: boolean },
+) {
+  if (value === "none" || isJsonPointerReferenceObject(value)) {
+    return true;
+  }
+
+  if (typeof value !== "number") {
+    return false;
+  }
+
+  if (min !== undefined && value < min) {
+    return false;
+  }
+
+  if (max !== undefined) {
+    if (exclusiveMax) {
+      if (value >= max) {
+        return false;
+      }
+    } else if (value > max) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function validateStructuredColorValue(value: {
+  colorSpace: unknown;
+  components: unknown;
+}) {
+  if (
+    isJsonPointerReferenceObject(value.colorSpace) ||
+    isJsonPointerReferenceObject(value.components)
+  ) {
+    return true;
+  }
+
+  if (typeof value.colorSpace !== "string") {
+    return false;
+  }
+
+  if (!Array.isArray(value.components) || value.components.length !== 3) {
+    return false;
+  }
+
+  const [first, second, third] = value.components;
+  const zeroToOne = (component: unknown) =>
+    validateComponent(component, { min: 0, max: 1 });
+  const percentage = (component: unknown) =>
+    validateComponent(component, { min: 0, max: 100 });
+  const hue = (component: unknown) =>
+    validateComponent(component, { min: 0, max: 360, exclusiveMax: true });
+  const chroma = (component: unknown) =>
+    validateComponent(component, { min: 0 });
+  const unbounded = (component: unknown) => validateComponent(component, {});
+
+  switch (value.colorSpace) {
+    case "srgb":
+    case "srgb-linear":
+    case "display-p3":
+    case "a98-rgb":
+    case "prophoto-rgb":
+    case "rec2020":
+    case "xyz-d65":
+    case "xyz-d50":
+      return zeroToOne(first) && zeroToOne(second) && zeroToOne(third);
+    case "hsl":
+    case "hwb":
+      return hue(first) && percentage(second) && percentage(third);
+    case "lab":
+      return percentage(first) && unbounded(second) && unbounded(third);
+    case "lch":
+      return percentage(first) && chroma(second) && hue(third);
+    case "oklab":
+      return zeroToOne(first) && unbounded(second) && unbounded(third);
+    case "oklch":
+      return zeroToOne(first) && chroma(second) && hue(third);
+    default:
+      return false;
+  }
+}
+
+export const ColorValueSchema = z
+  .strictObject({
+    colorSpace: z.union([colorSpaceSchema, JsonPointerReferenceObjectSchema]),
+    components: z.union([
+      z.array(
+        z.union([
+          z.number(),
+          z.literal("none"),
+          JsonPointerReferenceObjectSchema,
+        ]),
+      ),
+      JsonPointerReferenceObjectSchema,
+    ]),
+    alpha: z.optional(
+      z.union([
+        z.number().check(z.gte(0), z.lte(1)),
+        JsonPointerReferenceObjectSchema,
+      ]),
+    ),
+    hex: z.optional(
+      z.union([
+        z
+          .string()
+          .check(z.refine((value) => hexColorWithAlphaRegex.test(value))),
+        JsonPointerReferenceObjectSchema,
+      ]),
+    ),
+  })
+  .check(z.refine((value) => validateStructuredColorValue(value)));
+
+export const DimensionValueSchema = z.strictObject({
+  value: z.union([z.number(), JsonPointerReferenceObjectSchema]),
+  unit: z.union([
+    z.literal("px"),
+    z.literal("rem"),
+    JsonPointerReferenceObjectSchema,
+  ]),
+});
+
+export const FontFamilyValueSchema = z.union([
+  StrictStringSchema,
+  z
+    .array(z.union([StrictStringSchema, JsonPointerReferenceObjectSchema]))
+    .check(z.refine((value) => value.length > 0)),
+]);
+
+export const FontWeightValueSchema = z.union([
+  z.number().check(z.int(), z.gte(1), z.lte(1000)),
+  z.string().check(
+    z.refine((value) => {
+      const keys = Object.values(fontWeightValues);
+      return keys.some((key) => key.includes(value));
+    }),
+  ),
+]);
+
+export const DurationValueSchema = z.strictObject({
+  value: z.union([z.number(), JsonPointerReferenceObjectSchema]),
+  unit: z.union([
+    z.literal("ms"),
+    z.literal("s"),
+    JsonPointerReferenceObjectSchema,
+  ]),
+});
+
+export const CubicBezierValueSchema = z
+  .array(z.union([z.number(), JsonPointerReferenceObjectSchema]))
+  .check(
+    z.length(4, "The cubic bezier must have 4 values."),
+    z.refine((value) => {
+      const first = value[0];
+      const third = value[2];
+
+      if (
+        isJsonPointerReferenceObject(first) ||
+        isJsonPointerReferenceObject(third)
+      ) {
+        return true;
+      }
+
+      return (
+        typeof first === "number" &&
+        typeof third === "number" &&
+        first >= 0 &&
+        first <= 1 &&
+        third >= 0 &&
+        third <= 1
+      );
+    }),
+  );
+
+export const NumberValueSchema = z.number().check(
+  z.refine((value) => typeof value === "number", {
+    message: "The value must be a number.",
   }),
 );
 
-/**
- * A schema for a font family token.
- * Reference: https://tr.designtokens.org/format/#fontfamily
- *
- * @example
- * {
- *  $type: "fontFamily",
- *  $value: "Arial",
- *  $description: "The primary font family of the application."
- * }
- *
- * @returns The font family token schema.
- */
+export const ColorTokenSchema = createSchema("color", ColorValueSchema);
+export const DimensionTokenSchema = createSchema(
+  "dimension",
+  DimensionValueSchema,
+);
 export const FontFamilyTokenSchema = createSchema(
   "fontFamily",
-  z.union([StrictStringSchema, z.array(StrictStringSchema)]),
+  FontFamilyValueSchema,
 );
-
-/**
- * A schema for a font weight token.
- * Reference: https://tr.designtokens.org/format/#fontweight
- *
- * @example
- * {
- *  $type: "fontWeight",
- *  $value: 400,
- *  $description: "The font weight of the text."
- * }
- *
- * @returns The font weight token schema.
- */
 export const FontWeightTokenSchema = createSchema(
   "fontWeight",
-  z.union([
-    z.number().check(z.int(), z.gte(1), z.lte(1000)),
-    z.string().check(
-      z.refine((value) => {
-        const keys = Object.values(fontWeightValues);
-        return keys.some((key) => key.includes(value));
-      }),
-    ),
-  ]),
+  FontWeightValueSchema,
 );
 
 /**
@@ -186,24 +359,11 @@ export const fontWeightValues = {
  * The unit can be "ms" or "s".
  * Reference: https://tr.designtokens.org/format/#duration
  *
- * @example
- * {
- *  $type: "duration",
- *  $value: {
- *    value: 300,
- *    unit: "ms"
- *  },
- *  $description: "The duration of the animation."
- * }
- *
  * @returns The duration token schema.
  */
 export const DurationTokenSchema = createSchema(
   "duration",
-  z.strictObject({
-    value: z.number(),
-    unit: z.union([z.literal("ms"), z.literal("s")]),
-  }),
+  DurationValueSchema,
 );
 
 /**
@@ -212,53 +372,20 @@ export const DurationTokenSchema = createSchema(
  * The first and third numbers must be between 0 and 1.
  * Reference: https://tr.designtokens.org/format/#cubic-bezier
  *
- * @example
- * {
- *  $type: "cubicBezier",
- *  $value: [0.42, 0, 0.58, 1]
- * }
- *
  * @returns The cubic bezier token schema.
  */
 export const CubicBezierTokenSchema = createSchema(
   "cubicBezier",
-  z.array(z.union([z.number(), ReferenceValueSchema])).check(
-    z.length(4, "The cubic bezier must have 4 values."),
-    z.refine((value) => {
-      // Skipping the check if the value is a string
-      // because it is previously validated by the ReferenceValueSchema
-      if (typeof value[0] === "string" || typeof value[2] === "string") {
-        return true;
-      }
-
-      return (
-        value[0]! >= 0 && value[0]! <= 1 && value[2]! >= 0 && value[2]! <= 1
-      );
-    }),
-  ),
+  CubicBezierValueSchema,
 );
 
 /**
  * A schema for a number token.
  * Reference: https://tr.designtokens.org/format/#number
  *
- * @example
- * {
- *  $type: "number",
- *  $value: 16,
- *  $description: "The size of the button."
- * }
- *
  * @returns The number token schema.
  */
-export const NumberTokenSchema = createSchema(
-  "number",
-  z.number().check(
-    z.refine((value) => typeof value === "number", {
-      message: "The value must be a number.",
-    }),
-  ),
-);
+export const NumberTokenSchema = createSchema("number", NumberValueSchema);
 
 export const strokePredefinedValues = [
   "solid",
@@ -271,62 +398,98 @@ export const strokePredefinedValues = [
   "inset",
 ] as const;
 export const lineCapPredefinedValues = ["butt", "round", "square"] as const;
-export const StrokeStyleTokenSchema = createSchema(
-  "strokeStyle",
-  z.union([
-    z
-      .string()
-      .check(z.refine((value: any) => strokePredefinedValues.includes(value))),
-    z.strictObject({
-      dashArray: z.array(DimensionTokenSchema.def.shape.$value),
-      lineCap: z
+export const StrokeStyleValueSchema = z.union([
+  z
+    .string()
+    .check(
+      z.refine((value: string) =>
+        (strokePredefinedValues as readonly string[]).includes(value),
+      ),
+    ),
+  z.strictObject({
+    dashArray: z.union([
+      z
+        .array(z.union([DimensionValueSchema, TokenValueReferenceSchema]))
+        .check(z.refine((value) => value.length > 0)),
+      JsonPointerReferenceObjectSchema,
+    ]),
+    lineCap: z.union([
+      z
         .string()
         .check(
-          z.refine((value: any) => lineCapPredefinedValues.includes(value)),
+          z.refine((value: string) =>
+            (lineCapPredefinedValues as readonly string[]).includes(value),
+          ),
         ),
-    }),
-  ]),
+      JsonPointerReferenceObjectSchema,
+    ]),
+  }),
+]);
+
+export const StrokeStyleTokenSchema = createSchema(
+  "strokeStyle",
+  StrokeStyleValueSchema,
 );
 export const strokeStyleTokenPropertyTypes: Record<string, string> = {
   dashArray: "dimension",
-  lineCap: "string", // TODO: for now there is no "string" token type, revisit this later
+  lineCap: "string",
 };
 
-export const BorderTokenSchema = createSchema(
-  "border",
-  z
-    .strictObject({
-      color: ColorTokenSchema.def.shape.$value,
-      width: DimensionTokenSchema.def.shape.$value,
-      style: StrokeStyleTokenSchema.def.shape.$value,
-    })
-    .check(
-      z.refine((value) => typeof value === "object", {
-        message:
-          "The border value must be an object with the correct properties.",
-      }),
-    ),
-);
+const ColorOrReferenceSchema = z.union([
+  ColorValueSchema,
+  TokenValueReferenceSchema,
+]);
+const DimensionOrReferenceSchema = z.union([
+  DimensionValueSchema,
+  TokenValueReferenceSchema,
+]);
+const DurationOrReferenceSchema = z.union([
+  DurationValueSchema,
+  TokenValueReferenceSchema,
+]);
+const NumberOrReferenceSchema = z.union([
+  NumberValueSchema,
+  TokenValueReferenceSchema,
+]);
+const FontFamilyOrReferenceSchema = z.union([
+  FontFamilyValueSchema,
+  TokenValueReferenceSchema,
+]);
+const FontWeightOrReferenceSchema = z.union([
+  FontWeightValueSchema,
+  TokenValueReferenceSchema,
+]);
+const CubicBezierOrReferenceSchema = z.union([
+  CubicBezierValueSchema,
+  TokenValueReferenceSchema,
+]);
+const StrokeStyleOrReferenceSchema = z.union([
+  StrokeStyleValueSchema,
+  TokenValueReferenceSchema,
+]);
+
+export const BorderValueSchema = z.strictObject({
+  color: ColorOrReferenceSchema,
+  width: DimensionOrReferenceSchema,
+  style: StrokeStyleOrReferenceSchema,
+});
+
+export const BorderTokenSchema = createSchema("border", BorderValueSchema);
 export const borderTokenPropertyTypes: Record<string, string> = {
   color: "color",
   width: "dimension",
   style: "strokeStyle",
 };
 
+export const TransitionValueSchema = z.strictObject({
+  duration: DurationOrReferenceSchema,
+  delay: DurationOrReferenceSchema,
+  timingFunction: CubicBezierOrReferenceSchema,
+});
+
 export const TransitionTokenSchema = createSchema(
   "transition",
-  z
-    .strictObject({
-      duration: DurationTokenSchema.def.shape.$value,
-      delay: DurationTokenSchema.def.shape.$value,
-      timingFunction: CubicBezierTokenSchema.def.shape.$value,
-    })
-    .check(
-      z.refine((value) => typeof value === "object", {
-        message:
-          "The transition value must be an object with the correct properties.",
-      }),
-    ),
+  TransitionValueSchema,
 );
 export const transitionTokenPropertyTypes: Record<string, string> = {
   duration: "duration",
@@ -334,38 +497,18 @@ export const transitionTokenPropertyTypes: Record<string, string> = {
   timingFunction: "cubicBezier",
 };
 
-const SingleShadowValueSchema = z
-  .strictObject({
-    color: ColorTokenSchema.def.shape.$value,
-    offsetX: DimensionTokenSchema.def.shape.$value,
-    offsetY: DimensionTokenSchema.def.shape.$value,
-    blur: DimensionTokenSchema.def.shape.$value,
-    spread: DimensionTokenSchema.def.shape.$value,
-    inset: z.optional(z.boolean()),
-  })
-  .check(
-    z.refine((value) => typeof value === "object", {
-      message:
-        "The shadow value must be an object with the correct properties.",
-    }),
-  );
+const SingleShadowValueSchema = z.strictObject({
+  color: ColorOrReferenceSchema,
+  offsetX: DimensionOrReferenceSchema,
+  offsetY: DimensionOrReferenceSchema,
+  blur: DimensionOrReferenceSchema,
+  spread: DimensionOrReferenceSchema,
+  inset: z.optional(z.union([z.boolean(), JsonPointerReferenceObjectSchema])),
+});
 
 /**
  * A schema for a shadow token.
  * Reference: https://tr.designtokens.org/format/#shadow
- *
- * @example
- * {
- *  $type: "shadow",
- *  $value: {
- *    color: "#000000",
- *    offsetX: "0px",
- *    offsetY: "4px",
- *    blur: "8px",
- *    spread: "0px",
- *    inset: false
- *  }
- * }
  *
  * @returns The shadow token schema.
  */
@@ -373,7 +516,9 @@ export const ShadowTokenSchema = createSchema(
   "shadow",
   z.union([
     SingleShadowValueSchema,
-    z.array(z.union([SingleShadowValueSchema, ReferenceValueSchema])),
+    z
+      .array(z.union([SingleShadowValueSchema, TokenValueReferenceSchema]))
+      .check(z.refine((value) => value.length > 0)),
   ]),
 );
 export const shadowTokenPropertyTypes: Record<string, string> = {
@@ -382,47 +527,27 @@ export const shadowTokenPropertyTypes: Record<string, string> = {
   offsetY: "dimension",
   blur: "dimension",
   spread: "dimension",
-  inset: "boolean",
 };
 
 /**
  * A schema for a gradient token.
- *
- * Interpretation of `position`:
- *  Specification is not clear about whether the position needs to be between 0 and 1.
- *  Because it says "If a number value outside of that range is given, it MUST be considered as if it were clamped to the range [0, 1]".
- *  So, it is assumed that the position can be any number.
- *  However, it is recommended to use a number between 0 and 1.
  * Reference: https://tr.designtokens.org/format/#gradient
- *
- * @example
- * {
- *  $type: "gradient",
- *  $value: [
- *    {
- *      color: "#000000",
- *      position: 0
- *    },
- *    {
- *      color: "#FFFFFF",
- *      position: 1
- *    }
- *  ]
- * }
  *
  * @returns The gradient token schema.
  */
+const GradientStopSchema = z.strictObject({
+  color: ColorOrReferenceSchema,
+  position: z.union([
+    z.number().check(z.gte(0), z.lte(1)),
+    TokenValueReferenceSchema,
+  ]),
+});
+
 export const GradientTokenSchema = createSchema(
   "gradient",
-  z.array(
-    z.union([
-      z.strictObject({
-        color: ColorTokenSchema.def.shape.$value,
-        position: NumberTokenSchema.def.shape.$value,
-      }),
-      ReferenceValueSchema,
-    ]),
-  ),
+  z
+    .array(z.union([GradientStopSchema, TokenValueReferenceSchema]))
+    .check(z.refine((value) => value.length > 0)),
 );
 export const gradientTokenPropertyTypes: Record<string, string> = {
   color: "color",
@@ -433,37 +558,17 @@ export const gradientTokenPropertyTypes: Record<string, string> = {
  * A schema for a typography token.
  * Reference: https://tr.designtokens.org/format/#typography
  *
- * @example
- * {
- *  $type: "typography",
- *  $value: {
- *    fontFamily: "Arial",
- *    fontSize: "16px",
- *    fontWeight: 400,
- *    letterSpacing: "1px",
- *    lineHeight: 1.5
- *  },
- *  $description: "The typography of the application."
- * }
- *
  * @returns The typography token schema.
  */
 export const TypographyTokenSchema = createSchema(
   "typography",
-  z
-    .strictObject({
-      fontFamily: FontFamilyTokenSchema.def.shape.$value,
-      fontSize: DimensionTokenSchema.def.shape.$value,
-      fontWeight: FontWeightTokenSchema.def.shape.$value,
-      letterSpacing: DimensionTokenSchema.def.shape.$value,
-      lineHeight: NumberTokenSchema.def.shape.$value,
-    })
-    .check(
-      z.refine((value) => typeof value === "object", {
-        message:
-          "The typography value must be an object with the correct properties.",
-      }),
-    ),
+  z.strictObject({
+    fontFamily: FontFamilyOrReferenceSchema,
+    fontSize: DimensionOrReferenceSchema,
+    fontWeight: FontWeightOrReferenceSchema,
+    letterSpacing: DimensionOrReferenceSchema,
+    lineHeight: NumberOrReferenceSchema,
+  }),
 );
 export const typographyTokenPropertyTypes: Record<string, TokenType> = {
   fontFamily: "fontFamily",
@@ -507,5 +612,12 @@ export const dtcgJsonSchemas: TypeValidators = {
   },
   typography: {
     validator: (token: Token) => TypographyTokenSchema.safeParse(token).success,
+  },
+  strokeStyle: {
+    validator: (token: Token) =>
+      StrokeStyleTokenSchema.safeParse(token).success,
+  },
+  border: {
+    validator: (token: Token) => BorderTokenSchema.safeParse(token).success,
   },
 };

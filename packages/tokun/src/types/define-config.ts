@@ -3,11 +3,13 @@ import { ValidatorConfig, ValidatorReturn } from "validators/types.js";
 import {
   FileHeader,
   Format,
+  FormatConfig,
   Loader,
   ModifyProperties,
   Transform,
   TransformGroup,
 } from "../utils/types.js";
+import { assign } from "../utils/object-utils.js";
 
 /**
  * Define a configuration object for the design token builder.
@@ -17,6 +19,12 @@ import {
  * @returns
  */
 export const defineConfig = (config: Config) => config;
+
+/**
+ * Deep-merge a base config with overrides.
+ */
+export const extendConfig = (base: Config, overrides: Partial<Config>): Config =>
+  assign(base, overrides as Config);
 
 export type Config = {
   data: string | string[] | object | object[];
@@ -39,7 +47,7 @@ export type Platform = {
     filter?: ({ token, path }: { token: Token; path: string }) => boolean;
     fileHeader?: FileHeader;
   }[];
-  config?: any;
+  config?: FormatConfig;
 };
 
 export type PlatformWithoutString = ModifyProperties<

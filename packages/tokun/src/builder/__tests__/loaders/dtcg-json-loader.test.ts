@@ -47,13 +47,13 @@ describe("Test DTCG JSON Loader", () => {
     expect(Object.fromEntries(tokens)).toEqual({});
   });
 
-  it("should fix gradient position", () => {
+  it("should fix gradient position (0-1 range)", () => {
     const content = {
       gradient: {
         $type: "gradient",
         $value: [
           { color: "#000000", position: -1 },
-          { color: "#000000", position: 1.5 },
+          { color: "#000000", position: 150 },
         ],
       },
     } satisfies TokenGroup;
@@ -91,7 +91,7 @@ describe("Test DTCG JSON Loader", () => {
       },
       secondNumber: {
         $type: "number",
-        $value: 40,
+        $value: 400,
       },
       gradient: {
         $type: "gradient",
@@ -137,7 +137,7 @@ describe("Test DTCG JSON Loader", () => {
       },
       secondNumber: {
         $type: "number",
-        $value: 40,
+        $value: 400,
       },
       gradient: {
         $type: "gradient",
@@ -222,7 +222,6 @@ describe("Test DTCG JSON Loader", () => {
             offsetY: "{dimension}",
             blur: "{dimension}",
             spread: "{dimension}",
-            inset: true,
           },
         ],
       },
@@ -287,7 +286,6 @@ describe("Test DTCG JSON Loader", () => {
             offsetY: "{dimension}",
             blur: "{dimension}",
             spread: "{dimension}",
-            inset: true,
           },
         ],
         $extensions: {
@@ -310,7 +308,6 @@ describe("Test DTCG JSON Loader", () => {
                 value: 16,
                 unit: "px",
               },
-              inset: true,
             },
           ],
         },
@@ -403,8 +400,40 @@ describe("Test DTCG JSON Loader", () => {
     } satisfies TokenGroup;
 
     expect(() => dtcgJsonLoader.loadFn({ content })).toThrowError(
-      "Maximum call stack size exceeded",
+      "Circular reference detected",
     );
+  });
+
+  it("should resolve $extends group inheritance", () => {
+    const content = {
+      base: {
+        $type: "color",
+        primary: {
+          $value: "#ff0000",
+        },
+        secondary: {
+          $value: "#00ff00",
+        },
+      },
+      theme: {
+        $type: "color",
+        $extends: "{base}",
+        primary: {
+          $value: "#0000ff",
+        },
+      },
+    } as TokenGroup;
+
+    const tokens = dtcgJsonLoader.loadFn({ content });
+    const result = Object.fromEntries(tokens);
+
+    // theme.primary should be overridden, theme.secondary inherited from base
+    expect(
+      (result["theme.primary"] as { $value: string } | undefined)?.$value,
+    ).toBe("#0000ff");
+    expect(
+      (result["theme.secondary"] as { $value: string } | undefined)?.$value,
+    ).toBe("#00ff00");
   });
 
   it.todo(

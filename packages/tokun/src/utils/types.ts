@@ -1,6 +1,13 @@
 import { Token, TokenGroup } from "types/definitions.js";
 import { FlattenTokens } from "./to-flat.js";
 
+export type FormatConfig = {
+  outputReferences?: boolean;
+  prefix?: string;
+  selector?: string;
+  [key: string]: unknown;
+};
+
 export type Transform = {
   name: string;
   filter?: (arg: Token) => boolean;
@@ -31,7 +38,7 @@ export type Format = {
   name: string;
   formatter: (args: {
     tokens: FlattenTokens;
-    config: any;
+    config: FormatConfig;
     fileHeader: FileHeader;
   }) => string;
 };
@@ -43,7 +50,7 @@ export type FileHeader = {
 
 export type ModifyProperties<
   T,
-  Changes extends Partial<Record<keyof T, any>>,
+  Changes extends Partial<Record<keyof T, unknown>>,
 > = Omit<T, keyof Changes> & {
   [K in keyof Changes]: Changes[K];
 };
