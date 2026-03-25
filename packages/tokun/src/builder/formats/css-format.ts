@@ -9,6 +9,7 @@ import {
   getTokenValue,
   isReference,
   isTokenReference,
+  normalizeRootTokenPath,
   stringifyUnitValue,
 } from "utils/token-utils.js";
 import { Format, FormatConfig } from "utils/types.js";
@@ -274,7 +275,8 @@ function formatFileHeader(message: string): string {
 function createVariable(value: string, prefix?: string): string {
   return value.replace(
     /{(.*?)}/g,
-    (_, key) => `var(${createVariableName(key as string, prefix)})`,
+    (_, key) =>
+      `var(${createVariableName(normalizeRootTokenPath(key as string), prefix)})`,
   );
 }
 

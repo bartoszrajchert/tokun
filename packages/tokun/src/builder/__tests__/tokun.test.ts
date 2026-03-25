@@ -180,7 +180,7 @@ describe("parseDesignTokens", () => {
         gradient: {
           $type: "gradient",
           $value: [
-            { color: "{brand.color}", position: 0 },
+            { color: "{brand.color.$root}", position: 0 },
             { color: "{brand.color.black}", position: 100 },
           ],
         },

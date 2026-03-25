@@ -17,6 +17,7 @@ import {
   getTokenValue,
   isReference,
   isTokenComposite,
+  normalizeRootTokenPath,
   unwrapReference,
 } from "utils/token-utils.js";
 import { Loader, Transform, TransformGroup } from "utils/types.js";
@@ -281,19 +282,24 @@ function transformReferenceValue(
   transformer: TokenTransformer,
 ): unknown {
   if (isReference(value)) {
-    const transformedValue = transformer(unwrapReference(value));
-    return transformedValue !== value ? `{${transformedValue}}` : value;
+    const transformedValue = transformer(
+      normalizeRootTokenPath(unwrapReference(value)),
+    );
+
+    return `{${transformedValue}}`;
   }
 
   if (Array.isArray(value) && isTokenComposite({ $type: type } as Token)) {
     return value.map((v) =>
       isReference(v)
-        ? `{${transformer(unwrapReference(v))}}`
+        ? `{${transformer(normalizeRootTokenPath(unwrapReference(v)))}}`
         : transformCompositeValue(v, type, transformer),
     );
   } else if (Array.isArray(value)) {
     return value.map((v) =>
-      isReference(v) ? `{${transformer(unwrapReference(v))}}` : v,
+      isReference(v)
+        ? `{${transformer(normalizeRootTokenPath(unwrapReference(v)))}}`
+        : v,
     );
   }
 

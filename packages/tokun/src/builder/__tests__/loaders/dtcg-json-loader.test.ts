@@ -47,6 +47,68 @@ describe("Test DTCG JSON Loader", () => {
     expect(Object.fromEntries(tokens)).toEqual({});
   });
 
+  it("should resolve curly references targeting $root tokens", () => {
+    const content = {
+      brand: {
+        color: {
+          $type: "color",
+          $root: {
+            $value: "#123456",
+          },
+          white: {
+            $value: "#ffffff",
+          },
+        },
+      },
+      alias: {
+        color: {
+          $type: "color",
+          $value: "{brand.color.$root}",
+        },
+        gradient: {
+          $type: "gradient",
+          $value: [
+            { color: "{brand.color.$root}", position: 0 },
+            { color: "{brand.color.white}", position: 1 },
+          ],
+        },
+      },
+    } satisfies TokenGroup;
+
+    const tokens = dtcgJsonLoader.loadFn({ content });
+
+    expect(Object.fromEntries(tokens)).toEqual({
+      "alias.color": {
+        $type: "color",
+        $value: "{brand.color.$root}",
+        $extensions: {
+          "com.tokun.resolvedValue": "#123456",
+        },
+      },
+      "alias.gradient": {
+        $type: "gradient",
+        $value: [
+          { color: "{brand.color.$root}", position: 0 },
+          { color: "{brand.color.white}", position: 1 },
+        ],
+        $extensions: {
+          "com.tokun.resolvedValue": [
+            { color: "#123456", position: 0 },
+            { color: "#ffffff", position: 1 },
+          ],
+        },
+      },
+      "brand.color": {
+        $type: "color",
+        $value: "#123456",
+      },
+      "brand.color.white": {
+        $type: "color",
+        $value: "#ffffff",
+      },
+    });
+  });
+
   it("should fix gradient position (0-1 range)", () => {
     const content = {
       gradient: {

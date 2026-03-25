@@ -31,6 +31,7 @@ When anything meaningful changes, update AGEND and linked docs in the same chang
 
 - Single consolidated skill: `.agents/skills/dtcg-2025-10/`
 - Canonical skills root: `.agents/skills`
+- DTCG reference normalization treats root-token aliases (`{group.$root}`) and pointers (`#/group/$root`) as the same flattened token target.
 - Compatibility links:
   - `.claude/skills` -> `../.agents/skills`
   - `.opencode/skills` -> `../.agents/skills`
@@ -41,4 +42,4 @@ When anything meaningful changes, update AGEND and linked docs in the same chang
 
 ## Last reviewed
 
-- 2026-03-17
+- 2026-03-25

@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "build-basic": "tokun build -c templates/basic/config.mjs",
-    "build-sds": "tokun build -c templates/sds/config.mjs",
     "build-advanced": "tokun build -c templates/advanced/config.mjs"
   },
   "keywords": [],

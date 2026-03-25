@@ -151,6 +151,23 @@ describe("tokensValidator", () => {
     expect(result.errors[0]!.name).toBe("referenceNotFound");
   });
 
+  it("should allow references to $root tokens", () => {
+    const validTokenGroup: TokenGroup = {
+      colors: {
+        $type: "color",
+        $root: {
+          $value: structuredBlack,
+        },
+        token: {
+          $value: "{colors.$root}",
+        },
+      },
+    };
+
+    const result = dtcgValidator(validTokenGroup);
+    expect(result.errors).toHaveLength(0);
+  });
+
   it("should return an error for a token group with a reference type mismatch", () => {
     const invalidTokenGroup: TokenGroup = {
       colors: {
@@ -162,6 +179,30 @@ describe("tokensValidator", () => {
       dimensions: {
         $type: "dimension",
         token: {
+          $value: {
+            value: 1,
+            unit: "px",
+          },
+        },
+      },
+    };
+
+    const result = dtcgValidator(invalidTokenGroup);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.name).toBe("referenceTypeMismatch");
+  });
+
+  it("should return an error for JSON Pointer references to $root with type mismatch", () => {
+    const invalidTokenGroup: TokenGroup = {
+      colors: {
+        token: {
+          $type: "color",
+          $value: { $ref: "#/dimensions/$root" },
+        },
+      },
+      dimensions: {
+        $type: "dimension",
+        $root: {
           $value: {
             value: 1,
             unit: "px",

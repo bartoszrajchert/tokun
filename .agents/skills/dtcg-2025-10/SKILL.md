@@ -64,6 +64,7 @@ When this skill, its references, or DTCG conformance behavior changes, update th
 - Detect token vs group by `$value` presence.
 - Enforce names: no leading `$`, no `{`, `}`, or `.`.
 - Support both reference syntaxes: curly aliases and JSON Pointer `$ref`.
+- Resolve root-token aliases consistently: `{group.$root}` and `#/group/$root` must target the same token.
 - Enforce type determination order exactly: explicit `$type` -> referenced token type -> nearest parent group `$type` -> invalid.
 - Never infer token type by value shape alone.
 - Implement chaining and cycle detection across aliases, `$extends`, and `$ref`.

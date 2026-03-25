@@ -15,6 +15,7 @@ import {
   isReference,
   isToken,
   isTokenReference,
+  normalizeRootTokenPath,
   unwrapReference,
 } from "utils/token-utils.js";
 
@@ -231,7 +232,9 @@ const fixStrokeStyleDashArray = (flatten: FlattenTokens) => {
 
     const normalizedDashArray = strokeValue.dashArray.map((dim) => {
       if (isReference(dim)) {
-        const ref = flatten.get(unwrapReference(dim));
+        const rawRefPath = unwrapReference(dim);
+        const refPath = normalizeRootTokenPath(rawRefPath);
+        const ref = flatten.get(refPath);
 
         if (ref) {
           const refValue = getTokenValue(ref);
@@ -240,9 +243,7 @@ const fixStrokeStyleDashArray = (flatten: FlattenTokens) => {
           }
         }
 
-        throw new Error(
-          `Reference ${unwrapReference(dim)} not found in ${name}`,
-        );
+        throw new Error(`Reference ${rawRefPath} not found in ${name}`);
       }
 
       return dim;
@@ -265,7 +266,9 @@ const fixStrokeStyleDashArray = (flatten: FlattenTokens) => {
         resolved.dashArray = resolved.dashArray.map(
           (dim: DimensionToken["$value"]): DimensionToken["$value"] => {
             if (isReference(dim)) {
-              const ref = flatten.get(unwrapReference(dim));
+              const rawRefPath = unwrapReference(dim);
+              const refPath = normalizeRootTokenPath(rawRefPath);
+              const ref = flatten.get(refPath);
 
               if (ref) {
                 const refValue = getTokenValue(ref);
@@ -274,9 +277,7 @@ const fixStrokeStyleDashArray = (flatten: FlattenTokens) => {
                 }
               }
 
-              throw new Error(
-                `Reference ${unwrapReference(dim)} not found in ${name}`,
-              );
+              throw new Error(`Reference ${rawRefPath} not found in ${name}`);
             }
 
             return dim;
@@ -308,12 +309,13 @@ function resolveReference(
   stack: string[],
 ): unknown {
   if (isReference(reference)) {
-    const refPath = unwrapReference(reference);
+    const rawRefPath = unwrapReference(reference);
+    const refPath = normalizeRootTokenPath(rawRefPath);
     const guardedStack = withCycleGuard(stack, `token:${refPath}`);
     const referencedToken = tokens.get(refPath);
 
     if (!referencedToken) {
-      throw new Error(`Reference ${refPath} not found`);
+      throw new Error(`Reference ${rawRefPath} not found`);
     }
 
     return resolveValue(

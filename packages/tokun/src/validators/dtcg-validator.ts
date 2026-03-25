@@ -6,6 +6,7 @@ import {
   isJsonPointerReferenceObject,
   isReference,
   isToken,
+  normalizeRootTokenPath,
   pointerToTokenPath,
   unwrapReference,
 } from "utils/token-utils.js";
@@ -222,7 +223,9 @@ function isReferencedTokenExists(
 
     references.forEach((reference) => {
       if (isReference(reference.value)) {
-        const resolvedPath = unwrapReference(reference.value);
+        const resolvedPath = normalizeRootTokenPath(
+          unwrapReference(reference.value),
+        );
 
         if (!flatten.has(resolvedPath)) {
           errors.push({
@@ -294,7 +297,9 @@ function hasSameType(
     let referencedToken;
 
     if (isReference(tokenValue)) {
-      referencedToken = flatten.get(unwrapReference(tokenValue));
+      referencedToken = flatten.get(
+        normalizeRootTokenPath(unwrapReference(tokenValue)),
+      );
     } else if (isJsonPointerReferenceObject(tokenValue)) {
       referencedToken = getReferencedTokenFromPointer(
         tokenValue.$ref,

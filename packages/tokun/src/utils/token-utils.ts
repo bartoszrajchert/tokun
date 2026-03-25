@@ -156,6 +156,24 @@ export function unwrapReference(value: unknown): string {
 }
 
 /**
+ * Normalize flattened token map paths for `$root` tokens.
+ *
+ * In flattened maps, `$root` tokens are stored under their parent group path.
+ * Example: `brand.color.$root` becomes `brand.color`.
+ */
+export function normalizeRootTokenPath(path: string): string {
+  if (path === "$root") {
+    return "";
+  }
+
+  if (path.endsWith(".$root")) {
+    return path.slice(0, -".$root".length);
+  }
+
+  return path;
+}
+
+/**
  * Decode JSON Pointer into path segments.
  */
 export function decodeJsonPointer(pointer: string): string[] {
@@ -208,11 +226,12 @@ export function pointerToTokenPath(pointer: JsonPointerReference): string {
   const segments = decodeJsonPointer(pointer);
   const valueIndex = segments.indexOf("$value");
 
-  if (valueIndex > 0) {
-    return segments.slice(0, valueIndex).join(".");
-  }
+  const tokenPath =
+    valueIndex > 0
+      ? segments.slice(0, valueIndex).join(".")
+      : segments.join(".");
 
-  return segments.join(".");
+  return normalizeRootTokenPath(tokenPath);
 }
 
 /**

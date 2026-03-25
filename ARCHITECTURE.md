@@ -74,6 +74,9 @@ tokun/
   - `.agents/skills/dtcg-2025-10/references/requirements/`
 - Conformance guidance for agents is centralized in:
   - `.agents/skills/dtcg-2025-10/SKILL.md`
+- Format-module resolution normalizes `$root` token references to flattened paths:
+  - Curly aliases ending with `.$root` resolve against the parent flattened token path.
+  - JSON Pointer references targeting `/$root` map to the same flattened token path.
 
 ## Mandatory documentation update rule
 
@@ -87,4 +90,4 @@ If no documentation update is needed, explicitly note why in the change descript
 
 ## Last reviewed
 
-- 2026-03-17
+- 2026-03-25
