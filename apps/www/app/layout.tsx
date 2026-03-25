@@ -1,5 +1,5 @@
 import { MainNav } from "@/components/main-nav";
-import { ThemeProvider } from "@/components/ui/theme-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Rubik } from "next/font/google";
 import { getDocs, groupBySlug } from "./docs/utils";

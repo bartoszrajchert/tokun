@@ -80,13 +80,7 @@ export default function SearchDialog() {
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
-      <CommandDialog
-        open={open}
-        onOpenChange={setOpen}
-        commandProps={{
-          shouldFilter: false,
-        }}
-      >
+      <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
           placeholder="Search..."
           value={query}

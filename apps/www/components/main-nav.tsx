@@ -6,10 +6,10 @@ import { MenuIcon, StarIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import ModeToggle from "./mode-toggle";
 import SearchDialog from "./search-dialog";
 import { Button } from "./ui/button";
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "./ui/drawer";
-import { ModeToggle } from "./ui/mode-toggle";
 
 export interface MainNavProps {
   config: MDXDataGroupedBySlug[];

@@ -1,13 +1,9 @@
 import { DocsSidebar } from "@/app/docs/components/docs-sidebar";
 
-import { JSX } from "react";
+import type { ReactNode } from "react";
 import { getDocs, groupBySlug } from "./utils";
 
-export default async function Layout({
-  children,
-}: {
-  children: JSX.Element | JSX.Element[];
-}) {
+export default async function Layout({ children }: { children: ReactNode }) {
   const docs = await getDocs();
 
   return (
