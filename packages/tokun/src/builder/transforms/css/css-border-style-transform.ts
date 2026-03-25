@@ -3,11 +3,10 @@ import {
   stringifyCssValue,
 } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { Token, TokenReference } from "types/definitions.js";
+import { Token } from "types/definitions.js";
 
 import {
   getTokenValue,
-  isReference,
   isTokenReference,
   stringifyUnitValue,
 } from "utils/token-utils.js";
@@ -38,7 +37,7 @@ const cssBorderTransform = (token: Token) => {
   const tokenValue = getTokenValue(token);
 
   if (isTokenReference(tokenValue)) {
-    cssExtension.value = stringifyReference(tokenValue);
+    cssExtension.value = tokenValue;
   } else if (
     typeof tokenValue === "object" &&
     tokenValue !== null &&
@@ -101,7 +100,7 @@ const cssStrokeStyleTransform = (token: Token) => {
   transformed.value =
     isTokenReference(tokenValue) || typeof tokenValue === "string"
       ? isTokenReference(tokenValue)
-        ? stringifyReference(tokenValue)
+        ? tokenValue
         : tokenValue
       : "dashed";
 
@@ -121,11 +120,3 @@ const cssStrokeStyleTransform = (token: Token) => {
 
   return token;
 };
-
-function stringifyReference(reference: TokenReference): string {
-  if (isReference(reference)) {
-    return reference;
-  }
-
-  return reference.$ref;
-}

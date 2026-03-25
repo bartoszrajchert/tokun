@@ -192,7 +192,7 @@ describe("tokensValidator", () => {
     expect(result.errors[0]!.name).toBe("referenceTypeMismatch");
   });
 
-  it("should return an error for JSON Pointer references to $root with type mismatch", () => {
+  it("should return an error when token value uses unsupported $ref syntax", () => {
     const invalidTokenGroup: TokenGroup = {
       colors: {
         token: {
@@ -213,6 +213,6 @@ describe("tokensValidator", () => {
 
     const result = dtcgValidator(invalidTokenGroup);
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]!.name).toBe("referenceTypeMismatch");
+    expect(result.errors[0]!.name).toBe("invalidTokenValue");
   });
 });

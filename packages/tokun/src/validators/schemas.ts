@@ -1,6 +1,5 @@
 import {
   hexColorWithAlphaRegex,
-  isJsonPointerReferenceObject,
   jsonPointerReferenceRegex,
   TOKEN_TYPES,
   tokenReferenceRegex,
@@ -27,16 +26,10 @@ export function createSchema<
     $deprecated: z.optional(z.union([z.boolean(), z.string()])),
   };
 
-  return z.union([
-    z.strictObject({
-      ...baseShape,
-      $value: z.union([TokenValueReferenceSchema, value]),
-    }),
-    z.strictObject({
-      ...baseShape,
-      $ref: JsonPointerReferenceSchema,
-    }),
-  ]);
+  return z.strictObject({
+    ...baseShape,
+    $value: z.union([TokenValueReferenceSchema, value]),
+  });
 }
 
 export const ReferenceValueSchema = z
@@ -47,14 +40,7 @@ export const JsonPointerReferenceSchema = z
   .string()
   .check(z.refine((value) => jsonPointerReferenceRegex.test(value)));
 
-export const JsonPointerReferenceObjectSchema = z.strictObject({
-  $ref: JsonPointerReferenceSchema,
-});
-
-export const TokenValueReferenceSchema = z.union([
-  ReferenceValueSchema,
-  JsonPointerReferenceObjectSchema,
-]);
+export const TokenValueReferenceSchema = ReferenceValueSchema;
 
 export const StrictStringSchema = z
   .string()
@@ -143,7 +129,7 @@ function validateComponent(
     exclusiveMax = false,
   }: { min?: number; max?: number; exclusiveMax?: boolean },
 ) {
-  if (value === "none" || isJsonPointerReferenceObject(value)) {
+  if (value === "none") {
     return true;
   }
 
@@ -172,13 +158,6 @@ function validateStructuredColorValue(value: {
   colorSpace: unknown;
   components: unknown;
 }) {
-  if (
-    isJsonPointerReferenceObject(value.colorSpace) ||
-    isJsonPointerReferenceObject(value.components)
-  ) {
-    return true;
-  }
-
   if (typeof value.colorSpace !== "string") {
     return false;
   }
@@ -226,48 +205,23 @@ function validateStructuredColorValue(value: {
 
 export const ColorValueSchema = z
   .strictObject({
-    colorSpace: z.union([colorSpaceSchema, JsonPointerReferenceObjectSchema]),
-    components: z.union([
-      z.array(
-        z.union([
-          z.number(),
-          z.literal("none"),
-          JsonPointerReferenceObjectSchema,
-        ]),
-      ),
-      JsonPointerReferenceObjectSchema,
-    ]),
-    alpha: z.optional(
-      z.union([
-        z.number().check(z.gte(0), z.lte(1)),
-        JsonPointerReferenceObjectSchema,
-      ]),
-    ),
+    colorSpace: colorSpaceSchema,
+    components: z.array(z.union([z.number(), z.literal("none")])),
+    alpha: z.optional(z.number().check(z.gte(0), z.lte(1))),
     hex: z.optional(
-      z.union([
-        z
-          .string()
-          .check(z.refine((value) => hexColorWithAlphaRegex.test(value))),
-        JsonPointerReferenceObjectSchema,
-      ]),
+      z.string().check(z.refine((value) => hexColorWithAlphaRegex.test(value))),
     ),
   })
   .check(z.refine((value) => validateStructuredColorValue(value)));
 
 export const DimensionValueSchema = z.strictObject({
-  value: z.union([z.number(), JsonPointerReferenceObjectSchema]),
-  unit: z.union([
-    z.literal("px"),
-    z.literal("rem"),
-    JsonPointerReferenceObjectSchema,
-  ]),
+  value: z.number(),
+  unit: z.union([z.literal("px"), z.literal("rem")]),
 });
 
 export const FontFamilyValueSchema = z.union([
   StrictStringSchema,
-  z
-    .array(z.union([StrictStringSchema, JsonPointerReferenceObjectSchema]))
-    .check(z.refine((value) => value.length > 0)),
+  z.array(StrictStringSchema).check(z.refine((value) => value.length > 0)),
 ]);
 
 export const FontWeightValueSchema = z.union([
@@ -281,39 +235,23 @@ export const FontWeightValueSchema = z.union([
 ]);
 
 export const DurationValueSchema = z.strictObject({
-  value: z.union([z.number(), JsonPointerReferenceObjectSchema]),
-  unit: z.union([
-    z.literal("ms"),
-    z.literal("s"),
-    JsonPointerReferenceObjectSchema,
-  ]),
+  value: z.number(),
+  unit: z.union([z.literal("ms"), z.literal("s")]),
 });
 
-export const CubicBezierValueSchema = z
-  .array(z.union([z.number(), JsonPointerReferenceObjectSchema]))
-  .check(
-    z.length(4, "The cubic bezier must have 4 values."),
-    z.refine((value) => {
-      const first = value[0];
-      const third = value[2];
+export const CubicBezierValueSchema = z.array(z.number()).check(
+  z.length(4, "The cubic bezier must have 4 values."),
+  z.refine((value) => {
+    const first = value[0];
+    const third = value[2];
 
-      if (
-        isJsonPointerReferenceObject(first) ||
-        isJsonPointerReferenceObject(third)
-      ) {
-        return true;
-      }
+    if (first === undefined || third === undefined) {
+      return false;
+    }
 
-      return (
-        typeof first === "number" &&
-        typeof third === "number" &&
-        first >= 0 &&
-        first <= 1 &&
-        third >= 0 &&
-        third <= 1
-      );
-    }),
-  );
+    return first >= 0 && first <= 1 && third >= 0 && third <= 1;
+  }),
+);
 
 export const NumberValueSchema = z.number().check(
   z.refine((value) => typeof value === "number", {
@@ -407,22 +345,16 @@ export const StrokeStyleValueSchema = z.union([
       ),
     ),
   z.strictObject({
-    dashArray: z.union([
-      z
-        .array(z.union([DimensionValueSchema, TokenValueReferenceSchema]))
-        .check(z.refine((value) => value.length > 0)),
-      JsonPointerReferenceObjectSchema,
-    ]),
-    lineCap: z.union([
-      z
-        .string()
-        .check(
-          z.refine((value: string) =>
-            (lineCapPredefinedValues as readonly string[]).includes(value),
-          ),
+    dashArray: z
+      .array(z.union([DimensionValueSchema, TokenValueReferenceSchema]))
+      .check(z.refine((value) => value.length > 0)),
+    lineCap: z
+      .string()
+      .check(
+        z.refine((value: string) =>
+          (lineCapPredefinedValues as readonly string[]).includes(value),
         ),
-      JsonPointerReferenceObjectSchema,
-    ]),
+      ),
   }),
 ]);
 
@@ -503,7 +435,7 @@ const SingleShadowValueSchema = z.strictObject({
   offsetY: DimensionOrReferenceSchema,
   blur: DimensionOrReferenceSchema,
   spread: DimensionOrReferenceSchema,
-  inset: z.optional(z.union([z.boolean(), JsonPointerReferenceObjectSchema])),
+  inset: z.optional(z.boolean()),
 });
 
 /**

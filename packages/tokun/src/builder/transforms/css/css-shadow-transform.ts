@@ -3,10 +3,9 @@ import {
   stringifyCssValue,
 } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { Token, TokenReference } from "types/definitions.js";
+import { Token } from "types/definitions.js";
 import {
   getTokenValue,
-  isReference,
   isTokenReference,
   stringifyUnitValue,
 } from "utils/token-utils.js";
@@ -27,7 +26,7 @@ export const cssShadowTransform: Transform = {
 
     const tokenValue = getTokenValue(token);
     if (isTokenReference(tokenValue)) {
-      cssExtension.value = stringifyReference(tokenValue);
+      cssExtension.value = tokenValue;
     } else {
       cssExtension.value = stringifyShadow(tokenValue);
     }
@@ -59,7 +58,7 @@ function stringifyShadow(value: unknown): string {
 
 function stringifyShadowEntry(value: unknown): string {
   if (isTokenReference(value)) {
-    return stringifyReference(value);
+    return value;
   }
 
   if (typeof value !== "object" || value === null) {
@@ -75,12 +74,4 @@ function stringifyShadowEntry(value: unknown): string {
   };
 
   return `${stringifyUnitValue(shadow.offsetX as never)} ${stringifyUnitValue(shadow.offsetY as never)} ${stringifyUnitValue(shadow.blur as never)} ${stringifyUnitValue(shadow.spread as never)} ${stringifyCssValue(shadow.color)}`;
-}
-
-function stringifyReference(reference: TokenReference): string {
-  if (isReference(reference)) {
-    return reference;
-  }
-
-  return reference.$ref;
 }

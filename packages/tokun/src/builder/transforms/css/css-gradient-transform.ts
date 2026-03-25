@@ -3,12 +3,8 @@ import {
   stringifyCssValue,
 } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { Token, TokenReference } from "types/definitions.js";
-import {
-  getTokenValue,
-  isReference,
-  isTokenReference,
-} from "utils/token-utils.js";
+import { Token } from "types/definitions.js";
+import { getTokenValue, isTokenReference } from "utils/token-utils.js";
 import { Transform } from "utils/types.js";
 
 export const cssGradientTransform: Transform = {
@@ -26,7 +22,7 @@ export const cssGradientTransform: Transform = {
 
     const tokenValue = getTokenValue(token);
     if (isTokenReference(tokenValue)) {
-      cssExtension.value = stringifyReference(tokenValue);
+      cssExtension.value = tokenValue;
     } else if (Array.isArray(tokenValue)) {
       cssExtension.value = toCssGradient(tokenValue);
     }
@@ -53,7 +49,7 @@ function toCssGradient(value: unknown[]): string {
   return `linear-gradient(90deg, ${value
     .map((gradient) => {
       if (isTokenReference(gradient)) {
-        return stringifyReference(gradient);
+        return gradient;
       }
 
       if (typeof gradient !== "object" || gradient === null) {
@@ -72,7 +68,7 @@ function toCssGradient(value: unknown[]): string {
 
 const calcPosition = (position: unknown): string => {
   if (isTokenReference(position)) {
-    return stringifyReference(position);
+    return position;
   }
 
   if (typeof position !== "number") {
@@ -81,11 +77,3 @@ const calcPosition = (position: unknown): string => {
 
   return `${position * 100}%`;
 };
-
-function stringifyReference(reference: TokenReference): string {
-  if (isReference(reference)) {
-    return reference;
-  }
-
-  return reference.$ref;
-}

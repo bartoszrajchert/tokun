@@ -4,7 +4,6 @@ import {
   DurationToken,
   GradientToken,
   JsonPointerReference,
-  JsonPointerReferenceObject,
   ReferenceValue,
   ShadowToken,
   StrokeStyleToken,
@@ -29,7 +28,6 @@ export const UNALLOWED_CHARACTERS_IN_NAME = ["{", "}", "."];
  */
 export const DTCG_KEYS = [
   "$value",
-  "$ref",
   "$type",
   "$description",
   "$extensions",
@@ -87,34 +85,7 @@ export function hasUnallowedCharactersInName(value: string) {
  * Check if the object is a token.
  */
 export function isToken(obj: object): obj is Token {
-  return obj.hasOwnProperty("$value") || obj.hasOwnProperty("$ref");
-}
-
-/**
- * Check if the value is a JSON Pointer reference string.
- */
-export function isJsonPointerReference(
-  value: unknown,
-): value is JsonPointerReference {
-  return typeof value === "string" && jsonPointerReferenceRegex.test(value);
-}
-
-/**
- * Check if the value is a JSON Pointer reference object.
- */
-export function isJsonPointerReferenceObject(
-  value: unknown,
-): value is JsonPointerReferenceObject {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-
-  const keys = Object.keys(value);
-  if (keys.length !== 1 || keys[0] !== "$ref") {
-    return false;
-  }
-
-  return isJsonPointerReference((value as { $ref?: unknown }).$ref);
+  return obj.hasOwnProperty("$value");
 }
 
 /**
@@ -128,20 +99,27 @@ export function isReference(value: unknown): value is ReferenceValue {
  * Check if the value is a token value reference.
  */
 export function isTokenReference(value: unknown): value is TokenReference {
-  return isReference(value) || isJsonPointerReferenceObject(value);
+  return isReference(value);
 }
 
 /**
  * Return token's logical value representation.
  */
 export function getTokenValue(token: Token): TokenValue | TokenReference {
-  if ("$value" in token) {
-    return token.$value as TokenValue;
+  if (!("$value" in token)) {
+    throw new Error("Invalid token: missing $value. $ref is not supported.");
   }
 
-  return {
-    $ref: token.$ref as JsonPointerReference,
-  };
+  return token.$value as TokenValue;
+}
+
+/**
+ * Check if the value is a JSON Pointer reference string.
+ */
+export function isJsonPointerReference(
+  value: unknown,
+): value is JsonPointerReference {
+  return typeof value === "string" && jsonPointerReferenceRegex.test(value);
 }
 
 /**
@@ -220,21 +198,6 @@ export function getByJsonPointer(root: unknown, pointer: string): unknown {
 }
 
 /**
- * Convert JSON Pointer to flattened token path when possible.
- */
-export function pointerToTokenPath(pointer: JsonPointerReference): string {
-  const segments = decodeJsonPointer(pointer);
-  const valueIndex = segments.indexOf("$value");
-
-  const tokenPath =
-    valueIndex > 0
-      ? segments.slice(0, valueIndex).join(".")
-      : segments.join(".");
-
-  return normalizeRootTokenPath(tokenPath);
-}
-
-/**
  * Check if the value is composite.
  */
 export function isValueComposite(
@@ -289,13 +252,7 @@ export function applyTransform(transform: Transform, input: string | Token) {
   throw new Error("Expected string input for name transformer");
 }
 
-function stringifyScalarOrPointer(
-  value: string | number | JsonPointerReferenceObject,
-) {
-  if (isJsonPointerReferenceObject(value)) {
-    return value.$ref;
-  }
-
+function stringifyScalar(value: string | number) {
   return String(value);
 }
 
@@ -309,12 +266,8 @@ export function stringifyUnitValue(
     return value;
   }
 
-  if (isJsonPointerReferenceObject(value)) {
-    return value.$ref;
-  }
-
   if (typeof value === "object" && value !== null) {
-    return `${stringifyScalarOrPointer(value.value)}${stringifyScalarOrPointer(value.unit)}`;
+    return `${stringifyScalar(value.value)}${stringifyScalar(value.unit)}`;
   }
 
   return String(value);

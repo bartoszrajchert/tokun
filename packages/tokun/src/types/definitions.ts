@@ -14,10 +14,7 @@ export type BaseProperties = {
 
 export type ReferenceValue = `{${string}}`;
 export type JsonPointerReference = `#/${string}`;
-export type JsonPointerReferenceObject = {
-  $ref: JsonPointerReference;
-};
-export type TokenReference = ReferenceValue | JsonPointerReferenceObject;
+export type TokenReference = ReferenceValue;
 
 export type TokenType =
   | "color"
@@ -63,8 +60,8 @@ export type ColorToken = BaseProperties & {
 };
 
 export type DimensionValue = {
-  value: number | JsonPointerReferenceObject;
-  unit: "px" | "rem" | JsonPointerReferenceObject;
+  value: number;
+  unit: "px" | "rem";
 };
 
 export type DimensionToken = BaseProperties & {
@@ -74,7 +71,7 @@ export type DimensionToken = BaseProperties & {
 
 export type FontFamilyToken = BaseProperties & {
   $type?: "fontFamily";
-  $value: string | (string | JsonPointerReferenceObject)[] | TokenReference;
+  $value: string | string[] | TokenReference;
 };
 
 export type FontWeightToken = BaseProperties & {
@@ -83,8 +80,8 @@ export type FontWeightToken = BaseProperties & {
 };
 
 export type DurationValue = {
-  value: number | JsonPointerReferenceObject;
-  unit: "ms" | "s" | JsonPointerReferenceObject;
+  value: number;
+  unit: "ms" | "s";
 };
 
 export type DurationToken = BaseProperties & {
@@ -94,14 +91,7 @@ export type DurationToken = BaseProperties & {
 
 export type CubicBezierToken = BaseProperties & {
   $type?: "cubicBezier";
-  $value:
-    | [
-        number | JsonPointerReferenceObject,
-        number | JsonPointerReferenceObject,
-        number | JsonPointerReferenceObject,
-        number | JsonPointerReferenceObject,
-      ]
-    | TokenReference;
+  $value: [number, number, number, number] | TokenReference;
 };
 
 export type NumberToken = BaseProperties & {
@@ -149,7 +139,7 @@ type ShadowValue =
       offsetY: DimensionToken["$value"];
       blur: DimensionToken["$value"];
       spread: DimensionToken["$value"];
-      inset?: boolean | JsonPointerReferenceObject;
+      inset?: boolean;
     }
   | TokenReference;
 
@@ -184,12 +174,6 @@ export type TypographyToken = BaseProperties & {
     | TokenReference;
 };
 
-export type JsonPointerReferenceToken = BaseProperties & {
-  $type?: TokenType;
-  $value?: unknown;
-  $ref: JsonPointerReference;
-};
-
 export type Token =
   | ColorToken
   | DimensionToken
@@ -203,13 +187,12 @@ export type Token =
   | GradientToken
   | TypographyToken
   | StrokeStyleToken
-  | BorderToken
-  | JsonPointerReferenceToken;
+  | BorderToken;
 
 export type StrictToken = WithRequired<Token, "$type">;
 export type LooseToken = ModifyProperties<
   Token,
-  { $type: string; $value: unknown; $ref?: string }
+  { $type: string; $value: unknown }
 >;
 
 export type TokenValue = Extract<Token, { $value: unknown }>["$value"];

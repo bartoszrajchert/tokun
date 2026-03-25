@@ -261,7 +261,6 @@ describe("Test schema single token", () => {
     [0, 0, 0, 0],
     [1, 1, 1, 1],
     [0.5, 0.5, 0.5, 0.5],
-    [{ $ref: "#/curve/p1x" }, 0.2, { $ref: "#/curve/p2x" }, 0.4],
     "{cubicBezier.unknown}",
   ])("test cubic bezier token %s", (cubicBezier) => {
     const res = {
@@ -282,6 +281,7 @@ describe("Test schema single token", () => {
     [0.5, 0.5, 0.5],
     [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
     [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    [{ $ref: "#/curve/p1x" }, 0.2, { $ref: "#/curve/p2x" }, 0.4],
     ["0.5", "0.5", "0.5", "0.5"],
     ["{cubicBezier.unknown", 0.5, 0.5, 0.5],
     "{cubicBezier.unknown",

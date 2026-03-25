@@ -1,6 +1,5 @@
 import {
   DimensionToken,
-  JsonPointerReferenceObject,
   Token,
   TokenGroup,
   TokenValue,
@@ -11,7 +10,6 @@ import { FlattenTokens, toFlat } from "utils/to-flat.js";
 import {
   getByJsonPointer,
   getTokenValue,
-  isJsonPointerReferenceObject,
   isReference,
   isToken,
   isTokenReference,
@@ -303,7 +301,7 @@ function withCycleGuard(stack: string[], id: string): string[] {
 }
 
 function resolveReference(
-  reference: string | JsonPointerReferenceObject,
+  reference: string,
   tokens: FlattenTokens,
   root: TokenGroup,
   stack: string[],
@@ -326,28 +324,7 @@ function resolveReference(
     );
   }
 
-  if (!isJsonPointerReferenceObject(reference)) {
-    throw new Error(`Invalid reference ${String(reference)}`);
-  }
-
-  const pointer = reference.$ref;
-  const guardedStack = withCycleGuard(stack, `pointer:${pointer}`);
-  const referencedValue = getByJsonPointer(root, pointer);
-
-  if (referencedValue === undefined) {
-    throw new Error(`Reference ${pointer} not found`);
-  }
-
-  if (isObject(referencedValue) && isToken(referencedValue)) {
-    return resolveValue(
-      getTokenValue(referencedValue),
-      tokens,
-      root,
-      guardedStack,
-    );
-  }
-
-  return resolveValue(referencedValue, tokens, root, guardedStack);
+  throw new Error(`Invalid reference ${String(reference)}`);
 }
 
 function resolveValue(
@@ -356,7 +333,7 @@ function resolveValue(
   root: TokenGroup,
   stack: string[],
 ): ResolvedValue {
-  if (isReference(value) || isJsonPointerReferenceObject(value)) {
+  if (isReference(value)) {
     return resolveReference(value, tokens, root, stack);
   }
 

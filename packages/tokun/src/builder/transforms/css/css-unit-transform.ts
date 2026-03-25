@@ -3,7 +3,6 @@ import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { DimensionToken, ReferenceValue, Token } from "types/definitions.js";
 import {
   getTokenValue,
-  isReference,
   isTokenReference,
   stringifyUnitValue,
 } from "utils/token-utils.js";
@@ -27,9 +26,7 @@ export const cssUnitTransform: Transform = {
     if (!isTokenReference(tokenValue)) {
       cssExtension.value = stringifyUnitValue(tokenValue as never);
     } else {
-      cssExtension.value = isReference(tokenValue)
-        ? tokenValue
-        : tokenValue.$ref;
+      cssExtension.value = tokenValue;
     }
 
     if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {

@@ -1,9 +1,8 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { Token, TokenReference } from "types/definitions.js";
+import { Token } from "types/definitions.js";
 import {
   getTokenValue,
-  isReference,
   isTokenReference,
   stringifyUnitValue,
 } from "utils/token-utils.js";
@@ -26,7 +25,7 @@ export const cssFontTransform: Transform = {
     const tokenValue = getTokenValue(token);
 
     if (isTokenReference(tokenValue)) {
-      transformed.value = stringifyReference(tokenValue);
+      transformed.value = tokenValue;
     } else if (
       typeof tokenValue === "object" &&
       tokenValue !== null &&
@@ -77,11 +76,3 @@ export const cssFontTransform: Transform = {
     return token;
   },
 };
-
-function stringifyReference(reference: TokenReference): string {
-  if (isReference(reference)) {
-    return reference;
-  }
-
-  return reference.$ref;
-}

@@ -32,6 +32,10 @@ The goal is also to be align with latest DTCG Format and provide built-in suppor
 - `ARCHITECTURE.md` - canonical repository topology and system boundaries
 - `AGEND.md` - alignment checklist for keeping code, docs, and DTCG skill in sync
 
+## Todo
+
+- Add support for JSON Pointer `$ref`
+
 ## Contributing
 
 If you want to contribute to this project, feel free to create a pull request or an issue on [GitHub](https://github.com/bartoszrajchert/tokun).

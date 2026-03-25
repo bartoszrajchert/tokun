@@ -1,7 +1,6 @@
 import {
   hexColorWithAlphaRegex,
   normalizeRootTokenPath,
-  pointerToTokenPath,
   tokenReferenceRegex,
 } from "utils/token-utils.js";
 import { describe, expect, it } from "vitest";
@@ -44,14 +43,5 @@ describe("Test regexes", () => {
     ["brand.color.white", "brand.color.white"],
   ])("normalizes root token path %s", (input, output) => {
     expect(normalizeRootTokenPath(input)).toBe(output);
-  });
-
-  it.each([
-    ["#/$root", ""],
-    ["#/brand/color/$root", "brand.color"],
-    ["#/brand/color/$value", "brand.color"],
-    ["#/brand/color/$root/$value/components/0", "brand.color"],
-  ])("maps JSON Pointer %s to flattened token path", (pointer, tokenPath) => {
-    expect(pointerToTokenPath(pointer as `#/${string}`)).toBe(tokenPath);
   });
 });

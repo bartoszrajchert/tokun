@@ -1,10 +1,6 @@
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { Token } from "types/definitions.js";
-import {
-  getTokenValue,
-  isReference,
-  isTokenReference,
-} from "utils/token-utils.js";
+import { getTokenValue, isTokenReference } from "utils/token-utils.js";
 import { Format, FormatConfig } from "utils/types.js";
 import { CSS_EXTENSION, stringifyCssValue } from "./css-format.js";
 
@@ -50,9 +46,7 @@ function resolveScssValue(
   }
 
   if (config.outputReferences) {
-    return isTokenReference(tokenValue) && !isReference(tokenValue)
-      ? tokenValue.$ref
-      : stringifyCssValue(tokenValue);
+    return stringifyCssValue(tokenValue);
   }
 
   if (token.$extensions?.[RESOLVED_EXTENSION]) {

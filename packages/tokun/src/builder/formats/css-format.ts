@@ -136,7 +136,7 @@ function isStructuredColor(value: unknown): value is StructuredColor {
 
 export function stringifyCssValue(value: unknown): string {
   if (isTokenReference(value)) {
-    return typeof value === "string" ? value : value.$ref;
+    return value;
   }
 
   if (isStructuredColor(value)) {

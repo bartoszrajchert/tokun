@@ -407,6 +407,21 @@ describe("Test DTCG JSON Loader", () => {
     expect(() => dtcgJsonLoader.loadFn({ content })).toThrowError();
   });
 
+  it("should throw error when JSON Pointer $ref syntax is used", () => {
+    const content = {
+      color: {
+        $type: "color",
+        $value: {
+          $ref: "#/base/color",
+        },
+      },
+    } as TokenGroup;
+
+    expect(() => dtcgJsonLoader.loadFn({ content })).toThrowError(
+      "JSON Pointer $ref references are not supported",
+    );
+  });
+
   it.each([
     [
       "object",
