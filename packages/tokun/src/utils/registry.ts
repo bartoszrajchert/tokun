@@ -1,9 +1,3 @@
-import {
-  camelCaseTransform,
-  kebabCaseTransform,
-  pascalCaseTransform,
-  snakeCaseTransform,
-} from "builder/index.js";
 import { ConfigOptions } from "types/define-config.js";
 import { cssFormat } from "../builder/formats/css-format.js";
 import { detailedJsonFormat } from "../builder/formats/detailed-json-format.js";
@@ -17,6 +11,12 @@ import { cssShadowTransform } from "../builder/transforms/css/css-shadow-transfo
 import { cssTransforms } from "../builder/transforms/css/css-transforms.js";
 import { cssUnitTransform } from "../builder/transforms/css/css-unit-transform.js";
 import { cssVariableSafeTransform } from "../builder/transforms/css/css-variable-safe-transform.js";
+import {
+  camelCaseTransform,
+  kebabCaseTransform,
+  pascalCaseTransform,
+  snakeCaseTransform,
+} from "../builder/transforms/name-transforms.js";
 import { Format, Loader, Transform, TransformGroup } from "./types.js";
 
 export const formatRegistry: Format[] = [

@@ -13,11 +13,19 @@
     },
     "same name different token": {
       "$type": "color",
-      "$value": "#123456"
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.0706, 0.2039, 0.3373],
+        "hex": "#123456"
+      }
     },
     "Same Name Different Token": {
       "$type": "color",
-      "$value": "#123"
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.0667, 0.1333, 0.2],
+        "hex": "#112233"
+      }
     }
   },
   "alias": {
