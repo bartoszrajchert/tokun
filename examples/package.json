@@ -4,7 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
-    "build-basic": "tokun build -c templates/basic/config.mjs",
+    "build-simple": "tokun build -c templates/simple/config.mjs",
     "build-advanced": "tokun build -c templates/advanced/config.mjs"
   },
   "keywords": [],

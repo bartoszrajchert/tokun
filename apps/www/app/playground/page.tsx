@@ -10,7 +10,7 @@ export const metadata = {
 
 export default function Page() {
   const example = readFileSync(
-    path.resolve("../../examples/templates/basic/basic.tokens.json"),
+    path.resolve("../../examples/templates/simple/simple.tokens.json"),
     "utf-8",
   );
 

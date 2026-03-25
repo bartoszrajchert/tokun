@@ -1,6 +1,6 @@
 /** @type {import('tokun/types').Config} */
 export default {
-  data: ["basic.tokens.json"],
+  data: ["simple.tokens.json"],
   options: {
     loader: "dtcg-json",
     platforms: [
