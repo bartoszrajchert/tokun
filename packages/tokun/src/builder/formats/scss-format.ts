@@ -6,7 +6,7 @@ import {
   isTokenReference,
 } from "utils/token-utils.js";
 import { Format, FormatConfig } from "utils/types.js";
-import { CSS_EXTENSION } from "./css-format.js";
+import { CSS_EXTENSION, stringifyCssValue } from "./css-format.js";
 
 /**
  * SCSS formatter.
@@ -52,15 +52,15 @@ function resolveScssValue(
   if (config.outputReferences) {
     return isTokenReference(tokenValue) && !isReference(tokenValue)
       ? tokenValue.$ref
-      : String(tokenValue);
+      : stringifyCssValue(tokenValue);
   }
 
   if (token.$extensions?.[RESOLVED_EXTENSION]) {
-    return String(token.$extensions[RESOLVED_EXTENSION]);
+    return stringifyCssValue(token.$extensions[RESOLVED_EXTENSION]);
   }
 
   if (!isTokenReference(tokenValue)) {
-    return String(tokenValue);
+    return stringifyCssValue(tokenValue);
   }
 
   throw new Error(`No resolved value found in ${path}`);

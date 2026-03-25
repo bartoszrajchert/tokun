@@ -1,4 +1,7 @@
-import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import {
+  CSS_EXTENSION,
+  stringifyCssValue,
+} from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { Token, TokenReference } from "types/definitions.js";
 import {
@@ -71,7 +74,7 @@ function stringifyShadowEntry(value: unknown): string {
     color: unknown;
   };
 
-  return `${stringifyUnitValue(shadow.offsetX as never)} ${stringifyUnitValue(shadow.offsetY as never)} ${stringifyUnitValue(shadow.blur as never)} ${stringifyUnitValue(shadow.spread as never)} ${String(shadow.color)}`;
+  return `${stringifyUnitValue(shadow.offsetX as never)} ${stringifyUnitValue(shadow.offsetY as never)} ${stringifyUnitValue(shadow.blur as never)} ${stringifyUnitValue(shadow.spread as never)} ${stringifyCssValue(shadow.color)}`;
 }
 
 function stringifyReference(reference: TokenReference): string {

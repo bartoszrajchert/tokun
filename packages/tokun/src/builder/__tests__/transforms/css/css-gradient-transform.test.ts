@@ -66,6 +66,43 @@ describe("cssGradientTransform", () => {
     );
   });
 
+  it("should stringify structured colors in resolved gradient values", () => {
+    const token: GradientToken = {
+      $type: "gradient",
+      $value: [
+        { color: "{brand.color.primary}", position: 0 },
+        { color: "{brand.color.secondary}", position: 1 },
+      ],
+      $extensions: {
+        [RESOLVED_EXTENSION]: [
+          {
+            color: {
+              colorSpace: "srgb",
+              components: [1, 0, 0],
+              hex: "#ff0000",
+            },
+            position: 0,
+          },
+          {
+            color: {
+              colorSpace: "srgb",
+              components: [0, 1, 0],
+              hex: "#00ff00",
+            },
+            position: 1,
+          },
+        ],
+      },
+    };
+
+    const result = applyTransform(cssGradientTransform, token);
+
+    // @ts-expect-error
+    expect(result.$extensions?.[CSS_EXTENSION]?.resolvedValue).toBe(
+      "linear-gradient(90deg, #ff0000 0%, #00ff00 100%)",
+    );
+  });
+
   it("should handle tokens without $extensions", () => {
     const token: GradientToken = {
       $type: "gradient",

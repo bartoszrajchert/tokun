@@ -1,6 +1,6 @@
 import { emptyFileHeader } from "builder/file-headers/empty-file-header.js";
-import { scssFormat } from "builder/formats/scss-format.js";
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import { scssFormat } from "builder/formats/scss-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { FlattenTokens } from "utils/to-flat.js";
 import { describe, expect, it } from "vitest";
@@ -106,6 +106,32 @@ $color-secondary: #00ff00;
     });
 
     expect(result).toBe("$color-alias: #ff0000;\n");
+  });
+
+  it("should stringify resolved structured color extension", () => {
+    const tokens: FlattenTokens = new Map([
+      [
+        "color.alias",
+        {
+          $value: "{color.primary}",
+          $extensions: {
+            [RESOLVED_EXTENSION]: {
+              colorSpace: "srgb",
+              components: [0, 0, 0],
+              hex: "#000000",
+            },
+          },
+        },
+      ],
+    ]);
+
+    const result = scssFormat.formatter({
+      tokens,
+      config: { outputReferences: false },
+      fileHeader: emptyFileHeader,
+    });
+
+    expect(result).toBe("$color-alias: #000000;\n");
   });
 
   it("should throw error when no resolved value found for reference", () => {

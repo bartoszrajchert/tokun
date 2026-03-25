@@ -1,4 +1,7 @@
-import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import {
+  CSS_EXTENSION,
+  stringifyCssValue,
+} from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { Token, TokenReference } from "types/definitions.js";
 import {
@@ -62,7 +65,7 @@ function toCssGradient(value: unknown[]): string {
         position: unknown;
       };
 
-      return `${String(gradientStop.color)} ${calcPosition(gradientStop.position)}`;
+      return `${stringifyCssValue(gradientStop.color)} ${calcPosition(gradientStop.position)}`;
     })
     .join(", ")})`;
 }

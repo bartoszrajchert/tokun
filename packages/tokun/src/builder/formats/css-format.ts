@@ -1,13 +1,7 @@
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import {
-  ColorToken,
-  StructuredColor,
-  Token,
-  TypographyToken,
-} from "types/definitions.js";
+import { StructuredColor, Token, TypographyToken } from "types/definitions.js";
 import {
   getTokenValue,
-  isReference,
   isTokenReference,
   normalizeRootTokenPath,
   stringifyUnitValue,
@@ -110,7 +104,7 @@ function resolveTokenValue(
     value = stringifyTokenValue(token);
   } else if (token.$extensions?.[RESOLVED_EXTENSION]) {
     // Use resolved extension if available
-    value = String(token.$extensions[RESOLVED_EXTENSION]);
+    value = stringifyCssValue(token.$extensions[RESOLVED_EXTENSION]);
   } else if (!isTokenReference(tokenValue)) {
     // Final fallback to `value` if it's not a reference
     value = stringifyTokenValue(token);
@@ -127,17 +121,33 @@ function resolveTokenValue(
 function stringifyTokenValue(token: Token): string {
   const tokenValue = getTokenValue(token);
 
-  if (typeof tokenValue === "object" && tokenValue !== null) {
-    if ("colorSpace" in tokenValue) {
-      return structuredColorToCSS(tokenValue as StructuredColor);
-    }
+  return stringifyCssValue(tokenValue);
+}
 
-    if ("$ref" in tokenValue) {
-      return tokenValue.$ref;
-    }
+function isStructuredColor(value: unknown): value is StructuredColor {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    "colorSpace" in value &&
+    "components" in value
+  );
+}
+
+export function stringifyCssValue(value: unknown): string {
+  if (isTokenReference(value)) {
+    return typeof value === "string" ? value : value.$ref;
   }
 
-  return String(tokenValue);
+  if (isStructuredColor(value)) {
+    return structuredColorToCSS(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => stringifyCssValue(entry)).join(",");
+  }
+
+  return String(value);
 }
 
 /**

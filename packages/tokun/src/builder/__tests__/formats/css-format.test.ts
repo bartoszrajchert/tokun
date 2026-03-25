@@ -1,5 +1,6 @@
 import { emptyFileHeader } from "builder/file-headers/empty-file-header.js";
 import { CSS_EXTENSION, cssFormat } from "builder/formats/css-format.js";
+import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { FlattenTokens } from "utils/to-flat.js";
 import { describe, expect, it } from "vitest";
 
@@ -239,6 +240,35 @@ describe("cssFormat", () => {
     });
 
     expect(result).toBe(`:root {\n  --color-primary: #ff0000;\n}`);
+  });
+
+  it("should stringify resolved structured colors", () => {
+    const tokens: FlattenTokens = new Map([
+      [
+        "color-primary",
+        {
+          $type: "color",
+          $value: "{color-base}",
+          $extensions: {
+            [RESOLVED_EXTENSION]: {
+              colorSpace: "srgb",
+              components: [1, 1, 1],
+              hex: "#ffffff",
+            },
+          },
+        },
+      ],
+    ]);
+
+    const config = { outputReferences: false };
+
+    const result = cssFormat.formatter({
+      tokens,
+      config,
+      fileHeader: emptyFileHeader,
+    });
+
+    expect(result).toBe(`:root {\n  --color-primary: #ffffff;\n}`);
   });
 
   it("should apply prefix to CSS variable names", () => {

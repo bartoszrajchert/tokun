@@ -1,4 +1,7 @@
-import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import {
+  CSS_EXTENSION,
+  stringifyCssValue,
+} from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { Token, TokenReference } from "types/definitions.js";
 
@@ -49,7 +52,7 @@ const cssBorderTransform = (token: Token) => {
       color: unknown;
     };
 
-    cssExtension.value = `${stringifyUnitValue(borderValue.width as never)} ${String(borderValue.style)} ${String(borderValue.color)}`;
+    cssExtension.value = `${stringifyUnitValue(borderValue.width as never)} ${String(borderValue.style)} ${stringifyCssValue(borderValue.color)}`;
   }
 
   if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {
@@ -68,7 +71,7 @@ const cssBorderTransform = (token: Token) => {
         color: unknown;
       };
 
-      cssExtension.resolvedValue = `${stringifyUnitValue(borderValue.width as never)} ${String(borderValue.style)} ${String(borderValue.color)}`;
+      cssExtension.resolvedValue = `${stringifyUnitValue(borderValue.width as never)} ${String(borderValue.style)} ${stringifyCssValue(borderValue.color)}`;
     }
   }
 
