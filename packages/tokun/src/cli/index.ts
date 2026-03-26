@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 
 import packageJson from "../../package.json" with { type: "json" };
-import { logger } from "../utils/logger.js";
+import {
+  logger,
+  logVerbosityLevels,
+  logWarningLevels,
+  setLogConfig,
+  type LogConfig,
+} from "../utils/logger.js";
 import { runBuild } from "./build.js";
 import { runValidate } from "./validate.js";
 
@@ -11,6 +17,16 @@ type BuildOptions = {
   output?: string;
   loader?: string;
   format?: string;
+  silent?: boolean;
+  verbose?: boolean;
+  noWarn?: boolean;
+};
+
+type ValidateOptions = {
+  inputs: string[];
+  silent?: boolean;
+  verbose?: boolean;
+  noWarn?: boolean;
 };
 
 class CliUsageError extends Error {}
@@ -19,6 +35,44 @@ const handleSigTerm = () => process.exit(0);
 
 process.on("SIGTERM", handleSigTerm);
 process.on("SIGINT", handleSigTerm);
+
+setLogConfig({
+  verbosity: logVerbosityLevels.verbose,
+  warnings: logWarningLevels.warn,
+});
+
+function resolveCliLogConfig({
+  silent,
+  verbose,
+  noWarn,
+}: {
+  silent?: boolean;
+  verbose?: boolean;
+  noWarn?: boolean;
+}): LogConfig {
+  const verbosity = verbose
+    ? logVerbosityLevels.verbose
+    : silent
+      ? logVerbosityLevels.silent
+      : logVerbosityLevels.verbose;
+
+  return {
+    verbosity,
+    warnings: noWarn ? logWarningLevels.disabled : logWarningLevels.warn,
+  };
+}
+
+function hasCliLogOverride({
+  silent,
+  verbose,
+  noWarn,
+}: {
+  silent?: boolean;
+  verbose?: boolean;
+  noWarn?: boolean;
+}): boolean {
+  return Boolean(silent || verbose || noWarn);
+}
 
 function printMainHelp() {
   logger.log(`tokun v${packageJson.version}`);
@@ -54,6 +108,9 @@ function printBuildHelp() {
   logger.log(
     "  -f, --format <format>  Format name for input/output mode (inferred from output extension when omitted).",
   );
+  logger.log("  -s, --silent           Silence non-fatal logs");
+  logger.log("  -v, --verbose          Enable verbose logs (default)");
+  logger.log("  -n, --no-warn          Disable warning logs");
   logger.log("  -h, --help             Show help for build command");
 }
 
@@ -69,6 +126,9 @@ function printValidateHelp() {
   );
   logger.break();
   logger.log("Options:");
+  logger.log("  -s, --silent  Silence non-fatal logs");
+  logger.log("  -v, --verbose Enable verbose logs (default)");
+  logger.log("  -n, --no-warn Disable warning logs");
   logger.log("  -h, --help   Show help for validate command");
 }
 
@@ -205,18 +265,29 @@ function parseBuildArgs(args: string[]): BuildOptions | "help" {
       continue;
     }
 
+    if (arg === "-s" || arg === "--silent") {
+      options.silent = true;
+      continue;
+    }
+
+    if (arg === "-v" || arg === "--verbose") {
+      options.verbose = true;
+      continue;
+    }
+
+    if (arg === "-n" || arg === "--no-warn") {
+      options.noWarn = true;
+      continue;
+    }
+
     throw new CliUsageError(`Unknown option for build command: ${arg}`);
   }
 
   return options;
 }
 
-function parseValidateArgs(args: string[]): string[] | "help" {
-  if (args.length === 0) {
-    throw new CliUsageError("Missing required argument: <inputs...>");
-  }
-
-  const inputs: string[] = [];
+function parseValidateArgs(args: string[]): ValidateOptions | "help" {
+  const options: ValidateOptions = { inputs: [] };
 
   for (const arg of args) {
     if (arg === "-h" || arg === "--help") {
@@ -224,14 +295,33 @@ function parseValidateArgs(args: string[]): string[] | "help" {
       return "help";
     }
 
+    if (arg === "-s" || arg === "--silent") {
+      options.silent = true;
+      continue;
+    }
+
+    if (arg === "-v" || arg === "--verbose") {
+      options.verbose = true;
+      continue;
+    }
+
+    if (arg === "-n" || arg === "--no-warn") {
+      options.noWarn = true;
+      continue;
+    }
+
     if (arg.startsWith("-")) {
       throw new CliUsageError(`Unknown option for validate command: ${arg}`);
     }
 
-    inputs.push(arg);
+    options.inputs.push(arg);
   }
 
-  return inputs;
+  if (options.inputs.length === 0) {
+    throw new CliUsageError("Missing required argument: <inputs...>");
+  }
+
+  return options;
 }
 
 function printHelpForCommand(command?: string) {
@@ -285,18 +375,32 @@ async function main(): Promise<void> {
       return;
     }
 
-    await runBuild(options);
+    const logConfig = resolveCliLogConfig(options);
+    const hasLogOverride = hasCliLogOverride(options);
+
+    setLogConfig(logConfig);
+
+    await runBuild({
+      config: options.config,
+      input: options.input,
+      output: options.output,
+      loader: options.loader,
+      format: options.format,
+      log: logConfig,
+      preferConfigLog: !hasLogOverride,
+    });
     return;
   }
 
   if (command === "validate") {
-    const validateInputs = parseValidateArgs(restArgs);
+    const options = parseValidateArgs(restArgs);
 
-    if (validateInputs === "help") {
+    if (options === "help") {
       return;
     }
 
-    await runValidate(validateInputs);
+    setLogConfig(resolveCliLogConfig(options));
+    await runValidate(options.inputs);
     return;
   }
 

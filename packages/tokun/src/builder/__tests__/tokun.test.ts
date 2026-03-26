@@ -2,7 +2,7 @@ import { build } from "builder/tokun.js";
 import { Platform } from "types/define-config.js";
 import { Loader } from "utils/types.js";
 import { dtcgValidator } from "validators/dtcg-validator.js";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("parseDesignTokens with mocks", () => {
   const mockParser: Loader = {
@@ -241,5 +241,67 @@ describe("parseDesignTokens", () => {
 }`,
       },
     ]);
+  });
+});
+
+describe("build logging", () => {
+  const mockParser: Loader = {
+    name: "test",
+    loadFn: vi.fn().mockReturnValue(new Map()),
+    pattern: /\.json$/,
+  };
+
+  const mockPlatform: Platform = {
+    format: {
+      name: "testFormat",
+      formatter: vi.fn().mockReturnValue("formatted"),
+    },
+    outputs: [{ name: "test.json" }],
+    name: "testPlatform",
+  };
+
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleLogSpy = vi
+      .spyOn(console, "log")
+      .mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
+  });
+
+  it("does not print logs by default", () => {
+    build({
+      data: {
+        $type: "color",
+        tokens: {},
+      },
+      options: {
+        loader: mockParser,
+        platforms: [mockPlatform],
+      },
+    });
+
+    expect(consoleLogSpy).not.toHaveBeenCalled();
+  });
+
+  it("prints logs when verbosity is verbose", () => {
+    build(
+      {
+        data: {
+          $type: "color",
+          tokens: {},
+        },
+        options: {
+          loader: mockParser,
+          platforms: [mockPlatform],
+        },
+      },
+      { log: { verbosity: "verbose" } },
+    );
+
+    expect(consoleLogSpy).toHaveBeenCalled();
   });
 });

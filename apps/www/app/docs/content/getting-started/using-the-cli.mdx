@@ -52,12 +52,17 @@ Options:
 | Output path | -o, --output \<output\> | The output file to write. |
 | Loader | -l, --loader \<loader\> | Loader for input/output mode. Defaults to first registered loader. |
 | Format | -f, --format \<format\> | Format for input/output mode. If omitted, it is inferred from output extension (`.css`, `.scss`, `.detailed.json`, `.json`). |
+| Silent | -s, --silent | Silence non-fatal logs. |
+| Verbose | -v, --verbose | Enable verbose logs (default). |
+| No warnings | -n, --no-warn | Disable warning logs. |
 
 Examples:
 
 ```bash
 tokun build --input tokens.json --output dist/tokens.css
 tokun build --input tokens.json --output dist/tokens.out --format css --loader dtcg-json
+tokun build --input tokens.json --output dist/tokens.css --silent
+tokun build --input tokens.json --output dist/tokens.css --no-warn
 ```
 
 #### Config file
@@ -110,3 +115,10 @@ Arguments:
 | Name | Usage | Description |
 |-----------------|-----------------------|------------------------------------------------------------------------------------|
 | Inputs | \<inputs...\> | The input files to validate. This can be a glob pattern. See `tinyglobby` for more information. |
+
+Options:
+| Name | Usage | Description |
+|-----------------|-----------------------|------------------------------------------------------------------------------------|
+| Silent | -s, --silent | Silence non-fatal logs. |
+| Verbose | -v, --verbose | Enable verbose logs (default). |
+| No warnings | -n, --no-warn | Disable warning logs. |

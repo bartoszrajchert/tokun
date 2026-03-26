@@ -1,5 +1,12 @@
 export * from "../../types/index.js";
 export {
+  logVerbosityLevels,
+  logWarningLevels,
+  type LogConfig,
+  type LogVerbosity,
+  type LogWarningLevel,
+} from "../../utils/logger.js";
+export {
   formatNames,
   loaderNames,
   registerFormat,

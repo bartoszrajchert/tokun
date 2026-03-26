@@ -4,7 +4,13 @@ import {
   PlatformWithoutString,
 } from "types/define-config.js";
 import { Token, TokenGroup, TokenType, TokenValue } from "types/definitions.js";
-import { logger } from "utils/logger.js";
+import {
+  getLogConfig,
+  logger,
+  resolveLogConfig,
+  setLogConfig,
+  type LogConfig,
+} from "utils/logger.js";
 import { assign, isEqual } from "utils/object-utils.js";
 import {
   formatRegistry,
@@ -31,6 +37,10 @@ type BuildOutput = {
   content: string;
 };
 
+type BuildOptions = {
+  log?: Partial<LogConfig>;
+};
+
 type TokenTransformer = {
   (value: string): string;
   (token: Token): Token;
@@ -40,48 +50,61 @@ type TokenTransformer = {
  * Build design tokens.
  *
  * @param config Configuration object.
+ * @param buildOptions Runtime build options.
  * @returns Array of objects with name and content properties.
  */
-export function build(config: Config): BuildOutput[] {
-  const { data, options } = config;
+export function build(
+  config: Config,
+  buildOptions?: BuildOptions,
+): BuildOutput[] {
+  const previousLogConfig = getLogConfig();
+  const nextLogConfig = resolveLogConfig(config.log, buildOptions?.log);
 
-  if (!data) {
-    throw new Error("Please provide data.");
-  }
+  setLogConfig(nextLogConfig);
 
-  const mergedData = dataToObject(data);
+  try {
+    const { data, options } = config;
 
-  let result: BuildOutput[];
-
-  if (!options) {
-    result = buildDesignTokens({
-      obj: dtcgJsonLoader.loadFn({ content: mergedData }),
-      platforms: [
-        {
-          name: "css",
-          format: cssFormat,
-          transforms: [cssTransforms],
-          outputs: [{ name: "output.css" }],
-        },
-      ],
-    });
-  } else {
-    const { loader, platforms, validator, customValidator } = options;
-
-    const resolvedLoader = resolveLoader(loader);
-    const resolvedPlatforms = resolvePlatforms(platforms);
-
-    if (validator) {
-      validateTokens(mergedData, validator, customValidator);
+    if (!data) {
+      throw new Error("Please provide data.");
     }
 
-    result = buildDesignTokens({
-      obj: resolvedLoader.loadFn({ content: mergedData }),
-      platforms: resolvedPlatforms,
-    });
-  }
+    const mergedData = dataToObject(data);
 
-  return result;
+    let result: BuildOutput[];
+
+    if (!options) {
+      result = buildDesignTokens({
+        obj: dtcgJsonLoader.loadFn({ content: mergedData }),
+        platforms: [
+          {
+            name: "css",
+            format: cssFormat,
+            transforms: [cssTransforms],
+            outputs: [{ name: "output.css" }],
+          },
+        ],
+      });
+    } else {
+      const { loader, platforms, validator, customValidator } = options;
+
+      const resolvedLoader = resolveLoader(loader);
+      const resolvedPlatforms = resolvePlatforms(platforms);
+
+      if (validator) {
+        validateTokens(mergedData, validator, customValidator);
+      }
+
+      result = buildDesignTokens({
+        obj: resolvedLoader.loadFn({ content: mergedData }),
+        platforms: resolvedPlatforms,
+      });
+    }
+
+    return result;
+  } finally {
+    setLogConfig(previousLogConfig);
+  }
 }
 
 function resolvePlatforms(

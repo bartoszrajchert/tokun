@@ -1,28 +1,43 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { Config } from "types/define-config.js";
-import { logger } from "utils/logger.js";
+import {
+  getLogConfig,
+  logger,
+  resolveLogConfig,
+  setLogConfig,
+  type LogConfig,
+} from "utils/logger.js";
 import { build as coreBuild } from "./tokun.js";
 
 export function build(
   config: Config,
-  buildOptions?: { writeTo?: string },
+  buildOptions?: { writeTo?: string; log?: Partial<LogConfig> },
 ): ReturnType<typeof coreBuild> {
-  const result = coreBuild(config);
+  const previousLogConfig = getLogConfig();
+  const nextLogConfig = resolveLogConfig(config.log, buildOptions?.log);
 
-  if (buildOptions?.writeTo) {
-    for (const { name, content } of result) {
-      const filePath = path.join(buildOptions.writeTo, name);
-      const dir = path.dirname(filePath);
+  setLogConfig(nextLogConfig);
 
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
+  try {
+    const result = coreBuild(config, { log: nextLogConfig });
+
+    if (buildOptions?.writeTo) {
+      for (const { name, content } of result) {
+        const filePath = path.join(buildOptions.writeTo, name);
+        const dir = path.dirname(filePath);
+
+        if (!existsSync(dir)) {
+          mkdirSync(dir, { recursive: true });
+        }
+
+        writeFileSync(filePath, content);
+        logger.log(`Written to ${filePath}`);
       }
-
-      writeFileSync(filePath, content);
-      logger.log(`Written to ${filePath}`);
     }
-  }
 
-  return result;
+    return result;
+  } finally {
+    setLogConfig(previousLogConfig);
+  }
 }

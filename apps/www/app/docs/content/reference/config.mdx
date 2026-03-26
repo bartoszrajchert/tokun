@@ -8,11 +8,15 @@ order: 2
 Tokun config is defined with `defineConfig` and can be merged with `extendConfig`.
 
 ```ts
-import { defineConfig } from "tokun";
+import { defineConfig, logVerbosityLevels, logWarningLevels } from "tokun";
 import { dtcgValidator } from "tokun/validators";
 
 export default defineConfig({
   data: "./tokens/base.tokens.json",
+  log: {
+    verbosity: logVerbosityLevels.verbose,
+    warnings: logWarningLevels.warn,
+  },
   options: {
     loader: "dtcg-json",
     validator: dtcgValidator,
@@ -31,6 +35,8 @@ export default defineConfig({
 Key fields:
 
 - `data`: token input (object, JSON string, or arrays of them)
+- `log.verbosity`: `'default' | 'silent' | 'verbose'`
+- `log.warnings`: `'warn' | 'error' | 'disabled'`
 - `options.loader`: loader name or custom loader
 - `options.validator`: validation function (for example `dtcgValidator`)
 - `options.platforms`: output targets with `format`, `transforms`, and `outputs`

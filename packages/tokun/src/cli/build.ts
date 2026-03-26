@@ -5,7 +5,8 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { glob } from "tinyglobby";
 import { Config } from "types/define-config.js";
-import { logger } from "utils/logger.js";
+import type { LogConfig } from "utils/logger.js";
+import { logger, resolveLogConfig, setLogConfig } from "utils/logger.js";
 import { isObject } from "utils/object-utils.js";
 import { formatNames, loaderNames } from "utils/registry.js";
 import { z } from "zod/v4-mini";
@@ -18,6 +19,12 @@ const ConfigSchema = z.strictObject({
     z.looseObject({}),
     z.array(z.union([z.string(), z.looseObject({})])),
   ]),
+  log: z.optional(
+    z.looseObject({
+      verbosity: z.optional(z.enum(["default", "silent", "verbose"])),
+      warnings: z.optional(z.enum(["warn", "error", "disabled"])),
+    }),
+  ),
   options: z.optional(
     z.looseObject({
       loader: z.union([z.string(), z.looseObject({})]),
@@ -32,12 +39,16 @@ export async function runBuild({
   output,
   loader,
   format,
+  log,
+  preferConfigLog,
 }: {
   config?: string;
   input?: string;
   output?: string;
   loader?: string;
   format?: string;
+  log?: Partial<LogConfig>;
+  preferConfigLog?: boolean;
 }) {
   startMessage("build");
 
@@ -72,9 +83,9 @@ export async function runBuild({
   }
 
   if (config) {
-    await readConfigFile(config);
+    await readConfigFile(config, log, preferConfigLog);
   } else if (input && output) {
-    await readInputFile(input, output, loader, format);
+    await readInputFile(input, output, loader, format, log);
   }
 }
 
@@ -83,7 +94,11 @@ export async function runBuild({
  *
  * @param configPath
  */
-async function readConfigFile(configPath: string) {
+async function readConfigFile(
+  configPath: string,
+  log?: Partial<LogConfig>,
+  preferConfigLog?: boolean,
+) {
   const globConfigPath = await glob([configPath], { absolute: true });
 
   if (globConfigPath.length === 0) {
@@ -114,12 +129,18 @@ async function readConfigFile(configPath: string) {
     );
   }
 
+  const effectiveLog = preferConfigLog
+    ? resolveLogConfig(log, config.log)
+    : resolveLogConfig(config.log, log);
+
+  setLogConfig(effectiveLog);
+
   // If data is an object or array of objects, pass directly to build()
   if (
     isObject(config.data) ||
     (Array.isArray(config.data) && config.data.some(isObject))
   ) {
-    const finishedBuild = build(config);
+    const finishedBuild = build(config, { log: effectiveLog });
 
     for (const { name: buildName, content } of finishedBuild) {
       const name = `${absoluteConfigDir}/${buildName}`;
@@ -143,10 +164,13 @@ async function readConfigFile(configPath: string) {
 
   const tokenFiles = await glob(resolvedData, { absolute: true });
 
-  const finishedBuild = build({
-    ...config,
-    data: tokenFiles.map((file) => readFileSync(file, "utf-8")),
-  });
+  const finishedBuild = build(
+    {
+      ...config,
+      data: tokenFiles.map((file) => readFileSync(file, "utf-8")),
+    },
+    { log: effectiveLog },
+  );
 
   for (const { name: buildName, content } of finishedBuild) {
     const name = `${absoluteConfigDir}/${buildName}`;
@@ -169,6 +193,7 @@ async function readInputFile(
   outputFilePath: string,
   selectedLoader?: string,
   selectedFormat?: string,
+  log?: Partial<LogConfig>,
 ) {
   logger.log(filePath);
 
@@ -200,19 +225,22 @@ async function readInputFile(
 
   const data = await readFile(filePath, "utf-8");
 
-  const finishedBuild = build({
-    data: [data],
-    options: {
-      loader,
-      platforms: [
-        {
-          name: format,
-          format,
-          outputs: [{ name: outputFilePath }],
-        },
-      ],
+  const finishedBuild = build(
+    {
+      data: [data],
+      options: {
+        loader,
+        platforms: [
+          {
+            name: format,
+            format,
+            outputs: [{ name: outputFilePath }],
+          },
+        ],
+      },
     },
-  });
+    { log },
+  );
 
   for (const { name, content } of finishedBuild) {
     const dir = path.dirname(name);

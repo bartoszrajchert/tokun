@@ -21,7 +21,7 @@ npm install tokun
 See below simple way to use Tokun module
 
 ```js
-import { build } from 'tokun';
+import { build, logVerbosityLevels } from 'tokun';
 
 const value = ...;
 
@@ -31,4 +31,12 @@ const tokens = build({
 });
 
 tokens.forEach(console.log);
+
+// Enable verbose logs programmatically.
+build(
+  { data: JSON.parse(value) },
+  { log: { verbosity: logVerbosityLevels.verbose } }
+);
 ```
+
+> Programmatic `build` is silent by default. To enable logs, pass runtime logging options (for example `{ log: { verbosity: logVerbosityLevels.verbose } }`).
