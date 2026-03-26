@@ -3,7 +3,6 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import prompts from "prompts";
 import { glob } from "tinyglobby";
 import { Config } from "types/define-config.js";
 import { logger } from "utils/logger.js";
@@ -31,16 +30,22 @@ export async function runBuild({
   config,
   input,
   output,
+  loader,
+  format,
 }: {
   config?: string;
   input?: string;
   output?: string;
+  loader?: string;
+  format?: string;
 }) {
   startMessage("build");
 
-  if (!config) {
-    if (existsSync("/config.json")) {
-      config = "/config.json";
+  if (!config && !input) {
+    const defaultConfigPath = path.resolve("config.json");
+
+    if (existsSync(defaultConfigPath)) {
+      config = defaultConfigPath;
     }
   }
 
@@ -60,10 +65,16 @@ export async function runBuild({
     throw new Error("You cannot provide both a config and input file.");
   }
 
+  if (config && (loader || format)) {
+    throw new Error(
+      "You cannot provide --loader or --format when using a config file.",
+    );
+  }
+
   if (config) {
     await readConfigFile(config);
   } else if (input && output) {
-    readInputFile(input, output);
+    await readInputFile(input, output, loader, format);
   }
 }
 
@@ -153,34 +164,50 @@ async function readConfigFile(configPath: string) {
 /**
  * Read input file and run parse.
  */
-async function readInputFile(filePath: string, outputFilePath: string) {
+async function readInputFile(
+  filePath: string,
+  outputFilePath: string,
+  selectedLoader?: string,
+  selectedFormat?: string,
+) {
   logger.log(filePath);
 
-  const response = await prompts([
-    {
-      type: "select",
-      name: "loader",
-      message: "Select the loader",
-      choices: loaderNames.map((name) => ({ title: name, value: name })),
-    },
-    {
-      type: "select",
-      name: "format",
-      message: "Select the format",
-      choices: formatNames.map((name) => ({ title: name, value: name })),
-    },
-  ]);
+  const loader = selectedLoader ?? loaderNames[0];
+
+  if (!loader) {
+    throw new Error("No loaders are registered.");
+  }
+
+  if (!loaderNames.includes(loader as (typeof loaderNames)[number])) {
+    throw new Error(
+      `Invalid loader \"${loader}\". Available loaders: ${loaderNames.join(", ")}`,
+    );
+  }
+
+  const format = selectedFormat ?? inferFormatFromOutputPath(outputFilePath);
+
+  if (!format) {
+    throw new Error(
+      `Cannot infer format from output file \"${outputFilePath}\". Use --format with one of: ${formatNames.join(", ")}`,
+    );
+  }
+
+  if (!formatNames.includes(format as (typeof formatNames)[number])) {
+    throw new Error(
+      `Invalid format \"${format}\". Available formats: ${formatNames.join(", ")}`,
+    );
+  }
 
   const data = await readFile(filePath, "utf-8");
 
   const finishedBuild = build({
     data: [data],
     options: {
-      loader: response.loader,
+      loader,
       platforms: [
         {
-          name: response.format,
-          format: response.format,
+          name: format,
+          format,
           outputs: [{ name: outputFilePath }],
         },
       ],
@@ -197,4 +224,26 @@ async function readInputFile(filePath: string, outputFilePath: string) {
 
     await writeFile(name, content);
   }
+}
+
+function inferFormatFromOutputPath(outputFilePath: string): string | undefined {
+  const normalizedPath = outputFilePath.toLowerCase();
+
+  if (normalizedPath.endsWith(".detailed.json")) {
+    return "detailed-json";
+  }
+
+  if (normalizedPath.endsWith(".scss")) {
+    return "scss";
+  }
+
+  if (normalizedPath.endsWith(".css")) {
+    return "css";
+  }
+
+  if (normalizedPath.endsWith(".json")) {
+    return "flatten-json";
+  }
+
+  return undefined;
 }

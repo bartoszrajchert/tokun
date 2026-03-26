@@ -1,54 +1,322 @@
 #!/usr/bin/env node
 
-import { Command } from "commander";
-import { red } from "kleur/colors";
 import packageJson from "../../package.json" with { type: "json" };
 import { logger } from "../utils/logger.js";
 import { runBuild } from "./build.js";
 import { runValidate } from "./validate.js";
+
+type BuildOptions = {
+  config?: string;
+  input?: string;
+  output?: string;
+  loader?: string;
+  format?: string;
+};
+
+class CliUsageError extends Error {}
 
 const handleSigTerm = () => process.exit(0);
 
 process.on("SIGTERM", handleSigTerm);
 process.on("SIGINT", handleSigTerm);
 
-const program = new Command("tokun")
-  .description(packageJson.description)
-  .version(packageJson.version);
-
-program
-  .command("build")
-  .description(
-    "Build design tokens to a different format. This builder is simplified, to use more advencent option please create a custom script.",
-  )
-  .option("-c, --config <config>", "The path to the config file.")
-  .option(
-    "-i, --input <input>",
-    "The input file. This can be a glob pattern. See `tinyglobby` for more information.",
-  )
-  .option("-o, --output <output>", "The output file to write.")
-  .action(runBuild);
-
-program
-  .command("validate")
-  .description("Validate design tokens against the DTCG format.")
-  .argument(
-    "<inputs...>",
-    "The input files to validate. This can be a glob pattern. See `tinyglobby` for more information.",
-  )
-  .action(runValidate);
-
-program.on("command:*", function () {
-  logger.error(`Invalid command: ${process.argv.slice(2).join(" ")}`);
-  logger.error("See --help for a list of available commands.");
-  process.exit(1);
-});
-
-program.parseAsync().catch((error) => {
+function printMainHelp() {
+  logger.log(`tokun v${packageJson.version}`);
+  logger.log(packageJson.description);
   logger.break();
-  logger.error(red("Unexpected error. Please report it as a bug:"));
-  logger.error(error);
+  logger.log("Usage:");
+  logger.log("  tokun <command> [options]");
+  logger.break();
+  logger.log("Commands:");
+  logger.log(
+    "  build       Build design tokens to a different format. This builder is simplified, to use more advencent option please create a custom script.",
+  );
+  logger.log("  validate    Validate design tokens against the DTCG format.");
+  logger.break();
+  logger.log("Global options:");
+  logger.log("  -v, --version  Show version number");
+  logger.log("  -h, --help     Show this help message");
+}
+
+function printBuildHelp() {
+  logger.log("Build design tokens to a different format.");
+  logger.break();
+  logger.log("Usage:");
+  logger.log("  tokun build [options]");
+  logger.break();
+  logger.log("Options:");
+  logger.log("  -c, --config <config>  The path to the config file.");
+  logger.log("  -i, --input <input>    Path to a single input token file.");
+  logger.log("  -o, --output <output>  The output file to write.");
+  logger.log(
+    "  -l, --loader <loader>  Loader name for input/output mode (default: first registered loader).",
+  );
+  logger.log(
+    "  -f, --format <format>  Format name for input/output mode (inferred from output extension when omitted).",
+  );
+  logger.log("  -h, --help             Show help for build command");
+}
+
+function printValidateHelp() {
+  logger.log("Validate design tokens against the DTCG format.");
+  logger.break();
+  logger.log("Usage:");
+  logger.log("  tokun validate <inputs...>");
+  logger.break();
+  logger.log("Arguments:");
+  logger.log(
+    "  <inputs...>  The input files to validate. This can be a glob pattern. See `tinyglobby` for more information.",
+  );
+  logger.break();
+  logger.log("Options:");
+  logger.log("  -h, --help   Show help for validate command");
+}
+
+function getOptionValue(
+  args: string[],
+  index: number,
+  shortName: string,
+  longName: string,
+): {
+  value: string;
+  nextIndex: number;
+} {
+  const currentArg = args[index]!;
+  const normalizedShortName = `${shortName}=`;
+  const normalizedLongName = `${longName}=`;
+
+  if (currentArg.startsWith(normalizedLongName)) {
+    const value = currentArg.slice(normalizedLongName.length);
+
+    if (!value) {
+      throw new CliUsageError(`Missing value for ${longName}.`);
+    }
+
+    return { value, nextIndex: index };
+  }
+
+  if (currentArg.startsWith(normalizedShortName)) {
+    const value = currentArg.slice(normalizedShortName.length);
+
+    if (!value) {
+      throw new CliUsageError(`Missing value for ${shortName}.`);
+    }
+
+    return { value, nextIndex: index };
+  }
+
+  const value = args[index + 1];
+
+  if (!value || value.startsWith("-")) {
+    throw new CliUsageError(`Missing value for ${longName}.`);
+  }
+
+  return { value, nextIndex: index + 1 };
+}
+
+function parseBuildArgs(args: string[]): BuildOptions | "help" {
+  const options: BuildOptions = {};
+
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index]!;
+
+    if (arg === "-h" || arg === "--help") {
+      printBuildHelp();
+      return "help";
+    }
+
+    if (
+      arg === "-c" ||
+      arg === "--config" ||
+      arg.startsWith("-c=") ||
+      arg.startsWith("--config=")
+    ) {
+      const { value, nextIndex } = getOptionValue(
+        args,
+        index,
+        "-c",
+        "--config",
+      );
+      options.config = value;
+      index = nextIndex;
+      continue;
+    }
+
+    if (
+      arg === "-i" ||
+      arg === "--input" ||
+      arg.startsWith("-i=") ||
+      arg.startsWith("--input=")
+    ) {
+      const { value, nextIndex } = getOptionValue(args, index, "-i", "--input");
+      options.input = value;
+      index = nextIndex;
+      continue;
+    }
+
+    if (
+      arg === "-o" ||
+      arg === "--output" ||
+      arg.startsWith("-o=") ||
+      arg.startsWith("--output=")
+    ) {
+      const { value, nextIndex } = getOptionValue(
+        args,
+        index,
+        "-o",
+        "--output",
+      );
+      options.output = value;
+      index = nextIndex;
+      continue;
+    }
+
+    if (
+      arg === "-l" ||
+      arg === "--loader" ||
+      arg.startsWith("-l=") ||
+      arg.startsWith("--loader=")
+    ) {
+      const { value, nextIndex } = getOptionValue(
+        args,
+        index,
+        "-l",
+        "--loader",
+      );
+      options.loader = value;
+      index = nextIndex;
+      continue;
+    }
+
+    if (
+      arg === "-f" ||
+      arg === "--format" ||
+      arg.startsWith("-f=") ||
+      arg.startsWith("--format=")
+    ) {
+      const { value, nextIndex } = getOptionValue(
+        args,
+        index,
+        "-f",
+        "--format",
+      );
+      options.format = value;
+      index = nextIndex;
+      continue;
+    }
+
+    throw new CliUsageError(`Unknown option for build command: ${arg}`);
+  }
+
+  return options;
+}
+
+function parseValidateArgs(args: string[]): string[] | "help" {
+  if (args.length === 0) {
+    throw new CliUsageError("Missing required argument: <inputs...>");
+  }
+
+  const inputs: string[] = [];
+
+  for (const arg of args) {
+    if (arg === "-h" || arg === "--help") {
+      printValidateHelp();
+      return "help";
+    }
+
+    if (arg.startsWith("-")) {
+      throw new CliUsageError(`Unknown option for validate command: ${arg}`);
+    }
+
+    inputs.push(arg);
+  }
+
+  return inputs;
+}
+
+function printHelpForCommand(command?: string) {
+  if (!command) {
+    printMainHelp();
+    return;
+  }
+
+  if (command === "build") {
+    printBuildHelp();
+    return;
+  }
+
+  if (command === "validate") {
+    printValidateHelp();
+    return;
+  }
+
+  throw new CliUsageError(`Unknown help topic: ${command}`);
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    printMainHelp();
+    return;
+  }
+
+  const [command, ...restArgs] = args;
+
+  if (command === "-v" || command === "--version") {
+    logger.log(packageJson.version);
+    return;
+  }
+
+  if (command === "-h" || command === "--help") {
+    printMainHelp();
+    return;
+  }
+
+  if (command === "help") {
+    printHelpForCommand(restArgs[0]);
+    return;
+  }
+
+  if (command === "build") {
+    const options = parseBuildArgs(restArgs);
+
+    if (options === "help") {
+      return;
+    }
+
+    await runBuild(options);
+    return;
+  }
+
+  if (command === "validate") {
+    const validateInputs = parseValidateArgs(restArgs);
+
+    if (validateInputs === "help") {
+      return;
+    }
+
+    await runValidate(validateInputs);
+    return;
+  }
+
+  throw new CliUsageError(`Invalid command: ${args.join(" ")}`);
+}
+
+main().catch((error) => {
+  logger.break();
+
+  if (error instanceof CliUsageError) {
+    logger.error(error.message);
+    logger.error("See --help for a list of available commands.");
+    process.exit(1);
+  }
+
+  if (error instanceof Error) {
+    logger.error(error.message);
+    process.exit(1);
+  }
+
+  logger.error(String(error));
   process.exit(1);
 });
-
-logger.break();

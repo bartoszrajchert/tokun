@@ -31,7 +31,7 @@
   "scripts": {
     "dev": "bun --watch run build",
     "build": "rm -rf ./dist && bun run build:js && bun run build:types",
-    "build:js": "bun build ./src/builder/index.ts --outdir ./dist --format esm --target node && bun build ./src/builder/browser/index.ts --outdir ./dist/browser --format esm --target browser && bun build ./src/validators/index.ts --outdir ./dist/validators --format esm --target node -e zod -e zod/* && bun build ./src/cli/index.ts --outdir ./dist/cli --format esm --target node -e commander -e kleur -e ora -e prompts -e tinyglobby -e zod -e zod/*",
+    "build:js": "bun build ./src/builder/index.ts --outdir ./dist --format esm --target node && bun build ./src/builder/browser/index.ts --outdir ./dist/browser --format esm --target browser && bun build ./src/validators/index.ts --outdir ./dist/validators --format esm --target node -e zod -e zod/* && bun build ./src/cli/index.ts --outdir ./dist/cli --format esm --target node -e tinyglobby -e zod -e zod/*",
     "build:types": "bunx tsc -p tsconfig.build.json",
     "test": "vitest",
     "coverage": "vitest run --coverage",
@@ -40,14 +40,9 @@
   "author": "Bartosz Rajchert",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.17.10",
-    "@types/prompts": "^2.4.9"
+    "@types/node": "^20.17.10"
   },
   "dependencies": {
-    "commander": "^12.1.0",
-    "kleur": "^4.1.5",
-    "ora": "^8.1.1",
-    "prompts": "^2.4.2",
     "tinyglobby": "^0.2.10",
     "zod": "^3.25.76"
   },

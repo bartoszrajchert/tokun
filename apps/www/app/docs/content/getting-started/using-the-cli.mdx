@@ -42,14 +42,23 @@ Build design tokens to a different format. This builder is simplified, to use mo
 tokun build
 ```
 
-If options are not provided, then the command will try search for `config.json` file in the root.
+If options are not provided, then the command will try to find a `config.json` file in the root.
 
 Options:
 | Name | Usage | Description |
 |--------------------|-----------------------|------------------------------------------------------------------------------------|
 | Configuration path | -c, --config \<config\> | The path to the config file. |
-| Input path | -i, --input \<input\> | The input file. This can be a glob pattern. See `tinyglobby` for more information. |
+| Input path | -i, --input \<input\> | Path to a single input token file. |
 | Output path | -o, --output \<output\> | The output file to write. |
+| Loader | -l, --loader \<loader\> | Loader for input/output mode. Defaults to first registered loader. |
+| Format | -f, --format \<format\> | Format for input/output mode. If omitted, it is inferred from output extension (`.css`, `.scss`, `.detailed.json`, `.json`). |
+
+Examples:
+
+```bash
+tokun build --input tokens.json --output dist/tokens.css
+tokun build --input tokens.json --output dist/tokens.out --format css --loader dtcg-json
+```
 
 #### Config file
 
@@ -81,14 +90,13 @@ export default {
           },
         ],
         config: { outputReferences: true },
-      }
+      },
     ],
   },
 };
 ```
 
 For more details, read [Config API](/docs/reference/config).
-
 
 ### validate
 

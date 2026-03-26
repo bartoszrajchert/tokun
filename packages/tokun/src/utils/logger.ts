@@ -1,10 +1,10 @@
-import { cyan, green, red, yellow } from "kleur/colors";
+import { ansi } from "./ansi.js";
 
 export const highlighter = {
-  error: red,
-  warn: yellow,
-  info: cyan,
-  success: green,
+  error: ansi.red,
+  warn: ansi.yellow,
+  info: ansi.cyan,
+  success: ansi.green,
 };
 
 export const logger = {
