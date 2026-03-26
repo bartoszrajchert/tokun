@@ -7,13 +7,14 @@ import {
   cssVariableSafeTransform,
   dtcgJsonLoader,
   flattenJsonFormat,
+  isReference,
   kebabCaseTransform,
+  unwrapReference,
 } from "tokun";
-import { isReference, unwrapReference } from "tokun/utils";
 import { dtcgValidator } from "tokun/validators";
 import { z } from "zod";
 
-/** @type {import('tokun/types').Config} */
+/** @type {import('tokun').Config} */
 export default {
   data: ["tokens/theme/*.tokens.json", "tokens/base.tokens.json"],
   options: {

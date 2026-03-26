@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  const filePath = path.resolve("../../examples/templates/basic/config.mjs");
+  const filePath = path.resolve("../../examples/templates/simple/config.mjs");
   const content = readFileSync(filePath, "utf-8");
 
   return (

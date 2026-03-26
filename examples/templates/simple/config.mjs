@@ -1,4 +1,4 @@
-/** @type {import('tokun/types').Config} */
+/** @type {import('tokun').Config} */
 export default {
   data: ["simple.tokens.json"],
   options: {

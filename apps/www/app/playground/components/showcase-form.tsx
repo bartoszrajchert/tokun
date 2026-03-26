@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { build } from "tokun/browser";
-import { FormatName, formatNames, LoaderName, loaderNames } from "tokun/utils";
-import { dtcgValidator, ValidatorError } from "tokun/validators";
+import {
+  build,
+  formatNames,
+  loaderNames,
+  type FormatName,
+  type LoaderName,
+} from "tokun/browser";
+import { dtcgValidator, type ValidatorError } from "tokun/validators";
 
 import { Code } from "@/components/code";
 import { Button } from "@/components/ui/button";
