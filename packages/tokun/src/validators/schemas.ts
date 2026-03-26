@@ -4,7 +4,7 @@ import {
   TOKEN_TYPES,
   tokenReferenceRegex,
 } from "utils/token-utils.js";
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 import { Token, TokenType } from "../types/definitions.js";
 import { TypeValidators } from "./types.js";
 

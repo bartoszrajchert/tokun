@@ -5,6 +5,7 @@ import {
   cssShadowTransform,
   cssUnitTransform,
   cssVariableSafeTransform,
+  defineConfig,
   dtcgJsonLoader,
   flattenJsonFormat,
   isReference,
@@ -14,8 +15,7 @@ import {
 import { dtcgValidator } from "tokun/validators";
 import { z } from "zod";
 
-/** @type {import('tokun').Config} */
-export default {
+export default defineConfig({
   data: ["tokens/theme/*.tokens.json", "tokens/base.tokens.json"],
   options: {
     loader: dtcgJsonLoader,
@@ -116,4 +116,4 @@ export default {
       },
     ],
   },
-};
+});

@@ -9,7 +9,7 @@ import type { LogConfig } from "utils/logger.js";
 import { logger, resolveLogConfig, setLogConfig } from "utils/logger.js";
 import { isObject } from "utils/object-utils.js";
 import { formatNames, loaderNames } from "utils/registry.js";
-import { z } from "zod/v4-mini";
+import * as z from "zod/v4-mini";
 import { startMessage } from "./helpers.js";
 
 const ConfigSchema = z.strictObject({

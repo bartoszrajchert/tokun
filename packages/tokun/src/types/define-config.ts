@@ -1,7 +1,6 @@
 import { Token } from "types/definitions.js";
 import { ValidatorConfig, ValidatorReturn } from "validators/types.js";
 import type { LogConfig } from "../utils/logger.js";
-import { assign } from "../utils/object-utils.js";
 import {
   FileHeader,
   Format,
@@ -20,14 +19,6 @@ import {
  * @returns
  */
 export const defineConfig = (config: Config) => config;
-
-/**
- * Deep-merge a base config with overrides.
- */
-export const extendConfig = (
-  base: Config,
-  overrides: Partial<Config>,
-): Config => assign(base, overrides as Config);
 
 export type Config = {
   data: string | string[] | object | object[];

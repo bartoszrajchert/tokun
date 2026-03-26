@@ -297,7 +297,7 @@ export const findInRegistry = <T>(
   const found = registry.find((reg) => reg.name === name);
 
   if (!found) {
-    throw new Error(`${name} not found.`);
+    throw new Error(`${name} not found in the registry.`);
   }
 
   return found;
