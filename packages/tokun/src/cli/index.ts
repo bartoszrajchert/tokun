@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
-import packageJson from "../../package.json" with { type: "json" };
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   logger,
   logVerbosityLevels,
@@ -8,8 +10,32 @@ import {
   setLogConfig,
   type LogConfig,
 } from "../utils/logger.js";
-import { runBuild } from "./build.js";
-import { runValidate } from "./validate.js";
+
+type PackageMetadata = {
+  version?: string;
+  description?: string;
+};
+
+function readPackageMetadata(): { version: string; description: string } {
+  try {
+    const cliDir = path.dirname(fileURLToPath(import.meta.url));
+    const packageJsonPath = path.resolve(cliDir, "../../package.json");
+    const rawPackageMetadata = readFileSync(packageJsonPath, "utf-8");
+    const packageMetadata = JSON.parse(rawPackageMetadata) as PackageMetadata;
+
+    return {
+      version: packageMetadata.version ?? "0.0.0",
+      description: packageMetadata.description ?? "tokun",
+    };
+  } catch {
+    return {
+      version: "0.0.0",
+      description: "tokun",
+    };
+  }
+}
+
+const packageMetadata = readPackageMetadata();
 
 type BuildOptions = {
   config?: string;
@@ -75,8 +101,8 @@ function hasCliLogOverride({
 }
 
 function printMainHelp() {
-  logger.log(`tokun v${packageJson.version}`);
-  logger.log(packageJson.description);
+  logger.log(`tokun v${packageMetadata.version}`);
+  logger.log(packageMetadata.description);
   logger.break();
   logger.log("Usage:");
   logger.log("  tokun <command> [options]");
@@ -354,7 +380,7 @@ async function main(): Promise<void> {
   const [command, ...restArgs] = args;
 
   if (command === "-v" || command === "--version") {
-    logger.log(packageJson.version);
+    logger.log(packageMetadata.version);
     return;
   }
 
@@ -380,6 +406,8 @@ async function main(): Promise<void> {
 
     setLogConfig(logConfig);
 
+    const { runBuild } = await import("./build.js");
+
     await runBuild({
       config: options.config,
       input: options.input,
@@ -400,6 +428,9 @@ async function main(): Promise<void> {
     }
 
     setLogConfig(resolveCliLogConfig(options));
+
+    const { runValidate } = await import("./validate.js");
+
     await runValidate(options.inputs);
     return;
   }

@@ -31,8 +31,9 @@
   "scripts": {
     "dev": "bun --watch run build",
     "build": "rm -rf ./dist && bun run build:js && bun run build:types",
-    "build:js": "bun build ./src/builder/index.ts --outdir ./dist --format esm --target node && bun build ./src/builder/browser/index.ts --outdir ./dist/browser --format esm --target browser && bun build ./src/validators/index.ts --outdir ./dist/validators --format esm --target node -e zod -e zod/* && bun build ./src/cli/index.ts --outdir ./dist/cli --format esm --target node -e tinyglobby -e zod -e zod/*",
+    "build:js": "bun build ./src/builder/browser/index.ts ./src/builder/index.ts --outdir ./dist --format esm --target node --splitting && bun build ./src/validators/index.ts ./src/cli/index.ts --outdir ./dist --format esm --target node --splitting -e tinyglobby -e zod -e zod/*",
     "build:types": "bunx tsc -p tsconfig.build.json",
+    "size:report": "node ./scripts/size-report.mjs",
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "echo 'Add lint script here'"
