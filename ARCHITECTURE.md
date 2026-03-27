@@ -3,7 +3,7 @@
 ## Purpose
 
 This document is the canonical architecture map for the repository.
-When structure, workflows, or DTCG conformance behavior changes, update this file in the same change.
+When structure, workflows, or agent-skill behavior changes, update this file in the same change.
 
 ## Monorepo topology
 
@@ -16,7 +16,8 @@ tokun/
 |- examples/                # Runnable usage examples
 |- .agents/
 |  `- skills/
-|     `- dtcg-2025-10/      # Consolidated DTCG skill
+|     |- dtcg-2025-10/      # DTCG conformance skill
+|     `- typescript/        # TypeScript engineering skill
 |- .claude/skills -> ../.agents/skills
 `- .opencode/skills -> ../.agents/skills
 ```
@@ -44,14 +45,17 @@ tokun/
 
 - Example configs and commands that run against local workspace `tokun`.
 
-### 4) `.agents/skills/dtcg-2025-10` (agent conformance skill)
+### 4) `.agents/skills` (agent skill system)
 
-- Single, consolidated Agent Skill for DTCG 2025.10.
-- Layout follows the skill pattern:
+- Canonical root for repository-specific skills.
+- Current skills:
+  - `dtcg-2025-10/` for DTCG 2025.10 conformance workflow.
+  - `typescript/` for TypeScript implementation and validation workflow.
+- Skill layout pattern:
   - `SKILL.md` for activation instructions and guardrails
-  - `references/` for normative indexes, schema mirrors, and research trace
-  - `assets/` for reusable templates
-  - `scripts/` reserved for reusable automation
+  - `references/` for optional requirement indexes and research trace
+  - `assets/` for optional reusable templates
+  - `scripts/` for optional reusable automation
 - Shared by compatible clients via symlinks:
   - `.claude/skills`
   - `.opencode/skills`
@@ -84,10 +88,10 @@ For every structural or behavior change, update all impacted documents in the sa
 
 1. `ARCHITECTURE.md` (this file) for topology or system-flow changes
 2. `AGEND.md` for alignment status and checklist updates
-3. `.agents/skills/dtcg-2025-10/SKILL.md` and related references when DTCG behavior or skill workflow changes
+3. Relevant skill files under `.agents/skills/*/SKILL.md` (and related references/assets/scripts) when skill workflow or behavior changes
 
 If no documentation update is needed, explicitly note why in the change description.
 
 ## Last reviewed
 
-- 2026-03-25
+- 2026-03-27

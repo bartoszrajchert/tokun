@@ -1,19 +1,18 @@
-# DTCG 2025.10 Skill
+# Agent Skills
 
-This directory contains a single consolidated DTCG skill aligned to:
+This directory contains consolidated, project-aligned agent skills.
 
-- https://www.designtokens.org/tr/2025.10/
+## Skills
 
-## Skill
-
-- `dtcg-2025-10`
+- `dtcg-2025-10` - DTCG 2025.10 conformance implementation and auditing.
+- `typescript` - TypeScript engineering workflow for this monorepo.
 
 ## Skill layout
 
-- `dtcg-2025-10/SKILL.md` - instructions and metadata
-- `dtcg-2025-10/references/` - normative indexes, schema mirrors, research trace
-- `dtcg-2025-10/scripts/` - optional executable automation
-- `dtcg-2025-10/assets/` - reusable report/template resources
+- `<skill>/SKILL.md` - instructions and metadata
+- `<skill>/references/` - optional requirement indexes, mirrors, or research trace
+- `<skill>/scripts/` - optional executable automation
+- `<skill>/assets/` - optional reusable templates/resources
 
 ## Cross-agent compatibility (no duplicated content)
 
@@ -28,4 +27,4 @@ This keeps one canonical source of skill content while exposing it to compatible
 - Repository architecture source: `ARCHITECTURE.md`
 - Alignment checklist source: `AGEND.md`
 
-Update both whenever the skill layout or DTCG conformance workflow changes.
+Update both whenever skill layout or skill workflows change.
