@@ -237,6 +237,120 @@ describe("Test DTCG JSON Loader", () => {
     });
   });
 
+  it("should keep strokeStyle dashArray references in $value and resolve extension", () => {
+    const content = {
+      dash: {
+        base: {
+          $type: "dimension",
+          $value: { value: 2, unit: "px" },
+        },
+      },
+      stroke: {
+        style: {
+          $type: "strokeStyle",
+          $value: {
+            dashArray: ["{dash.base}"],
+            lineCap: "round",
+          },
+        },
+      },
+    } satisfies TokenGroup;
+
+    const tokens = dtcgJsonLoader.loadFn({ content });
+
+    expect(Object.fromEntries(tokens)).toEqual({
+      "dash.base": {
+        $type: "dimension",
+        $value: {
+          value: 2,
+          unit: "px",
+        },
+      },
+      "stroke.style": {
+        $type: "strokeStyle",
+        $value: {
+          dashArray: ["{dash.base}"],
+          lineCap: "round",
+        },
+        $extensions: {
+          "com.tokun.resolvedValue": {
+            dashArray: [
+              {
+                value: 2,
+                unit: "px",
+              },
+            ],
+            lineCap: "round",
+          },
+        },
+      },
+    });
+  });
+
+  it("should resolve chained references inside strokeStyle dashArray", () => {
+    const content = {
+      dash: {
+        base: {
+          $type: "dimension",
+          $value: { value: 2, unit: "px" },
+        },
+        alias: {
+          $type: "dimension",
+          $value: "{dash.base}",
+        },
+      },
+      stroke: {
+        style: {
+          $type: "strokeStyle",
+          $value: {
+            dashArray: ["{dash.alias}"],
+            lineCap: "round",
+          },
+        },
+      },
+    } satisfies TokenGroup;
+
+    const tokens = dtcgJsonLoader.loadFn({ content });
+
+    expect(Object.fromEntries(tokens)).toEqual({
+      "dash.base": {
+        $type: "dimension",
+        $value: {
+          value: 2,
+          unit: "px",
+        },
+      },
+      "dash.alias": {
+        $type: "dimension",
+        $value: "{dash.base}",
+        $extensions: {
+          "com.tokun.resolvedValue": {
+            value: 2,
+            unit: "px",
+          },
+        },
+      },
+      "stroke.style": {
+        $type: "strokeStyle",
+        $value: {
+          dashArray: ["{dash.alias}"],
+          lineCap: "round",
+        },
+        $extensions: {
+          "com.tokun.resolvedValue": {
+            dashArray: [
+              {
+                value: 2,
+                unit: "px",
+              },
+            ],
+            lineCap: "round",
+          },
+        },
+      },
+    });
+  });
+
   it("should handle composite tokens with deep references", () => {
     const content = {
       color: {

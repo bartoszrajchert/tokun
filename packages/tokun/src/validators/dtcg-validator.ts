@@ -1,4 +1,5 @@
-import { FlattenTokens, toFlat } from "utils/to-flat.js";
+import type { FlattenTokens } from "utils/to-flat.js";
+import { toFlat } from "utils/to-flat.js";
 import {
   getTokenValue,
   hasUnallowedCharactersInName,
@@ -7,7 +8,7 @@ import {
   unwrapReference,
 } from "utils/token-utils.js";
 import { traverseTokens } from "utils/traverse-tokens.js";
-import { TokenGroup, TokenType } from "../types/definitions.js";
+import type { TokenGroup, TokenType } from "../types/definitions.js";
 import { GroupSchema, dtcgJsonSchemas } from "./schemas.js";
 import {
   RuleValidators,

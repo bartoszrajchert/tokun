@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ansi } from "../utils/ansi.js";
 import {
   logger,
   logVerbosityLevels,
@@ -100,62 +101,95 @@ function hasCliLogOverride({
   return Boolean(silent || verbose || noWarn);
 }
 
+type HelpRows = Array<readonly [option: string, description: string]>;
+
+function printRows(rows: HelpRows): void {
+  const width = rows.reduce((max, [option]) => Math.max(max, option.length), 0);
+
+  for (const [option, description] of rows) {
+    logger.log(
+      `  ${ansi.bold(option.padEnd(width))}  ${ansi.dim(description)}`,
+    );
+  }
+}
+
+function printSection(title: string): void {
+  logger.break();
+  logger.section(title);
+}
+
 function printMainHelp() {
-  logger.log(`tokun v${packageMetadata.version}`);
-  logger.log(packageMetadata.description);
-  logger.break();
-  logger.log("Usage:");
-  logger.log("  tokun <command> [options]");
-  logger.break();
-  logger.log("Commands:");
   logger.log(
-    "  build       Build design tokens to a different format. This builder is simplified, to use more advencent option please create a custom script.",
+    `${ansi.bold("tokun")} ${ansi.dim(`v${packageMetadata.version}`)}`,
   );
-  logger.log("  validate    Validate design tokens against the DTCG format.");
-  logger.break();
-  logger.log("Global options:");
-  logger.log("  -v, --version  Show version number");
-  logger.log("  -h, --help     Show this help message");
+  logger.log(packageMetadata.description);
+
+  printSection("Usage");
+  logger.log("  tokun <command> [options]");
+
+  printSection("Commands");
+  printRows([
+    [
+      "build",
+      "Build design tokens to a different format (for advanced workflows, use a custom script).",
+    ],
+    ["validate", "Validate design tokens against the DTCG format."],
+  ]);
+
+  printSection("Global options");
+  printRows([
+    ["-v, --version", "Show version number"],
+    ["-h, --help", "Show this help message"],
+  ]);
 }
 
 function printBuildHelp() {
   logger.log("Build design tokens to a different format.");
-  logger.break();
-  logger.log("Usage:");
+
+  printSection("Usage");
   logger.log("  tokun build [options]");
-  logger.break();
-  logger.log("Options:");
-  logger.log("  -c, --config <config>  The path to the config file.");
-  logger.log("  -i, --input <input>    Path to a single input token file.");
-  logger.log("  -o, --output <output>  The output file to write.");
-  logger.log(
-    "  -l, --loader <loader>  Loader name for input/output mode (default: first registered loader).",
-  );
-  logger.log(
-    "  -f, --format <format>  Format name for input/output mode (inferred from output extension when omitted).",
-  );
-  logger.log("  -s, --silent           Silence non-fatal logs");
-  logger.log("  -v, --verbose          Enable verbose logs (default)");
-  logger.log("  -n, --no-warn          Disable warning logs");
-  logger.log("  -h, --help             Show help for build command");
+
+  printSection("Options");
+  printRows([
+    ["-c, --config <config>", "Path to the config file."],
+    ["-i, --input <input>", "Path to a single input token file."],
+    ["-o, --output <output>", "Output file to write."],
+    [
+      "-l, --loader <loader>",
+      "Loader name for input/output mode (defaults to first registered loader).",
+    ],
+    [
+      "-f, --format <format>",
+      "Format name for input/output mode (inferred from output extension when omitted).",
+    ],
+    ["-s, --silent", "Silence non-fatal logs."],
+    ["-v, --verbose", "Enable verbose logs (default)."],
+    ["-n, --no-warn", "Disable warning logs."],
+    ["-h, --help", "Show help for build command."],
+  ]);
 }
 
 function printValidateHelp() {
   logger.log("Validate design tokens against the DTCG format.");
-  logger.break();
-  logger.log("Usage:");
+
+  printSection("Usage");
   logger.log("  tokun validate <inputs...>");
-  logger.break();
-  logger.log("Arguments:");
-  logger.log(
-    "  <inputs...>  The input files to validate. This can be a glob pattern. See `tinyglobby` for more information.",
-  );
-  logger.break();
-  logger.log("Options:");
-  logger.log("  -s, --silent  Silence non-fatal logs");
-  logger.log("  -v, --verbose Enable verbose logs (default)");
-  logger.log("  -n, --no-warn Disable warning logs");
-  logger.log("  -h, --help   Show help for validate command");
+
+  printSection("Arguments");
+  printRows([
+    [
+      "<inputs...>",
+      "Input files to validate (glob patterns are supported via tinyglobby).",
+    ],
+  ]);
+
+  printSection("Options");
+  printRows([
+    ["-s, --silent", "Silence non-fatal logs."],
+    ["-v, --verbose", "Enable verbose logs (default)."],
+    ["-n, --no-warn", "Disable warning logs."],
+    ["-h, --help", "Show help for validate command."],
+  ]);
 }
 
 function getOptionValue(

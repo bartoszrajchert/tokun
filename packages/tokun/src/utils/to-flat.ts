@@ -1,4 +1,4 @@
-import { Token, TokenGroup, TokenType } from "types/definitions.js";
+import type { Token, TokenGroup, TokenType } from "types/definitions.js";
 import { traverseTokens } from "./traverse-tokens.js";
 
 export type FlattenTokens = Map<string, Token>;
@@ -12,7 +12,10 @@ export function toFlat(obj: Token | TokenGroup) {
         throw new Error("Last type is undefined");
       }
 
-      const newToken: Token = { ...token, $type: lastType as TokenType } as Token;
+      const newToken: Token = {
+        ...token,
+        $type: lastType as TokenType,
+      } as Token;
 
       flatten.set(path, newToken);
     },

@@ -36,6 +36,7 @@ When anything meaningful changes, update AGEND and linked docs in the same chang
   - `.agents/skills/typescript/`
 - Canonical skills root: `.agents/skills`
 - DTCG reference normalization treats root-token aliases (`{group.$root}`) and pointers (`#/group/$root`) as the same flattened token target.
+- DTCG loader keeps `strokeStyle.$value.dashArray` references untouched and stores resolved/chained dash values in `com.tokun.resolvedValue`.
 - Compatibility links:
   - `.claude/skills` -> `../.agents/skills`
   - `.opencode/skills` -> `../.agents/skills`
@@ -46,4 +47,4 @@ When anything meaningful changes, update AGEND and linked docs in the same chang
 
 ## Last reviewed
 
-- 2026-03-27
+- 2026-03-31

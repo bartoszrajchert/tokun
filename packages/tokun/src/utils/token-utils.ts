@@ -1,4 +1,5 @@
-import {
+import { tokenTypes } from "types/constants.js";
+import type {
   BorderToken,
   DimensionToken,
   DurationToken,
@@ -15,7 +16,7 @@ import {
   TransitionToken,
   TypographyToken,
 } from "types/definitions.js";
-import { Transform } from "./types.js";
+import type { Transform } from "./types.js";
 
 /**
  * The disallowed characters in token/group names.
@@ -37,21 +38,7 @@ export const DTCG_KEYS = [
   "$schema",
 ];
 
-export const TOKEN_TYPES: TokenType[] = [
-  "number",
-  "color",
-  "dimension",
-  "fontFamily",
-  "fontWeight",
-  "duration",
-  "cubicBezier",
-  "transition",
-  "shadow",
-  "gradient",
-  "typography",
-  "strokeStyle",
-  "border",
-];
+export const TOKEN_TYPES: readonly TokenType[] = tokenTypes;
 
 export const COMPOSITE_TOKEN_TYPES: TokenType[] = [
   "transition",

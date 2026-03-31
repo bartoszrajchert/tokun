@@ -1,7 +1,7 @@
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { Token } from "types/definitions.js";
+import type { Token } from "types/definitions.js";
 import { getTokenValue, isTokenReference } from "utils/token-utils.js";
-import { Format } from "utils/types.js";
+import type { Format } from "utils/types.js";
 import { CSS_EXTENSION, stringifyCssValue } from "./css-format.js";
 
 /**

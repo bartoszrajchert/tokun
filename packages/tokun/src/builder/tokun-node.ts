@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { Config } from "types/define-config.js";
+import type { Config } from "types/define-config.js";
 import {
   getLogConfig,
   logger,

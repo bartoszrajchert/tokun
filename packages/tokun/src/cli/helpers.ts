@@ -3,8 +3,12 @@ import { ansi } from "../utils/ansi.js";
 import { logger } from "../utils/logger.js";
 
 export function startMessage(msg: string) {
+  const separator = ansi.dim("-".repeat(56));
+
   logger.break();
+  logger.log(separator);
   logger.log(
-    `${ansi.bold(ansi.green(`🥷 ${packageJson.name}`))} ${ansi.dim(ansi.green(`v${packageJson.version}`))} | Running ${ansi.bold(msg)}...`,
+    `🥷 ${ansi.bold(packageJson.name)} ${ansi.dim(`v${packageJson.version}`)} ${ansi.dim("|")} ${ansi.bold(msg)}`,
   );
+  logger.log(separator);
 }

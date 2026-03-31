@@ -1,12 +1,8 @@
-import {
-  DimensionToken,
-  Token,
-  TokenGroup,
-  TokenValue,
-} from "types/definitions.js";
+import type { Token, TokenGroup, TokenValue } from "types/definitions.js";
 import { logger } from "utils/logger.js";
 import { assign, isEqual, isObject } from "utils/object-utils.js";
-import { FlattenTokens, toFlat } from "utils/to-flat.js";
+import type { FlattenTokens } from "utils/to-flat.js";
+import { toFlat } from "utils/to-flat.js";
 import {
   getByJsonPointer,
   getTokenValue,
@@ -17,7 +13,7 @@ import {
   unwrapReference,
 } from "utils/token-utils.js";
 
-import { Loader } from "utils/types.js";
+import type { Loader } from "utils/types.js";
 
 export const dtcgJsonLoader: Loader = {
   name: "dtcg-json",
@@ -28,7 +24,6 @@ export const dtcgJsonLoader: Loader = {
     const resolvedFlatten = resolveTokens(flatten);
 
     fixGradientPosition(resolvedFlatten);
-    fixStrokeStyleDashArray(resolvedFlatten);
 
     return resolvedFlatten;
   },
@@ -203,74 +198,6 @@ const fixGradientPosition = (flatten: FlattenTokens) => {
       if (Array.isArray(resolved)) {
         token.$extensions[RESOLVED_EXTENSION] = resolved.map((gradient) =>
           validateGradientPosition(gradient as Record<string, unknown>, name),
-        );
-      }
-    }
-  });
-};
-
-/**
- * Resolve dashArray dimension values in StrokeStyle tokens with object values.
- *
- * @link https://tr.designtokens.org/format/#object-value
- */
-const fixStrokeStyleDashArray = (flatten: FlattenTokens) => {
-  const resolveDashArrayDimension = (
-    dim: DimensionToken["$value"],
-    tokenName: string,
-  ): DimensionToken["$value"] => {
-    if (isReference(dim)) {
-      const rawRefPath = unwrapReference(dim);
-      const refPath = normalizeRootTokenPath(rawRefPath);
-      const ref = flatten.get(refPath);
-
-      if (ref) {
-        const refValue = getTokenValue(ref);
-        if (!isTokenReference(refValue)) {
-          return refValue as DimensionToken["$value"];
-        }
-      }
-
-      throw new Error(`Reference ${rawRefPath} not found in ${tokenName}`);
-    }
-
-    return dim;
-  };
-
-  flatten.forEach((token, name) => {
-    if (token.$type !== "strokeStyle") return;
-
-    const tokenValue = getTokenValue(token);
-    if (isTokenReference(tokenValue)) return;
-    if (typeof tokenValue === "string") return;
-    if (!isObject(tokenValue) || !("dashArray" in tokenValue)) return;
-    if (!Array.isArray(tokenValue.dashArray)) return;
-
-    const strokeValue = tokenValue as {
-      dashArray: DimensionToken["$value"][];
-    };
-
-    const normalizedDashArray = strokeValue.dashArray.map((dim) =>
-      resolveDashArrayDimension(dim, name),
-    );
-
-    strokeValue.dashArray = normalizedDashArray;
-
-    if ("$value" in token) {
-      (token as { $value: typeof strokeValue }).$value = strokeValue;
-    }
-
-    if (token.$extensions?.[RESOLVED_EXTENSION]) {
-      const resolved = token.$extensions[RESOLVED_EXTENSION];
-
-      if (
-        isObject(resolved) &&
-        "dashArray" in resolved &&
-        Array.isArray(resolved.dashArray)
-      ) {
-        resolved.dashArray = resolved.dashArray.map(
-          (dim: DimensionToken["$value"]): DimensionToken["$value"] =>
-            resolveDashArrayDimension(dim, name),
         );
       }
     }

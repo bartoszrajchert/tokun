@@ -1,12 +1,16 @@
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { StructuredColor, Token, TypographyToken } from "types/definitions.js";
+import type {
+  StructuredColor,
+  Token,
+  TypographyToken,
+} from "types/definitions.js";
 import {
   getTokenValue,
   isTokenReference,
   normalizeRootTokenPath,
   stringifyUnitValue,
 } from "utils/token-utils.js";
-import { Format } from "utils/types.js";
+import type { Format } from "utils/types.js";
 
 type CSSRoot = Record<
   string,

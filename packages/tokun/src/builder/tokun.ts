@@ -1,9 +1,14 @@
-import {
+import type {
   Config,
   ConfigOptions,
   PlatformWithoutString,
 } from "types/define-config.js";
-import { Token, TokenGroup, TokenType, TokenValue } from "types/definitions.js";
+import type {
+  Token,
+  TokenGroup,
+  TokenType,
+  TokenValue,
+} from "types/definitions.js";
 import {
   getLogConfig,
   logger,
@@ -17,7 +22,7 @@ import {
   loaderRegistry,
   transformRegistry,
 } from "utils/registry.js";
-import { FlattenTokens } from "utils/to-flat.js";
+import type { FlattenTokens } from "utils/to-flat.js";
 import {
   findInRegistry,
   getTokenValue,
@@ -26,7 +31,7 @@ import {
   normalizeRootTokenPath,
   unwrapReference,
 } from "utils/token-utils.js";
-import { Loader, Transform, TransformGroup } from "utils/types.js";
+import type { Loader, Transform, TransformGroup } from "utils/types.js";
 import { defaultFileHeader } from "./file-headers/default-file-header.js";
 import { cssFormat } from "./formats/css-format.js";
 import { dtcgJsonLoader } from "./loaders/dtcg-json-loader.js";
@@ -139,7 +144,7 @@ function validateTokens(
   const { errors, warnings } = validator(data, customValidator);
 
   if (errors.length > 0) {
-    errors.forEach(({ message }) => logger.error(`! ${message}`));
+    errors.forEach(({ message }) => logger.error(message));
     throw new Error("Provided content is not a valid token group.");
   }
 
@@ -180,7 +185,7 @@ function buildDesignTokens({
     const transformedTokens = applyTransforms(obj, format.transforms);
     const formats = generateFormats(transformedTokens, format);
 
-    logger.success(`✓ ${format.format.name} format parsed`);
+    logger.success(`${format.format.name} format parsed`);
     output.push(...formats);
   }
 
@@ -265,7 +270,7 @@ function handleNameTransform(
   acc: FlattenTokens,
 ): void {
   if (!token.$type) {
-    logger.error(`! Token ${name} has no type`);
+    logger.error(`Token ${name} has no type`);
     throw new Error(`Token ${name} has no type`);
   }
 

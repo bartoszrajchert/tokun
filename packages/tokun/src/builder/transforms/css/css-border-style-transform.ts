@@ -3,14 +3,14 @@ import {
   stringifyCssValue,
 } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { Token } from "types/definitions.js";
+import type { Token } from "types/definitions.js";
 
 import {
   getTokenValue,
   isTokenReference,
   stringifyUnitValue,
 } from "utils/token-utils.js";
-import { Transform } from "utils/types.js";
+import type { Transform } from "utils/types.js";
 
 export const cssBorderStyleTransform: Transform = {
   name: "css-border",

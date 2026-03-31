@@ -1,4 +1,4 @@
-import { ConfigOptions } from "types/define-config.js";
+import type { ConfigOptions } from "types/define-config.js";
 import { cssFormat } from "../builder/formats/css-format.js";
 import { detailedJsonFormat } from "../builder/formats/detailed-json-format.js";
 import { flattenJsonFormat } from "../builder/formats/flatten-json-format.js";
@@ -17,7 +17,7 @@ import {
   pascalCaseTransform,
   snakeCaseTransform,
 } from "../builder/transforms/name-transforms.js";
-import { Format, Loader, Transform, TransformGroup } from "./types.js";
+import type { Format, Loader, Transform, TransformGroup } from "./types.js";
 
 export const formatRegistry: Format[] = [
   cssFormat,

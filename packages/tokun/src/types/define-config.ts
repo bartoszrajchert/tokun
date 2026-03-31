@@ -1,7 +1,7 @@
-import { Token } from "types/definitions.js";
-import { ValidatorConfig, ValidatorReturn } from "validators/types.js";
+import type { Token } from "types/definitions.js";
+import type { ValidatorConfig, ValidatorReturn } from "validators/types.js";
 import type { LogConfig } from "../utils/logger.js";
-import {
+import type {
   FileHeader,
   Format,
   FormatConfig,
@@ -11,20 +11,17 @@ import {
   TransformGroup,
 } from "../utils/types.js";
 
-/**
- * Define a configuration object for the design token builder.
- * It should be used with CLI.
- *
- * @param config
- * @returns
- */
-export const defineConfig = (config: Config) => config;
-
 export type Config = {
   data: string | string[] | object | object[];
   log?: Partial<LogConfig>;
   options?: ConfigOptions;
 };
+
+/**
+ * Define a configuration object for the design token builder.
+ * It should be used with CLI.
+ */
+export const defineConfig = <T extends Config>(config: T): T => config;
 
 export type ConfigOptions = {
   loader: Loader | string;

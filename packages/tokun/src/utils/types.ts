@@ -1,5 +1,5 @@
-import { Token, TokenGroup } from "types/definitions.js";
-import { FlattenTokens } from "./to-flat.js";
+import type { Token, TokenGroup } from "types/definitions.js";
+import type { FlattenTokens } from "./to-flat.js";
 
 export type FormatConfig = {
   outputReferences?: boolean;

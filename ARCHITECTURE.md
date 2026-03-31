@@ -81,6 +81,9 @@ tokun/
 - Format-module resolution normalizes `$root` token references to flattened paths:
   - Curly aliases ending with `.$root` resolve against the parent flattened token path.
   - JSON Pointer references targeting `/$root` map to the same flattened token path.
+- Loader post-resolution behavior:
+  - Gradient stop `position` values are clamped to the spec range `[0, 1]`.
+  - `strokeStyle.$value.dashArray` keeps original references; resolved/chained dimension values are exposed through `com.tokun.resolvedValue`.
 
 ## Mandatory documentation update rule
 
@@ -94,4 +97,4 @@ If no documentation update is needed, explicitly note why in the change descript
 
 ## Last reviewed
 
-- 2026-03-27
+- 2026-03-31

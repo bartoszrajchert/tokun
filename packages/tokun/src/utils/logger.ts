@@ -68,9 +68,52 @@ export const highlighter = {
   success: ansi.green,
 };
 
+const runtimeProcess = typeof process === "undefined" ? undefined : process;
+
+function supportsUnicode(): boolean {
+  if (!runtimeProcess) {
+    return true;
+  }
+
+  if (runtimeProcess.platform !== "win32") {
+    return runtimeProcess.env.TERM !== "linux";
+  }
+
+  return Boolean(
+    runtimeProcess.env.CI ||
+      runtimeProcess.env.WT_SESSION ||
+      runtimeProcess.env.ConEmuTask === "{cmd::Cmder}" ||
+      runtimeProcess.env.TERM_PROGRAM === "vscode" ||
+      runtimeProcess.env.TERM === "xterm-256color" ||
+      runtimeProcess.env.TERM === "alacritty" ||
+      runtimeProcess.env.TERMINAL_EMULATOR === "JetBrains-JediTerm",
+  );
+}
+
+const unicodeSupported = supportsUnicode();
+
+const logSymbols = {
+  info: highlighter.info(unicodeSupported ? "ℹ" : "i"),
+  success: highlighter.success(unicodeSupported ? "✔" : "√"),
+  warn: highlighter.warn(unicodeSupported ? "⚠" : "‼"),
+  error: highlighter.error(unicodeSupported ? "✖" : "×"),
+} as const;
+
+function joinArgs(args: unknown[]): string {
+  return args.map((arg) => String(arg)).join(" ");
+}
+
+function withLevelPrefix(
+  level: keyof typeof logSymbols,
+  args: unknown[],
+): string {
+  const prefix = ansi.bold(logSymbols[level]);
+  return `${prefix} ${joinArgs(args)}`;
+}
+
 export const logger = {
   error(...args: unknown[]) {
-    console.log(highlighter.error(args.join(" ")));
+    console.log(withLevelPrefix("error", args));
   },
   warn(...args: unknown[]) {
     if (shouldIgnoreWarnings()) {
@@ -78,28 +121,28 @@ export const logger = {
     }
 
     if (currentLogConfig.warnings === logWarningLevels.error) {
-      throw new Error(args.join(" "));
+      throw new Error(joinArgs(args));
     }
 
     if (isSilent()) {
       return;
     }
 
-    console.log(highlighter.warn(args.join(" ")));
+    console.log(withLevelPrefix("warn", args));
   },
   info(...args: unknown[]) {
     if (isSilent()) {
       return;
     }
 
-    console.log(highlighter.info(args.join(" ")));
+    console.log(withLevelPrefix("info", args));
   },
   success(...args: unknown[]) {
     if (isSilent()) {
       return;
     }
 
-    console.log(highlighter.success(args.join(" ")));
+    console.log(withLevelPrefix("success", args));
   },
   log(...args: unknown[]) {
     if (isSilent()) {
@@ -114,5 +157,12 @@ export const logger = {
     }
 
     console.log("");
+  },
+  section(title: string) {
+    if (isSilent()) {
+      return;
+    }
+
+    console.log(ansi.bold(ansi.cyan(title)));
   },
 };

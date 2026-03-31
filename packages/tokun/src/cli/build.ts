@@ -4,34 +4,13 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { glob } from "tinyglobby";
-import { Config } from "types/define-config.js";
+import type { Config } from "types/define-config.js";
+import { ConfigSchema } from "types/define-config.schema.js";
 import type { LogConfig } from "utils/logger.js";
 import { logger, resolveLogConfig, setLogConfig } from "utils/logger.js";
 import { isObject } from "utils/object-utils.js";
 import { formatNames, loaderNames } from "utils/registry.js";
-import * as z from "zod/v4-mini";
 import { startMessage } from "./helpers.js";
-
-const ConfigSchema = z.strictObject({
-  data: z.union([
-    z.string(),
-    z.array(z.string()),
-    z.looseObject({}),
-    z.array(z.union([z.string(), z.looseObject({})])),
-  ]),
-  log: z.optional(
-    z.looseObject({
-      verbosity: z.optional(z.enum(["default", "silent", "verbose"])),
-      warnings: z.optional(z.enum(["warn", "error", "disabled"])),
-    }),
-  ),
-  options: z.optional(
-    z.looseObject({
-      loader: z.union([z.string(), z.looseObject({})]),
-      platforms: z.array(z.looseObject({})),
-    }),
-  ),
-});
 
 export async function runBuild({
   config,
@@ -124,8 +103,18 @@ async function readConfigFile(
 
   const validation = ConfigSchema.safeParse(config);
   if (!validation.success) {
+    const details = validation.error.issues
+      .map((issue) => {
+        const pathLabel =
+          issue.path.length > 0
+            ? issue.path.map((segment) => String(segment)).join(".")
+            : "root";
+        return `${pathLabel}: ${issue.message}`;
+      })
+      .join("; ");
+
     throw new Error(
-      `Invalid config shape: ${JSON.stringify(z.prettifyError(validation.error))}`,
+      `Invalid config shape: ${details || validation.error.message}`,
     );
   }
 
@@ -173,7 +162,7 @@ async function readInputFile(
   selectedFormat?: string,
   log?: Partial<LogConfig>,
 ) {
-  logger.log(filePath);
+  logger.info(`Input ${filePath}`);
 
   const loader = selectedLoader ?? loaderNames[0];
 
@@ -227,17 +216,26 @@ async function writeBuildOutputs(
   outputs: ReturnType<typeof build>,
   baseDir?: string,
 ): Promise<void> {
+  let writtenFiles = 0;
+
   for (const { name, content } of outputs) {
     const outputPath = baseDir ? path.resolve(baseDir, name) : name;
     const dir = path.dirname(outputPath);
 
-    logger.log(`Writing to ${outputPath}`);
+    logger.info(`Write ${outputPath}`);
 
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
 
     await writeFile(outputPath, content);
+    writtenFiles++;
+  }
+
+  if (writtenFiles > 0) {
+    logger.success(
+      `Build completed with ${writtenFiles} output${writtenFiles === 1 ? "" : "s"}.`,
+    );
   }
 }
 

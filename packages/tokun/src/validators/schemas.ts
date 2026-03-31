@@ -1,12 +1,25 @@
 import {
+  colorSpaces,
+  fontWeightValues,
+  lineCapPredefinedValues,
+  strokePredefinedValues,
+} from "types/constants.js";
+import {
   hexColorWithAlphaRegex,
   jsonPointerReferenceRegex,
   TOKEN_TYPES,
   tokenReferenceRegex,
 } from "utils/token-utils.js";
-import * as z from "zod/v4-mini";
-import { Token, TokenType } from "../types/definitions.js";
-import { TypeValidators } from "./types.js";
+import * as z from "zod/mini";
+import type { Token, TokenType } from "../types/definitions.js";
+import type { TypeValidators } from "./types.js";
+
+export {
+  colorSpaces,
+  fontWeightValues,
+  lineCapPredefinedValues,
+  strokePredefinedValues,
+};
 
 /**
  * Creates a schema for a token.
@@ -95,23 +108,6 @@ export const GroupSchema = (customTypes?: string[]) =>
         return true;
       }),
     );
-
-export const colorSpaces = [
-  "srgb",
-  "srgb-linear",
-  "hsl",
-  "hwb",
-  "lab",
-  "lch",
-  "oklab",
-  "oklch",
-  "display-p3",
-  "a98-rgb",
-  "prophoto-rgb",
-  "rec2020",
-  "xyz-d65",
-  "xyz-d50",
-] as const;
 
 const colorSpaceSchema = z
   .string()
@@ -228,8 +224,10 @@ export const FontWeightValueSchema = z.union([
   z.number().check(z.int(), z.gte(1), z.lte(1000)),
   z.string().check(
     z.refine((value) => {
-      const keys = Object.values(fontWeightValues);
-      return keys.some((key) => key.includes(value));
+      const aliases = Object.values(
+        fontWeightValues,
+      ).flat() as readonly string[];
+      return aliases.includes(value);
     }),
   ),
 ]);
@@ -274,24 +272,6 @@ export const FontWeightTokenSchema = createSchema(
 );
 
 /**
- * Helper constant for font weight values.
- * The keys are the font weight values and the values are the possible names.
- * Reference: https://tr.designtokens.org/format/#font-weight
- */
-export const fontWeightValues = {
-  100: ["thin", "hairline"],
-  200: ["extra-light", "ultra-light"],
-  300: ["light"],
-  400: ["normal", "regular", "book"],
-  500: ["medium"],
-  600: ["semi-bold", "demi-bold"],
-  700: ["bold"],
-  800: ["extra-bold", "ultra-bold"],
-  900: ["black", "heavy"],
-  950: ["extra-black", "ultra-black"],
-};
-
-/**
  * A schema for a duration token.
  * The duration token is an object with a value and a unit.
  * The unit can be "ms" or "s".
@@ -325,17 +305,6 @@ export const CubicBezierTokenSchema = createSchema(
  */
 export const NumberTokenSchema = createSchema("number", NumberValueSchema);
 
-export const strokePredefinedValues = [
-  "solid",
-  "dashed",
-  "dotted",
-  "double",
-  "groove",
-  "ridge",
-  "outset",
-  "inset",
-] as const;
-export const lineCapPredefinedValues = ["butt", "round", "square"] as const;
 export const StrokeStyleValueSchema = z.union([
   z
     .string()

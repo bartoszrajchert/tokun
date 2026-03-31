@@ -1,8 +1,10 @@
-import { ModifyProperties } from "utils/types.js";
+import type { ModifyProperties } from "utils/types.js";
 import {
+  colorSpaces,
   lineCapPredefinedValues,
   strokePredefinedValues,
-} from "validators/schemas.js";
+  tokenTypes,
+} from "./constants.js";
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
@@ -16,36 +18,9 @@ export type ReferenceValue = `{${string}}`;
 export type JsonPointerReference = `#/${string}`;
 export type TokenReference = ReferenceValue;
 
-export type TokenType =
-  | "color"
-  | "dimension"
-  | "fontFamily"
-  | "fontWeight"
-  | "duration"
-  | "cubicBezier"
-  | "number"
-  | "strokeStyle"
-  | "border"
-  | "transition"
-  | "shadow"
-  | "gradient"
-  | "typography";
+export type TokenType = (typeof tokenTypes)[number];
 
-export type ColorSpace =
-  | "srgb"
-  | "srgb-linear"
-  | "hsl"
-  | "hwb"
-  | "lab"
-  | "lch"
-  | "oklab"
-  | "oklch"
-  | "display-p3"
-  | "a98-rgb"
-  | "prophoto-rgb"
-  | "rec2020"
-  | "xyz-d65"
-  | "xyz-d50";
+export type ColorSpace = (typeof colorSpaces)[number];
 
 export type StructuredColor = {
   colorSpace: ColorSpace;
