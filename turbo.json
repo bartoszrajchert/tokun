@@ -20,6 +20,22 @@
     },
     "typedoc": {
       "outputs": ["app/docs/content/api/**"]
+    },
+    "docs#typedoc": {
+      "outputs": ["app/docs/content/api/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/www/typedoc.json",
+        "$TURBO_ROOT$/apps/www/scripts/typedoc/**",
+        "$TURBO_ROOT$/packages/tokun/src/**",
+        "$TURBO_ROOT$/packages/tokun/typedoc.json",
+        "$TURBO_ROOT$/packages/tokun/package.json"
+      ]
+    },
+    "docs#dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["typedoc"]
     }
   }
 }
