@@ -123,7 +123,7 @@ export default function ShowcaseForm({ example }: { example: string }) {
             items={formatNames as unknown as string[]}
           />
           <div className="flex gap-1.5">
-            <InfoIcon size={14} className="mt-1 flex-shrink-0" />
+            <InfoIcon size={14} className="mt-1 shrink-0" />
             <small>
               Transforms are automatically applied when choosing a format
             </small>

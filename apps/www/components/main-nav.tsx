@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { MenuIcon, StarIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ModeToggle from "./mode-toggle";
 import SearchDialog from "./search-dialog";
 import { Button } from "./ui/button";
@@ -16,16 +16,17 @@ export interface MainNavProps {
 }
 
 export function MainNav({ config }: MainNavProps) {
-  const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const [openedPathname, setOpenedPathname] = useState<string | null>(null);
   const pathname = usePathname();
+  const isDrawerOpen = openedPathname === pathname;
 
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
+  const onDrawerOpenChange = (open: boolean) => {
+    setOpenedPathname(open ? pathname : null);
+  };
 
   return (
-    <Drawer open={isDrawerOpen} onOpenChange={setDrawerOpen}>
-      <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 dark:border-border sticky top-0 z-50 w-full border-b backdrop-blur">
+    <Drawer open={isDrawerOpen} onOpenChange={onDrawerOpenChange}>
+      <header className="border-border/40 bg-background/95 supports-backdrop-filter:bg-background/60 dark:border-border sticky top-0 z-50 w-full border-b backdrop-blur-sm">
         <nav className="m-auto flex h-14 items-center justify-between px-6 sm:px-8">
           <div className="mr-4 flex">
             <Link

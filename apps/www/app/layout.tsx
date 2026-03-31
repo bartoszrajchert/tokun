@@ -26,7 +26,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${rubik.variable} ${IBMPlexMono.variable} font-sans`}>
+      <body
+        className={`${rubik.variable} ${IBMPlexMono.variable} ${rubik.className} font-sans`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -32,7 +32,7 @@ export function DocsSidebar({ config }: DocsSidebarProps) {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "mb-0.5 h-auto w-full justify-start text-wrap p-2 text-left font-normal",
+                    "wrap-break-word mb-0.5 h-auto w-full justify-start whitespace-normal p-2 text-left font-normal",
                     pathname === `/docs/${item.slug}` ? "bg-accent" : "",
                   )}
                   size="sm"

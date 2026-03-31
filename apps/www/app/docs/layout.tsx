@@ -9,7 +9,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="-mx-8 flex">
       <DocsSidebar config={groupBySlug(docs)} />
-      <div className="min-w-0 flex-grow">{children}</div>
+      <div className="min-w-0 grow">{children}</div>
     </div>
   );
 }

@@ -36,7 +36,7 @@ export function TocTree({ post }: { post: MDXData }) {
                 <a
                   href={`#${heading.slug}`}
                   style={{ marginLeft: `${(heading.level - 1) * 8}px` }}
-                  className={`block break-words`}
+                  className={`block wrap-break-word`}
                 >
                   {heading.title}
                 </a>
