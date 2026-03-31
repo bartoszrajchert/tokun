@@ -25,15 +25,15 @@ export function traverseTokens(
     value = Object.fromEntries(value);
   }
 
-  const stack: {
+  const queue: {
     value: Token | TokenGroup;
     key: string;
     lastType?: string;
     lastGroupProperties?: TokenGroupProperties;
   }[] = [{ value: value as Token | TokenGroup, key: "" }];
 
-  while (stack.length > 0) {
-    const { value, key, lastType, lastGroupProperties } = stack.shift()!;
+  for (let index = 0; index < queue.length; index++) {
+    const { value, key, lastType, lastGroupProperties } = queue[index]!;
 
     if (isToken(value) && onToken) {
       onToken(value, key, lastType, lastGroupProperties);
@@ -75,7 +75,7 @@ export function traverseTokens(
               }
             : lastGroupProperties;
 
-        stack.push({
+        queue.push({
           value: nextValue,
           key: finalKey,
           lastType: nextValue?.$type || lastType,

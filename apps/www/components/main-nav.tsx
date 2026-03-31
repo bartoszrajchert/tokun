@@ -107,16 +107,19 @@ export interface MobileDrawerContentProps {
 export function MobileDrawerContent({ config }: MobileDrawerContentProps) {
   const pathname = usePathname();
   const generateDocsTree = (data: MDXDataGroupedBySlug[]) => {
-    return data
+    return [...data]
       .sort((a, b) => {
         if (a.metadata.order && b.metadata.order) {
           return Number(a.metadata.order) - Number(b.metadata.order);
         }
         return 0;
       })
-      .map((item, index) => {
+      .map((item) => {
+        const itemKey =
+          typeof item.slug === "string" ? item.slug : item.slug.join("/");
+
         return (
-          <div key={index} className={cn("pb-3")}>
+          <div key={itemKey} className={cn("pb-3")}>
             {item.content ? (
               <Link
                 className={cn(

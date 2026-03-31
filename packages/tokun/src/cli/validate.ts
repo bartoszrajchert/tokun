@@ -18,7 +18,7 @@ export async function runValidate(globInputs: string[]): Promise<void> {
     const resolvedPath = path.relative(process.cwd(), filePath);
     logger.log(`Validating tokens for ${resolvedPath}`);
 
-    const fileContent = fs.readFileSync(resolvedPath, "utf-8");
+    const fileContent = fs.readFileSync(filePath, "utf-8");
     const { errors, warnings } = dtcgValidator(JSON.parse(fileContent));
 
     if (warnings.length > 0) {

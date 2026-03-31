@@ -14,16 +14,19 @@ export function DocsSidebar({ config }: DocsSidebarProps) {
   const pathname = usePathname();
 
   const generateTree = (data: MDXDataGroupedBySlug[]) => {
-    return data
+    return [...data]
       .sort((a, b) => {
         if (a.metadata.order && b.metadata.order) {
           return Number(a.metadata.order) - Number(b.metadata.order);
         }
         return 0;
       })
-      .map((item, index) => {
+      .map((item) => {
+        const itemKey =
+          typeof item.slug === "string" ? item.slug : item.slug.join("/");
+
         return (
-          <div key={index}>
+          <div key={itemKey}>
             {item.content ? (
               <Link href={`/docs/${item.slug}`}>
                 <Button

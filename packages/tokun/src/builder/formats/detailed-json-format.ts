@@ -56,6 +56,7 @@ function toDetailed(obj: Token | TokenGroup): {
 } {
   const flatten: DetailedTokens = new Map();
   const warnings: string[] = [];
+  const seenTokenNamesLowerCase = new Set<string>();
   const originalObj: Token | TokenGroup = Object.freeze(obj);
 
   traverseTokens(obj, {
@@ -93,13 +94,15 @@ function toDetailed(obj: Token | TokenGroup): {
         );
       }
 
-      flatten.forEach((_, key) => {
-        if (key.toLowerCase() === tokenName.toLowerCase()) {
-          warnings.push(
-            `⚠ The token "${tokenName}" has duplication in different cases. Please make sure the token names are unique. Taking the first one.`,
-          );
-        }
-      });
+      const normalizedTokenName = tokenName.toLowerCase();
+
+      if (seenTokenNamesLowerCase.has(normalizedTokenName)) {
+        warnings.push(
+          `⚠ The token "${tokenName}" has duplication in different cases. Please make sure the token names are unique. Taking the first one.`,
+        );
+      } else {
+        seenTokenNamesLowerCase.add(normalizedTokenName);
+      }
 
       flatten.set(tokenName, {
         type: tokenType as TokenType,

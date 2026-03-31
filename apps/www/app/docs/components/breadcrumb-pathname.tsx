@@ -12,20 +12,18 @@ import { Fragment } from "react";
 
 export default function BreadcrumbPathname() {
   const pathname = usePathname();
+  const segments = pathname.split("/").filter(Boolean);
 
   return (
     <Breadcrumb className="mb-4 mt-8">
       <BreadcrumbList>
-        {pathname.split("/").map((path, index) => {
-          if (path === "") {
-            return null;
-          }
+        {segments.map((segment, index) => {
+          const key = segments.slice(0, index + 1).join("/");
+
           return (
-            <Fragment key={index}>
-              <BreadcrumbItem key={index}>{capitalize(path)}</BreadcrumbItem>
-              {index !== pathname.split("/").length - 1 && (
-                <BreadcrumbSeparator />
-              )}
+            <Fragment key={key}>
+              <BreadcrumbItem>{capitalize(segment)}</BreadcrumbItem>
+              {index < segments.length - 1 && <BreadcrumbSeparator />}
             </Fragment>
           );
         })}

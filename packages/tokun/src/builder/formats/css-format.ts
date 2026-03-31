@@ -6,7 +6,7 @@ import {
   normalizeRootTokenPath,
   stringifyUnitValue,
 } from "utils/token-utils.js";
-import { Format, FormatConfig } from "utils/types.js";
+import { Format } from "utils/types.js";
 
 type CSSRoot = Record<
   string,
@@ -32,14 +32,19 @@ export const CSS_EXTENSION = "com.tokun.css";
 export const cssFormat: Format = {
   name: "css",
   formatter: ({ tokens, config, fileHeader }) => {
-    config.outputReferences = config.outputReferences ?? false;
+    const outputReferences = config.outputReferences ?? false;
     const prefix = config.prefix as string | undefined;
     const selector = (config.selector as string) ?? ":root";
     const cssRoot: CSSRoot = {};
 
     tokens.forEach((token, path) => {
       const variableName = createVariableName(path, prefix);
-      const resolvedValue = resolveTokenValue(token, path, config, prefix);
+      const resolvedValue = resolveTokenValue(
+        token,
+        path,
+        outputReferences,
+        prefix,
+      );
 
       // Ensure no duplicate variables
       if (cssRoot[variableName]) {
@@ -61,7 +66,7 @@ export const cssFormat: Format = {
           cssRoot,
           token as TypographyToken,
           path,
-          config,
+          outputReferences,
           prefix,
         );
       }
@@ -86,7 +91,7 @@ ${formatCSSOutput(cssRoot, selector)}`;
 function resolveTokenValue(
   token: Token,
   path: string,
-  config: FormatConfig,
+  outputReferences: boolean,
   prefix?: string,
 ): string {
   const extension =
@@ -96,10 +101,10 @@ function resolveTokenValue(
 
   // Check for custom extension's `value` and `resolvedValue`
   if (Object.keys(extension).length > 0) {
-    value = config.outputReferences
+    value = outputReferences
       ? String(extension.value)
       : String(extension.resolvedValue ?? extension.value);
-  } else if (config.outputReferences) {
+  } else if (outputReferences) {
     // Fall back to token's `$value` when outputting references
     value = stringifyTokenValue(token);
   } else if (token.$extensions?.[RESOLVED_EXTENSION]) {
@@ -204,7 +209,7 @@ function handleTypographyToken(
   cssRoot: CSSRoot,
   token: TypographyToken,
   path: string,
-  config: FormatConfig,
+  outputReferences: boolean,
   prefix?: string,
 ) {
   const tokenValue = getTokenValue(token);
@@ -222,7 +227,7 @@ function handleTypographyToken(
   };
 
   const letterSpacingVariableName = `${createVariableName(path, prefix)}-letter-spacing`;
-  const letterSpacingValue = config.outputReferences
+  const letterSpacingValue = outputReferences
     ? stringifyUnitValue(typographyValue.letterSpacing as never)
     : stringifyUnitValue(
         (((

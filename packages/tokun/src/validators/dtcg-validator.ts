@@ -71,6 +71,7 @@ function validateGroup(
     ...dtcgJsonSchemas,
     ...customTypes,
   };
+  const groupSchema = GroupSchema(Object.keys(customTypes));
 
   const errors: ValidatorError[] = [];
 
@@ -107,8 +108,7 @@ function validateGroup(
       }
     },
     onGroup: (group, path) => {
-      const schema = GroupSchema(Object.keys(customTypes));
-      const result = schema.safeParse(group);
+      const result = groupSchema.safeParse(group);
 
       if (!result.success) {
         errors.push({
@@ -153,13 +153,13 @@ function validateRules(
 ): { errors: ValidatorError[] } {
   const finalErrors: ValidatorError[] = [];
 
-  const alleRules: RuleValidators = [
+  const allRules: RuleValidators = [
     (tokens) => isReferencedTokenExists(tokens),
     (tokens) => hasSameType(tokens),
     ...customRules,
   ];
 
-  alleRules.forEach((rule) => {
+  allRules.forEach((rule) => {
     const { errors } = rule(flatten);
     if (errors.length > 0) {
       finalErrors.push(...errors);

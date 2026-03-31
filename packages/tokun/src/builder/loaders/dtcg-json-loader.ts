@@ -25,7 +25,7 @@ export const dtcgJsonLoader: Loader = {
   loadFn: ({ content }) => {
     resolveExtends(content);
     const { flatten } = toFlat(content);
-    const resolvedFlatten = resolveTokens(flatten, content);
+    const resolvedFlatten = resolveTokens(flatten);
 
     fixGradientPosition(resolvedFlatten);
     fixStrokeStyleDashArray(resolvedFlatten);
@@ -215,6 +215,28 @@ const fixGradientPosition = (flatten: FlattenTokens) => {
  * @link https://tr.designtokens.org/format/#object-value
  */
 const fixStrokeStyleDashArray = (flatten: FlattenTokens) => {
+  const resolveDashArrayDimension = (
+    dim: DimensionToken["$value"],
+    tokenName: string,
+  ): DimensionToken["$value"] => {
+    if (isReference(dim)) {
+      const rawRefPath = unwrapReference(dim);
+      const refPath = normalizeRootTokenPath(rawRefPath);
+      const ref = flatten.get(refPath);
+
+      if (ref) {
+        const refValue = getTokenValue(ref);
+        if (!isTokenReference(refValue)) {
+          return refValue as DimensionToken["$value"];
+        }
+      }
+
+      throw new Error(`Reference ${rawRefPath} not found in ${tokenName}`);
+    }
+
+    return dim;
+  };
+
   flatten.forEach((token, name) => {
     if (token.$type !== "strokeStyle") return;
 
@@ -228,24 +250,9 @@ const fixStrokeStyleDashArray = (flatten: FlattenTokens) => {
       dashArray: DimensionToken["$value"][];
     };
 
-    const normalizedDashArray = strokeValue.dashArray.map((dim) => {
-      if (isReference(dim)) {
-        const rawRefPath = unwrapReference(dim);
-        const refPath = normalizeRootTokenPath(rawRefPath);
-        const ref = flatten.get(refPath);
-
-        if (ref) {
-          const refValue = getTokenValue(ref);
-          if (!isTokenReference(refValue)) {
-            return refValue as typeof dim;
-          }
-        }
-
-        throw new Error(`Reference ${rawRefPath} not found in ${name}`);
-      }
-
-      return dim;
-    });
+    const normalizedDashArray = strokeValue.dashArray.map((dim) =>
+      resolveDashArrayDimension(dim, name),
+    );
 
     strokeValue.dashArray = normalizedDashArray;
 
@@ -262,24 +269,8 @@ const fixStrokeStyleDashArray = (flatten: FlattenTokens) => {
         Array.isArray(resolved.dashArray)
       ) {
         resolved.dashArray = resolved.dashArray.map(
-          (dim: DimensionToken["$value"]): DimensionToken["$value"] => {
-            if (isReference(dim)) {
-              const rawRefPath = unwrapReference(dim);
-              const refPath = normalizeRootTokenPath(rawRefPath);
-              const ref = flatten.get(refPath);
-
-              if (ref) {
-                const refValue = getTokenValue(ref);
-                if (!isTokenReference(refValue)) {
-                  return refValue as DimensionToken["$value"];
-                }
-              }
-
-              throw new Error(`Reference ${rawRefPath} not found in ${name}`);
-            }
-
-            return dim;
-          },
+          (dim: DimensionToken["$value"]): DimensionToken["$value"] =>
+            resolveDashArrayDimension(dim, name),
         );
       }
     }
@@ -303,12 +294,17 @@ function withCycleGuard(stack: string[], id: string): string[] {
 function resolveReference(
   reference: string,
   tokens: FlattenTokens,
-  root: TokenGroup,
   stack: string[],
+  cache: Map<string, ResolvedValue>,
 ): unknown {
   if (isReference(reference)) {
     const rawRefPath = unwrapReference(reference);
     const refPath = normalizeRootTokenPath(rawRefPath);
+
+    if (cache.has(refPath)) {
+      return cache.get(refPath);
+    }
+
     const guardedStack = withCycleGuard(stack, `token:${refPath}`);
     const referencedToken = tokens.get(refPath);
 
@@ -316,12 +312,16 @@ function resolveReference(
       throw new Error(`Reference ${rawRefPath} not found`);
     }
 
-    return resolveValue(
+    const resolvedValue = resolveValue(
       getTokenValue(referencedToken),
       tokens,
-      root,
       guardedStack,
+      cache,
     );
+
+    cache.set(refPath, resolvedValue);
+
+    return resolvedValue;
   }
 
   throw new Error(`Invalid reference ${String(reference)}`);
@@ -330,26 +330,26 @@ function resolveReference(
 function resolveValue(
   value: unknown,
   tokens: FlattenTokens,
-  root: TokenGroup,
   stack: string[],
+  cache: Map<string, ResolvedValue>,
 ): ResolvedValue {
   if (isReference(value)) {
-    return resolveReference(value, tokens, root, stack);
+    return resolveReference(value, tokens, stack, cache);
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => resolveValue(item, tokens, root, stack));
+    return value.map((item) => resolveValue(item, tokens, stack, cache));
   }
 
   if (isObject(value)) {
     if (isToken(value)) {
-      return resolveValue(getTokenValue(value), tokens, root, stack);
+      return resolveValue(getTokenValue(value), tokens, stack, cache);
     }
 
     return Object.fromEntries(
       Object.entries(value).map(([key, nestedValue]) => [
         key,
-        resolveValue(nestedValue, tokens, root, stack),
+        resolveValue(nestedValue, tokens, stack, cache),
       ]),
     );
   }
@@ -379,13 +379,16 @@ function setResolvedValue(
 /**
  * Resolves all token references in the given token collection
  */
-export function resolveTokens(
-  tokens: FlattenTokens,
-  root: TokenGroup,
-): FlattenTokens {
+export function resolveTokens(tokens: FlattenTokens): FlattenTokens {
+  const resolvedByPath = new Map<string, ResolvedValue>();
+
   tokens.forEach((token, key) => {
     const tokenValue = getTokenValue(token);
-    const resolved = resolveValue(tokenValue, tokens, root, [`token:${key}`]);
+    const resolved = resolvedByPath.has(key)
+      ? resolvedByPath.get(key)
+      : resolveValue(tokenValue, tokens, [`token:${key}`], resolvedByPath);
+
+    resolvedByPath.set(key, resolved);
     setResolvedValue(token, tokenValue, resolved);
   });
 

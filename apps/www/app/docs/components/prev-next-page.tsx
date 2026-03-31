@@ -11,7 +11,7 @@ export default function PrevNextPage({ data }: { data: MDXData[] }) {
   const pathname = usePathname();
 
   const currPathname = pathname.split("/").slice(2).join("/");
-  const sortedData = data.sort((a, b) => {
+  const sortedData = [...data].sort((a, b) => {
     const aIndex = sidebarConfig.info.findIndex(
       (item) => item.slug === a.slug[0],
     );

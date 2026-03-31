@@ -142,25 +142,13 @@ async function readConfigFile(
   ) {
     const finishedBuild = build(config, { log: effectiveLog });
 
-    for (const { name: buildName, content } of finishedBuild) {
-      const name = `${absoluteConfigDir}/${buildName}`;
-      const dir = path.dirname(name);
-      logger.log(`Writing to ${name}`);
-
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-      }
-
-      await writeFile(name, content);
-    }
+    await writeBuildOutputs(finishedBuild, absoluteConfigDir);
     return;
   }
 
   const resolvedData = Array.isArray(config.data)
-    ? config.data.map((file) =>
-        path.resolve(`${absoluteConfigDir}/${file as string}`),
-      )
-    : [path.resolve(`${absoluteConfigDir}/${config.data}`)];
+    ? config.data.map((file) => path.resolve(absoluteConfigDir, file as string))
+    : [path.resolve(absoluteConfigDir, config.data)];
 
   const tokenFiles = await glob(resolvedData, { absolute: true });
 
@@ -172,17 +160,7 @@ async function readConfigFile(
     { log: effectiveLog },
   );
 
-  for (const { name: buildName, content } of finishedBuild) {
-    const name = `${absoluteConfigDir}/${buildName}`;
-    const dir = path.dirname(name);
-    logger.log(`Writing to ${name}`);
-
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
-
-    await writeFile(name, content);
-  }
+  await writeBuildOutputs(finishedBuild, absoluteConfigDir);
 }
 
 /**
@@ -242,15 +220,24 @@ async function readInputFile(
     { log },
   );
 
-  for (const { name, content } of finishedBuild) {
-    const dir = path.dirname(name);
-    logger.log(`Writing to ${name}`);
+  await writeBuildOutputs(finishedBuild);
+}
+
+async function writeBuildOutputs(
+  outputs: ReturnType<typeof build>,
+  baseDir?: string,
+): Promise<void> {
+  for (const { name, content } of outputs) {
+    const outputPath = baseDir ? path.resolve(baseDir, name) : name;
+    const dir = path.dirname(outputPath);
+
+    logger.log(`Writing to ${outputPath}`);
 
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
 
-    await writeFile(name, content);
+    await writeFile(outputPath, content);
   }
 }
 

@@ -1,7 +1,7 @@
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
 import { Token } from "types/definitions.js";
 import { getTokenValue, isTokenReference } from "utils/token-utils.js";
-import { Format, FormatConfig } from "utils/types.js";
+import { Format } from "utils/types.js";
 import { CSS_EXTENSION, stringifyCssValue } from "./css-format.js";
 
 /**
@@ -11,7 +11,7 @@ import { CSS_EXTENSION, stringifyCssValue } from "./css-format.js";
 export const scssFormat: Format = {
   name: "scss",
   formatter: ({ tokens, config, fileHeader }) => {
-    config.outputReferences = config.outputReferences ?? false;
+    const outputReferences = config.outputReferences ?? false;
     const lines: string[] = [];
 
     const fileHeaderText = fileHeader.fileHeader().join("\n// ");
@@ -21,7 +21,7 @@ export const scssFormat: Format = {
 
     tokens.forEach((token, path) => {
       const variableName = `$${path.replace(/\./g, "-")}`;
-      const value = resolveScssValue(token, path, config);
+      const value = resolveScssValue(token, path, outputReferences);
       const comment = token.$description ? ` // ${token.$description}` : "";
       lines.push(`${variableName}: ${value};${comment}`);
     });
@@ -33,19 +33,19 @@ export const scssFormat: Format = {
 function resolveScssValue(
   token: Token,
   path: string,
-  config: FormatConfig,
+  outputReferences: boolean,
 ): string {
   const extension =
     (token.$extensions?.[CSS_EXTENSION] as Record<string, string>) ?? {};
   const tokenValue = getTokenValue(token);
 
   if (Object.keys(extension).length > 0) {
-    return config.outputReferences
+    return outputReferences
       ? String(extension.value)
       : String(extension.resolvedValue ?? extension.value);
   }
 
-  if (config.outputReferences) {
+  if (outputReferences) {
     return stringifyCssValue(tokenValue);
   }
 

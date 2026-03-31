@@ -1,6 +1,13 @@
 import { capitalize } from "utils/string-utils.js";
 import { Transform } from "utils/types.js";
 
+function toCaseParts(value: string): string[] {
+  return value
+    .replace(/([A-Z])+/g, capitalize)
+    .split(/(?=[A-Z])|[\.\-\s_]/)
+    .map((part) => part.toLowerCase());
+}
+
 /**
  * Formats the given string in camel case fashion
  *
@@ -12,11 +19,7 @@ export const camelCaseTransform: Transform = {
   name: "camel-case",
   type: "name",
   transformer: (arg: string) => {
-    const parts =
-      arg
-        ?.replace(/([A-Z])+/g, capitalize)
-        ?.split(/(?=[A-Z])|[\.\-\s_]/)
-        .map((x) => x.toLowerCase()) ?? [];
+    const parts = toCaseParts(arg);
     if (parts.length === 0) return "";
     if (parts.length === 1) return parts[0]!;
     return parts.reduce((acc, part) => {
@@ -36,11 +39,7 @@ export const kebabCaseTransform: Transform = {
   name: "kebab-case",
   type: "name",
   transformer: (arg: string) => {
-    const parts =
-      arg
-        ?.replace(/([A-Z])+/g, capitalize)
-        ?.split(/(?=[A-Z])|[\.\-\s_]/)
-        .map((x) => x.toLowerCase()) ?? [];
+    const parts = toCaseParts(arg);
     if (parts.length === 0) return "";
     if (parts.length === 1) return parts[0]!;
     return parts.reduce((acc, part) => {
@@ -78,11 +77,7 @@ export const snakeCaseTransform: Transform = {
   name: "snake-case",
   type: "name",
   transformer: (arg: string) => {
-    const parts =
-      arg
-        ?.replace(/([A-Z])+/g, capitalize)
-        .split(/(?=[A-Z])|[\.\-\s_]/)
-        .map((x) => x.toLowerCase()) ?? [];
+    const parts = toCaseParts(arg);
     if (parts.length === 0) return "";
     if (parts.length === 1) return parts[0]!;
     const result = parts.reduce((acc, part) => {

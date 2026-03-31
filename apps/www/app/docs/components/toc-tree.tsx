@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MDXData } from "../utils";
 
 function filterToc(toc: MDXData["toc"], maxDepth?: number) {
@@ -13,7 +13,11 @@ function filterToc(toc: MDXData["toc"], maxDepth?: number) {
 }
 
 export function TocTree({ post }: { post: MDXData }) {
-  const activeId = useActiveItem(post.toc.map((heading) => heading.slug));
+  const itemIds = useMemo(
+    () => post.toc.map((heading) => heading.slug),
+    [post.toc],
+  );
+  const activeId = useActiveItem(itemIds);
 
   return (
     <div className="h-screen-with-nav hidden w-full max-w-[260px] overflow-auto border-l xl:block">
@@ -60,7 +64,7 @@ function useActiveItem(itemIds: string[]) {
       { rootMargin: `0% 0% -80% 0%` },
     );
 
-    itemIds?.forEach((id) => {
+    itemIds.forEach((id) => {
       const element = document.getElementById(id);
       if (element) {
         observer.observe(element);
@@ -68,12 +72,7 @@ function useActiveItem(itemIds: string[]) {
     });
 
     return () => {
-      itemIds?.forEach((id) => {
-        const element = document.getElementById(id);
-        if (element) {
-          observer.unobserve(element);
-        }
-      });
+      observer.disconnect();
     };
   }, [itemIds]);
 
