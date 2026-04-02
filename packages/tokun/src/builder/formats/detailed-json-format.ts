@@ -1,6 +1,5 @@
 import {
   ReferenceValue,
-  StrictToken,
   Token,
   TokenCompositeValue,
   TokenGroup,
@@ -61,7 +60,7 @@ function toDetailed(obj: Token | TokenGroup): {
 
   traverseTokens(obj, {
     onToken(token, path, lastType, lastGroupProperties) {
-      let { $type, $description, $extensions } = token;
+      const { $type, $description, $extensions } = token;
       const $value = getTokenValue(token);
       const resolvedValue = resolveValue($value, originalObj);
 

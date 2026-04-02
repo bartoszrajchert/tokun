@@ -33,7 +33,7 @@ tokun/
   - `validators/` for DTCG validation and schemas
   - `utils/` shared utilities and registry helpers
   - `types/` typed config and exported definitions
-  - `cli/` commands (`build`, `validate`)
+  - `cli/` commands (`build`, `validate`), where `validate` exits non-zero when validation errors are found
 
 ### 2) `apps/www` (documentation surface)
 
@@ -69,6 +69,12 @@ tokun/
   - `lint` -> `turbo lint`
   - `typedoc` -> `turbo typedoc`
 - Package-level build for `tokun` emits JS + type declarations into `packages/tokun/dist/`.
+- Package-level lint for `tokun` uses flat-config ESLint (`packages/tokun/eslint.config.mjs`).
+
+## CI workflows
+
+- Pull request validation runs in `.github/workflows/ci.yml` and gates `lint`, `test`, and `build`.
+- Release automation remains in `.github/workflows/release.yml` on `main` pushes.
 
 ## DTCG conformance boundary
 
@@ -97,4 +103,4 @@ If no documentation update is needed, explicitly note why in the change descript
 
 ## Last reviewed
 
-- 2026-03-31
+- 2026-04-01

@@ -1,4 +1,4 @@
-import type { Token, TokenGroup, TokenValue } from "types/definitions.js";
+import type { Token, TokenGroup } from "types/definitions.js";
 import { logger } from "utils/logger.js";
 import { assign, isEqual, isObject } from "utils/object-utils.js";
 import type { FlattenTokens } from "utils/to-flat.js";

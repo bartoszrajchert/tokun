@@ -47,10 +47,10 @@ export async function runValidate(globInputs: string[]): Promise<void> {
   logger.break();
 
   if (totalErrors > 0) {
-    logger.warn(
-      `Validation finished with ${totalErrors} error${totalErrors === 1 ? "" : "s"} and ${totalWarnings} warning${totalWarnings === 1 ? "" : "s"}.`,
-    );
-    return;
+    const summary = `Validation finished with ${totalErrors} error${totalErrors === 1 ? "" : "s"} and ${totalWarnings} warning${totalWarnings === 1 ? "" : "s"}.`;
+
+    logger.warn(summary);
+    throw new Error(summary);
   }
 
   logger.success(

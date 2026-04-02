@@ -37,6 +37,9 @@ When anything meaningful changes, update AGEND and linked docs in the same chang
 - Canonical skills root: `.agents/skills`
 - DTCG reference normalization treats root-token aliases (`{group.$root}`) and pointers (`#/group/$root`) as the same flattened token target.
 - DTCG loader keeps `strokeStyle.$value.dashArray` references untouched and stores resolved/chained dash values in `com.tokun.resolvedValue`.
+- CLI `tokun validate` now fails the process when validation errors are present (non-zero exit behavior).
+- Pull request CI gate runs `lint`, `test`, and `build` in `.github/workflows/ci.yml`.
+- ESLint is standardized on flat config in active workspaces (`apps/www/eslint.config.mjs`, `packages/tokun/eslint.config.mjs`).
 - Compatibility links:
   - `.claude/skills` -> `../.agents/skills`
   - `.opencode/skills` -> `../.agents/skills`
@@ -47,4 +50,4 @@ When anything meaningful changes, update AGEND and linked docs in the same chang
 
 ## Last reviewed
 
-- 2026-03-31
+- 2026-04-01

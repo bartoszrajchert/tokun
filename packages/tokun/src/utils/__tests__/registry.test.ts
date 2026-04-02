@@ -1,10 +1,10 @@
 import {
   formatRegistry,
   loaderRegistry,
-  transformRegistry,
   registerFormat,
-  registerTransform,
   registerLoader,
+  registerTransform,
+  transformRegistry,
 } from "utils/registry.js";
 import { Format, Loader, Transform } from "utils/types.js";
 import { describe, expect, it } from "vitest";
@@ -68,7 +68,7 @@ describe("registry", () => {
     const customLoader: Loader = {
       name: "custom-test-loader",
       pattern: /\.custom$/,
-      loadFn: ({ content }) => new Map(),
+      loadFn: () => new Map(),
     };
 
     registerLoader(customLoader);
