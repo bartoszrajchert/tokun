@@ -37,7 +37,7 @@
     "size:report": "node ./scripts/size-report.mjs",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint ."
   },
   "author": "Bartosz Rajchert",
   "license": "MIT",
