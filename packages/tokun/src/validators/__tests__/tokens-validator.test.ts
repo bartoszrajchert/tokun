@@ -1,0 +1,218 @@
+import { TokenGroup } from "types/definitions.js";
+import { dtcgValidator } from "validators/dtcg-validator.js";
+import { describe, expect, it } from "vitest";
+
+const structuredBlack = {
+  colorSpace: "srgb",
+  components: [0, 0, 0],
+} as const;
+
+describe("tokensValidator", () => {
+  it("should return no errors for a valid token group", () => {
+    const validTokenGroup: TokenGroup = {
+      colors: {
+        token: {
+          $type: "color",
+          $value: structuredBlack,
+        },
+      },
+      dimensions: {
+        $type: "dimension",
+        token: {
+          $value: {
+            value: 1,
+            unit: "px",
+          },
+        },
+      },
+    };
+
+    const result = dtcgValidator(validTokenGroup);
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it("should return an error for a token group with missing type", () => {
+    const invalidTokenGroup: TokenGroup = {
+      colors: {
+        token: {
+          $type: "color",
+          $value: structuredBlack,
+        },
+      },
+      dimensions: {
+        token: {
+          $value: {
+            value: 1,
+            unit: "px",
+          },
+        },
+      },
+    };
+
+    const result = dtcgValidator(invalidTokenGroup);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.name).toBe("missingTokenType");
+  });
+
+  it("should return an error for a token group with invalid token type", () => {
+    const invalidTokenGroup: TokenGroup = {
+      colors: {
+        token: {
+          $type: "unknown",
+          $value: structuredBlack,
+        },
+      },
+      dimensions: {
+        $type: "dimension",
+        token: {
+          $value: {
+            value: 1,
+            unit: "px",
+          },
+        },
+      },
+    };
+
+    const result = dtcgValidator(invalidTokenGroup);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.name).toBe("invalidTokenType");
+  });
+
+  it("should return an error for a token group with invalid token value", () => {
+    const invalidTokenGroup: TokenGroup = {
+      colors: {
+        token: {
+          $type: "color",
+          $value: structuredBlack,
+        },
+      },
+      dimensions: {
+        $type: "dimension",
+        token: {
+          $value: "1px",
+        },
+      },
+    };
+
+    const result = dtcgValidator(invalidTokenGroup);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.name).toBe("invalidTokenValue");
+  });
+
+  it("should return an error for a token group with invalid group properties", () => {
+    const invalidTokenGroup: TokenGroup = {
+      colors: {
+        $type: "color",
+        $unkown: {},
+        token: {
+          $type: "color",
+          $value: structuredBlack,
+        },
+      },
+      dimensions: {
+        $type: "dimension",
+        token: {
+          $value: {
+            value: 1,
+            unit: "px",
+          },
+        },
+      },
+    };
+
+    const result = dtcgValidator(invalidTokenGroup);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.name).toBe("invalidGroup");
+  });
+
+  it("should return an error for a token group with a non-existent reference", () => {
+    const invalidTokenGroup: TokenGroup = {
+      colors: {
+        token: {
+          $type: "color",
+          $value: "{does.not.exist}",
+        },
+      },
+      dimensions: {
+        $type: "dimension",
+        token: {
+          $value: {
+            value: 1,
+            unit: "px",
+          },
+        },
+      },
+    };
+
+    const result = dtcgValidator(invalidTokenGroup);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.name).toBe("referenceNotFound");
+  });
+
+  it("should allow references to $root tokens", () => {
+    const validTokenGroup: TokenGroup = {
+      colors: {
+        $type: "color",
+        $root: {
+          $value: structuredBlack,
+        },
+        token: {
+          $value: "{colors.$root}",
+        },
+      },
+    };
+
+    const result = dtcgValidator(validTokenGroup);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("should return an error for a token group with a reference type mismatch", () => {
+    const invalidTokenGroup: TokenGroup = {
+      colors: {
+        token: {
+          $type: "color",
+          $value: "{dimensions.token}",
+        },
+      },
+      dimensions: {
+        $type: "dimension",
+        token: {
+          $value: {
+            value: 1,
+            unit: "px",
+          },
+        },
+      },
+    };
+
+    const result = dtcgValidator(invalidTokenGroup);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.name).toBe("referenceTypeMismatch");
+  });
+
+  it("should return an error when token value uses unsupported $ref syntax", () => {
+    const invalidTokenGroup: TokenGroup = {
+      colors: {
+        token: {
+          $type: "color",
+          $value: { $ref: "#/dimensions/$root" },
+        },
+      },
+      dimensions: {
+        $type: "dimension",
+        $root: {
+          $value: {
+            value: 1,
+            unit: "px",
+          },
+        },
+      },
+    };
+
+    const result = dtcgValidator(invalidTokenGroup);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]!.name).toBe("invalidTokenValue");
+  });
+});

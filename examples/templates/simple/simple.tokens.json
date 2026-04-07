@@ -1,0 +1,90 @@
+{
+  "brand": {
+    "color": {
+      "$type": "color",
+      "$root": {
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.0706, 0.2039, 0.3373],
+          "hex": "#123456"
+        },
+        "$description": "Default color"
+      },
+      "white": {
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "hex": "#ffffff"
+        },
+        "$description": "White color"
+      },
+      "black": {
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0, 0, 0],
+          "hex": "#000000"
+        },
+        "$description": "Black color"
+      }
+    },
+    "typography": {
+      "header": {
+        "fontFamily": {
+          "$type": "fontFamily",
+          "$value": ["Arial", "sans-serif"]
+        },
+        "fontSize": {
+          "$type": "dimension",
+          "$value": {
+            "value": 24,
+            "unit": "px"
+          }
+        },
+        "fontWeight": {
+          "$type": "fontWeight",
+          "$value": 500
+        }
+      }
+    }
+  },
+  "alias": {
+    "$description": "Alias",
+    "color": {
+      "$description": "Color alias",
+      "primary": {
+        "$type": "color",
+        "$value": "{brand.color.white}",
+        "$description": "Primary color"
+      },
+      "secondary": {
+        "$type": "color",
+        "$value": "{brand.color.black}",
+        "$description": "Secondary color"
+      }
+    },
+    "gradient": {
+      "$type": "gradient",
+      "$value": [
+        { "color": "{brand.color.$root}", "position": 0 },
+        { "color": "{brand.color.black}", "position": 1 }
+      ]
+    },
+    "typography": {
+      "$description": "Typography alias",
+      "header": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "{brand.typography.header.fontFamily}",
+          "fontSize": "{brand.typography.header.fontSize}",
+          "fontWeight": "{brand.typography.header.fontWeight}",
+          "letterSpacing": {
+            "value": 0.1,
+            "unit": "rem"
+          },
+          "lineHeight": 1.2
+        },
+        "$description": "Header typography"
+      }
+    }
+  }
+}

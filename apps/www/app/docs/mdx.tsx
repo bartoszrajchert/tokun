@@ -1,17 +1,15 @@
-// TODO: do types later
-// @ts-nocheck
-
 import { Button } from "@/components/ui/button";
 import { compileMDX } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
 
 import { Code } from "@/components/code";
+import { PackageManagerTabs } from "@/components/package-manager-tabs";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { type ReactNode } from "react";
 
-function CustomLink(props) {
-  const href: string = props.href;
+function CustomLink(props: React.ComponentPropsWithoutRef<"a">) {
+  const href = props.href ?? "";
   const markdownWithAnchorFileRegex = /\.mdx?(?:$|#.+$)/;
 
   if (href.startsWith("/") || markdownWithAnchorFileRegex.test(href)) {
@@ -31,11 +29,11 @@ function CustomLink(props) {
   return <a target="_blank" rel="noopener noreferrer" {...props} />;
 }
 
-function RoundedImage(props) {
-  return <Image alt={props.alt} className="rounded-lg" {...props} />;
+function RoundedImage({ alt, ...props }: React.ComponentProps<typeof Image>) {
+  return <Image {...props} alt={alt} className="rounded-lg" />;
 }
 
-function slugify(str) {
+function slugify(str: string) {
   return str
     .toString()
     .toLowerCase()
@@ -46,19 +44,76 @@ function slugify(str) {
     .replace(/\-\-+/g, "-"); // Replace multiple - with single -
 }
 
-function createHeading(level) {
-  const Heading = ({ children }) => {
-    const slug = slugify(children);
+function extractTextContent(value: ReactNode): string {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => extractTextContent(entry)).join(" ");
+  }
+
+  if (React.isValidElement<{ children?: ReactNode }>(value)) {
+    return extractTextContent(value.props.children);
+  }
+
+  return "";
+}
+
+function getCodeString(value: ReactNode): string {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => getCodeString(entry)).join("");
+  }
+
+  if (React.isValidElement<{ children?: ReactNode }>(value)) {
+    return getCodeString(value.props.children);
+  }
+
+  return "";
+}
+
+function MdxCode({
+  children,
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"code">) {
+  const code = getCodeString(children).replace(/\n$/, "");
+  const isCodeBlock = Boolean(className?.includes("language-"));
+
+  if (isCodeBlock) {
+    return (
+      <Code className={className} {...props}>
+        {code}
+      </Code>
+    );
+  }
+
+  const inlineClassName = ["docs-inline-code", className]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <Code className={inlineClassName} {...props}>
+      {code}
+    </Code>
+  );
+}
+
+function createHeading(level: 1 | 2 | 3 | 4 | 5 | 6) {
+  const Heading = ({ children }: { children: ReactNode }) => {
+    const slug = slugify(extractTextContent(children));
+
     return React.createElement(
       `h${level}`,
       { id: slug },
-      [
-        React.createElement("a", {
-          href: `#${slug}`,
-          key: `link-${slug}`,
-          className: "anchor",
-        }),
-      ],
+      React.createElement("a", {
+        href: `#${slug}`,
+        className: "anchor",
+      }),
       children,
     );
   };
@@ -77,8 +132,9 @@ const components = {
   h6: createHeading(6),
   Image: RoundedImage,
   a: CustomLink,
-  code: Code,
+  code: MdxCode,
   Button,
+  PackageManagerTabs,
 };
 
 export async function CustomMDX({ source }: { source: string }) {

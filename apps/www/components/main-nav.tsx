@@ -5,27 +5,28 @@ import { cn } from "@/lib/utils";
 import { MenuIcon, StarIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import ModeToggle from "./mode-toggle";
 import SearchDialog from "./search-dialog";
 import { Button } from "./ui/button";
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from "./ui/drawer";
-import { ModeToggle } from "./ui/mode-toggle";
 
 export interface MainNavProps {
   config: MDXDataGroupedBySlug[];
 }
 
 export function MainNav({ config }: MainNavProps) {
-  const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const [openedPathname, setOpenedPathname] = useState<string | null>(null);
   const pathname = usePathname();
+  const isDrawerOpen = openedPathname === pathname;
 
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
+  const onDrawerOpenChange = (open: boolean) => {
+    setOpenedPathname(open ? pathname : null);
+  };
 
   return (
-    <Drawer open={isDrawerOpen} onOpenChange={setDrawerOpen}>
-      <header className="border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/60 dark:border-border sticky top-0 z-50 w-full border-b backdrop-blur">
+    <Drawer open={isDrawerOpen} onOpenChange={onDrawerOpenChange}>
+      <header className="border-border/40 bg-background/95 supports-backdrop-filter:bg-background/60 dark:border-border sticky top-0 z-50 w-full border-b backdrop-blur-sm">
         <nav className="m-auto flex h-14 items-center justify-between px-6 sm:px-8">
           <div className="mr-4 flex">
             <Link
@@ -107,16 +108,19 @@ export interface MobileDrawerContentProps {
 export function MobileDrawerContent({ config }: MobileDrawerContentProps) {
   const pathname = usePathname();
   const generateDocsTree = (data: MDXDataGroupedBySlug[]) => {
-    return data
+    return [...data]
       .sort((a, b) => {
         if (a.metadata.order && b.metadata.order) {
           return Number(a.metadata.order) - Number(b.metadata.order);
         }
         return 0;
       })
-      .map((item, index) => {
+      .map((item) => {
+        const itemKey =
+          typeof item.slug === "string" ? item.slug : item.slug.join("/");
+
         return (
-          <div key={index} className={cn("pb-3")}>
+          <div key={itemKey} className={cn("pb-3")}>
             {item.content ? (
               <Link
                 className={cn(

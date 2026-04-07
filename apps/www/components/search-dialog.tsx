@@ -13,33 +13,71 @@ import {
   CommandList,
 } from "./ui/command";
 
+type PagefindResultData = {
+  url: string;
+  excerpt: string;
+  meta: {
+    title: string;
+    image?: string;
+  };
+  sub_results?: {
+    title: string;
+    url: string;
+    excerpt: string;
+  }[];
+};
+
+type PagefindResult = {
+  id: string;
+  data: () => Promise<PagefindResultData>;
+};
+
+type PagefindSearchResponse = {
+  results: PagefindResult[];
+};
+
+type PagefindApi = {
+  search:
+    | ((query: string) => PagefindSearchResponse)
+    | ((query: string) => Promise<PagefindSearchResponse>);
+};
+
+declare global {
+  interface Window {
+    pagefind?: PagefindApi;
+  }
+}
+
 export default function SearchDialog() {
   const [query, setQuery] = React.useState("");
-  const [results, setResults] = React.useState([]);
+  const [results, setResults] = React.useState<PagefindResult[]>([]);
   const [open, setOpen] = React.useState(false);
+  const [isPagefindReady, setIsPagefindReady] = React.useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     async function loadPagefind() {
-      // @ts-ignore
       if (typeof window.pagefind === "undefined") {
         try {
-          // @ts-ignore
-          window.pagefind = await import(
-            // @ts-expect-error pagefind.js generated after build
-            /* webpackIgnore: true */ "./pagefind/pagefind.js"
-          );
-        } catch (e) {
-          // @ts-ignore
+          const modulePath = "/_next/static/chunks/app/pagefind/pagefind.js";
+          window.pagefind = (await import(
+            /* webpackIgnore: true */ modulePath
+          )) as unknown as PagefindApi;
+        } catch (error) {
           window.pagefind = {
             search: () => ({
               results: mockResults,
             }),
           };
-          console.log(e);
+          console.log(error);
         }
       }
+
+      if (window.pagefind) {
+        setIsPagefindReady(true);
+      }
     }
+
     loadPagefind();
   }, []);
 
@@ -56,17 +94,33 @@ export default function SearchDialog() {
   }, []);
 
   useEffect(() => {
+    let isCurrent = true;
+
     async function handleSearch() {
-      // @ts-ignore
+      const nextQuery = query.trim();
+
+      if (!isPagefindReady || nextQuery.length === 0) {
+        if (isCurrent) {
+          setResults([]);
+        }
+        return;
+      }
+
       if (window.pagefind) {
-        // @ts-ignore
-        const search = await window.pagefind.search(query);
+        const search = await window.pagefind.search(nextQuery);
+        if (!isCurrent) {
+          return;
+        }
         setResults(search.results);
       }
     }
 
     handleSearch();
-  }, [query]);
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [query, isPagefindReady]);
 
   useEffect(() => {
     setOpen(false);
@@ -83,9 +137,7 @@ export default function SearchDialog() {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        commandProps={{
-          shouldFilter: false,
-        }}
+        commandProps={{ shouldFilter: false }}
       >
         <CommandInput
           placeholder="Search..."
@@ -94,8 +146,7 @@ export default function SearchDialog() {
         />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {results.map((result: any) => {
+          {results.map((result) => {
             return <Result key={result.id} result={result} />;
           })}
         </CommandList>
@@ -104,10 +155,8 @@ export default function SearchDialog() {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function Result({ result }: { result: any }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data, setData] = useState<any>(null);
+function Result({ result }: { result: PagefindResult }) {
+  const [data, setData] = useState<PagefindResultData | null>(null);
 
   function cleanLink(url: string) {
     return url
@@ -142,7 +191,7 @@ function Result({ result }: { result: any }) {
  * Mock results for the search dialog.
  * Used only in development mode.
  */
-const mockResults = [
+const mockResults: PagefindResult[] = [
   {
     id: "en_8bceec9",
     data: async function data() {

@@ -6,7 +6,4 @@ export * from "./css/css-transforms.js";
 export * from "./css/css-unit-transform.js";
 export * from "./css/css-variable-safe-transform.js";
 
-export * from "./camel-case-transform.js";
-export * from "./kebab-case-transform.js";
-export * from "./pascal-case-transform.js";
-export * from "./snake-case-transform.js";
+export * from "./name-transforms.js";

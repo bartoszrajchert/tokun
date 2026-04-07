@@ -5,16 +5,17 @@ import {
   cssShadowTransform,
   cssUnitTransform,
   cssVariableSafeTransform,
+  defineConfig,
   dtcgJsonLoader,
   flattenJsonFormat,
+  isReference,
   kebabCaseTransform,
+  unwrapReference,
 } from "tokun";
-import { isReference, unwrapReference } from "tokun/utils";
 import { dtcgValidator } from "tokun/validators";
 import { z } from "zod";
 
-/** @type {import('tokun/types').Config} */
-export default {
+export default defineConfig({
   data: ["tokens/theme/*.tokens.json", "tokens/base.tokens.json"],
   options: {
     loader: dtcgJsonLoader,
@@ -115,4 +116,4 @@ export default {
       },
     ],
   },
-};
+});

@@ -1,24 +1,37 @@
-import {
+import type {
   Config,
   ConfigOptions,
   PlatformWithoutString,
 } from "types/define-config.js";
-import { Token, TokenGroup, TokenType, TokenValue } from "types/definitions.js";
-import { logger } from "utils/logger.js";
+import type {
+  Token,
+  TokenGroup,
+  TokenType,
+  TokenValue,
+} from "types/definitions.js";
+import {
+  getLogConfig,
+  logger,
+  resolveLogConfig,
+  setLogConfig,
+  type LogConfig,
+} from "utils/logger.js";
 import { assign, isEqual } from "utils/object-utils.js";
 import {
   formatRegistry,
   loaderRegistry,
   transformRegistry,
 } from "utils/registry.js";
-import { FlattenTokens } from "utils/to-flat.js";
+import type { FlattenTokens } from "utils/to-flat.js";
 import {
   findInRegistry,
+  getTokenValue,
   isReference,
   isTokenComposite,
+  normalizeRootTokenPath,
   unwrapReference,
 } from "utils/token-utils.js";
-import { Loader, Transform, TransformGroup } from "utils/types.js";
+import type { Loader, Transform, TransformGroup } from "utils/types.js";
 import { defaultFileHeader } from "./file-headers/default-file-header.js";
 import { cssFormat } from "./formats/css-format.js";
 import { dtcgJsonLoader } from "./loaders/dtcg-json-loader.js";
@@ -27,6 +40,10 @@ import { cssTransforms } from "./transforms/index.js";
 type BuildOutput = {
   name: string;
   content: string;
+};
+
+type BuildOptions = {
+  log?: Partial<LogConfig>;
 };
 
 type TokenTransformer = {
@@ -38,44 +55,61 @@ type TokenTransformer = {
  * Build design tokens.
  *
  * @param config Configuration object.
+ * @param buildOptions Runtime build options.
  * @returns Array of objects with name and content properties.
  */
-export function build(config: Config): BuildOutput[] {
-  const { data, options } = config;
+export function build(
+  config: Config,
+  buildOptions?: BuildOptions,
+): BuildOutput[] {
+  const previousLogConfig = getLogConfig();
+  const nextLogConfig = resolveLogConfig(config.log, buildOptions?.log);
 
-  if (!data) {
-    throw new Error("Please provide data.");
+  setLogConfig(nextLogConfig);
+
+  try {
+    const { data, options } = config;
+
+    if (!data) {
+      throw new Error("Please provide data.");
+    }
+
+    const mergedData = dataToObject(data);
+
+    let result: BuildOutput[];
+
+    if (!options) {
+      result = buildDesignTokens({
+        obj: dtcgJsonLoader.loadFn({ content: mergedData }),
+        platforms: [
+          {
+            name: "css",
+            format: cssFormat,
+            transforms: [cssTransforms],
+            outputs: [{ name: "output.css" }],
+          },
+        ],
+      });
+    } else {
+      const { loader, platforms, validator, customValidator } = options;
+
+      const resolvedLoader = resolveLoader(loader);
+      const resolvedPlatforms = resolvePlatforms(platforms);
+
+      if (validator) {
+        validateTokens(mergedData, validator, customValidator);
+      }
+
+      result = buildDesignTokens({
+        obj: resolvedLoader.loadFn({ content: mergedData }),
+        platforms: resolvedPlatforms,
+      });
+    }
+
+    return result;
+  } finally {
+    setLogConfig(previousLogConfig);
   }
-
-  const mergedData = dataToObject(data);
-
-  if (!options) {
-    return buildDesignTokens({
-      obj: dtcgJsonLoader.loadFn({ content: mergedData }),
-      platforms: [
-        {
-          name: "css",
-          format: cssFormat,
-          transforms: [cssTransforms],
-          outputs: [{ name: "output.css" }],
-        },
-      ],
-    });
-  }
-
-  const { loader, platforms, validator, customValidator } = options;
-
-  const resolvedLoader = resolveLoader(loader);
-  const resolvedPlatforms = resolvePlatforms(platforms);
-
-  if (validator) {
-    validateTokens(mergedData, validator, customValidator);
-  }
-
-  return buildDesignTokens({
-    obj: resolvedLoader.loadFn({ content: mergedData }),
-    platforms: resolvedPlatforms,
-  });
 }
 
 function resolvePlatforms(
@@ -110,7 +144,7 @@ function validateTokens(
   const { errors, warnings } = validator(data, customValidator);
 
   if (errors.length > 0) {
-    errors.forEach(({ message }) => logger.error(`! ${message}`));
+    errors.forEach(({ message }) => logger.error(message));
     throw new Error("Provided content is not a valid token group.");
   }
 
@@ -151,7 +185,7 @@ function buildDesignTokens({
     const transformedTokens = applyTransforms(obj, format.transforms);
     const formats = generateFormats(transformedTokens, format);
 
-    logger.success(`✓ ${format.format.name} format parsed`);
+    logger.success(`${format.format.name} format parsed`);
     output.push(...formats);
   }
 
@@ -236,18 +270,19 @@ function handleNameTransform(
   acc: FlattenTokens,
 ): void {
   if (!token.$type) {
-    logger.error(`! Token ${name} has no type`);
+    logger.error(`Token ${name} has no type`);
     throw new Error(`Token ${name} has no type`);
   }
 
   const transformedName = transform.transformer(name as Token & string);
+  const tokenValue = getTokenValue(token);
   const transformedValue = transformReferenceValue(
-    token.$value,
+    tokenValue,
     token.$type,
     transform.transformer as TokenTransformer,
   );
 
-  if (!isEqual(transformedValue, token.$value)) {
+  if ("$value" in token && !isEqual(transformedValue, tokenValue)) {
     token.$value = transformedValue as TokenValue;
   }
 
@@ -275,19 +310,24 @@ function transformReferenceValue(
   transformer: TokenTransformer,
 ): unknown {
   if (isReference(value)) {
-    const transformedValue = transformer(unwrapReference(value));
-    return transformedValue !== value ? `{${transformedValue}}` : value;
+    const transformedValue = transformer(
+      normalizeRootTokenPath(unwrapReference(value)),
+    );
+
+    return `{${transformedValue}}`;
   }
 
   if (Array.isArray(value) && isTokenComposite({ $type: type } as Token)) {
     return value.map((v) =>
       isReference(v)
-        ? `{${transformer(unwrapReference(v))}}`
+        ? `{${transformer(normalizeRootTokenPath(unwrapReference(v)))}}`
         : transformCompositeValue(v, type, transformer),
     );
   } else if (Array.isArray(value)) {
     return value.map((v) =>
-      isReference(v) ? `{${transformer(unwrapReference(v))}}` : v,
+      isReference(v)
+        ? `{${transformer(normalizeRootTokenPath(unwrapReference(v)))}}`
+        : v,
     );
   }
 

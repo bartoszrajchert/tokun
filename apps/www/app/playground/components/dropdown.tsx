@@ -9,38 +9,57 @@ import {
 import { Label } from "@/components/ui/label";
 import { ChevronsUpDown } from "lucide-react";
 
+export type DropdownItem = {
+  value: string;
+  label: string;
+};
+
 export function Dropdown({
+  id,
   label,
   placeholder,
   value,
   setValue,
   items,
 }: {
+  id: string;
   label: string;
   placeholder: string;
   value: string;
   setValue: (format: string) => void;
-  items: string[];
+  items: Array<string | DropdownItem>;
 }) {
+  const normalizedItems = items.map((item) =>
+    typeof item === "string"
+      ? {
+          value: item,
+          label: item,
+        }
+      : item,
+  );
+
+  const selectedItem = normalizedItems.find((item) => item.value === value);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div>
-          <Label htmlFor="formatButton">{label}</Label>
+          <Label htmlFor={id}>{label}</Label>
           <Button
-            id="formatButton"
+            id={id}
             variant="outline"
+            type="button"
             className="mt-1 w-full justify-between"
           >
-            {value ? value : placeholder} <ChevronsUpDown />
+            {selectedItem ? selectedItem.label : placeholder} <ChevronsUpDown />
           </Button>
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
         <DropdownMenuRadioGroup value={value} onValueChange={setValue}>
-          {items.map((formatName) => (
-            <DropdownMenuRadioItem key={formatName} value={formatName}>
-              {formatName}
+          {normalizedItems.map((item) => (
+            <DropdownMenuRadioItem key={item.value} value={item.value}>
+              {item.label}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

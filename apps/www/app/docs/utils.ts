@@ -35,9 +35,15 @@ export type MDXDataGroupedBySlug = {
   root?: boolean;
 };
 
+const docsDirectoryPath = path.join(process.cwd(), "app", "docs");
+let docsCache: Promise<MDXData[]> | undefined;
+
 export function getDocs() {
-  const pathToDocs = path.join(process.cwd(), "app", "docs");
-  return getMDXData(pathToDocs);
+  if (!docsCache) {
+    docsCache = getMDXData(docsDirectoryPath);
+  }
+
+  return docsCache;
 }
 
 function readMDXFile(filePath: string) {
@@ -59,11 +65,15 @@ function readMDXFile(filePath: string) {
 
 async function getMDXData(dir: string): Promise<MDXData[]> {
   const mdxFiles = await glob([`${dir}/**/*.(mdx|md)`]);
+  const docsContentPath = path.join(dir, "content");
 
   const ret = await Promise.all(
     mdxFiles.map(async (file) => {
       const { metadata, content, toc } = readMDXFile(file);
-      const slug = file.split("/content/")[1].split(".")[0].split("/");
+      const relativeFilePath = path.relative(docsContentPath, file);
+      const slug = relativeFilePath
+        .replace(path.extname(relativeFilePath), "")
+        .split(path.sep);
 
       return {
         metadata,

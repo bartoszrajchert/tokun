@@ -1,6 +1,5 @@
 import {
   ReferenceValue,
-  StrictToken,
   Token,
   TokenCompositeValue,
   TokenGroup,
@@ -10,6 +9,7 @@ import {
 } from "types/definitions.js";
 import { get } from "utils/object-utils.js";
 import {
+  getTokenValue,
   isReference,
   isValueComposite,
   replacer,
@@ -28,17 +28,15 @@ export const detailedJsonFormat: Format = {
   },
 };
 
-type ValueInfo<T> = T extends TokenType
-  ? Extract<StrictToken, { $type: T }>["$value"]
-  : any;
+type ValueInfo<T> = T extends TokenType ? unknown : unknown;
 
 type DetailedTokens = Map<string, TokenInfo>;
 
-type TokenInfo<T extends TokenType = any, V = ValueInfo<T>> = {
+type TokenInfo<T extends TokenType = TokenType, V = ValueInfo<T>> = {
   type: T;
   value: V;
   description?: string;
-  extensions?: Record<string, any>;
+  extensions?: Record<string, unknown>;
   resolvedValue: Exclude<V, ReferenceValue> | undefined;
   readonly original: Readonly<{
     path: string;
@@ -57,11 +55,13 @@ function toDetailed(obj: Token | TokenGroup): {
 } {
   const flatten: DetailedTokens = new Map();
   const warnings: string[] = [];
+  const seenTokenNamesLowerCase = new Set<string>();
   const originalObj: Token | TokenGroup = Object.freeze(obj);
 
   traverseTokens(obj, {
     onToken(token, path, lastType, lastGroupProperties) {
-      let { $type, $value, $description, $extensions } = token;
+      const { $type, $description, $extensions } = token;
+      const $value = getTokenValue(token);
       const resolvedValue = resolveValue($value, originalObj);
 
       /**
@@ -93,16 +93,18 @@ function toDetailed(obj: Token | TokenGroup): {
         );
       }
 
-      flatten.forEach((_, key) => {
-        if (key.toLowerCase() === tokenName.toLowerCase()) {
-          warnings.push(
-            `⚠ The token "${tokenName}" has duplication in different cases. Please make sure the token names are unique. Taking the first one.`,
-          );
-        }
-      });
+      const normalizedTokenName = tokenName.toLowerCase();
+
+      if (seenTokenNamesLowerCase.has(normalizedTokenName)) {
+        warnings.push(
+          `⚠ The token "${tokenName}" has duplication in different cases. Please make sure the token names are unique. Taking the first one.`,
+        );
+      } else {
+        seenTokenNamesLowerCase.add(normalizedTokenName);
+      }
 
       flatten.set(tokenName, {
-        type: tokenType,
+        type: tokenType as TokenType,
         value: $value,
         description: $description,
         extensions: $extensions,
@@ -129,10 +131,10 @@ function toDetailed(obj: Token | TokenGroup): {
  * @returns The resolved value.
  */
 const resolveValue = (
-  value: any,
+  value: unknown,
   originalObj: Token | TokenGroup,
-): Token["$value"] | undefined => {
-  if (isValueComposite(value)) {
+): unknown => {
+  if (isValueComposite(value as TokenValue)) {
     if (Array.isArray(value)) {
       const result = value.map((subValue) =>
         resolveValue(subValue, originalObj),
@@ -145,12 +147,16 @@ const resolveValue = (
       return undefined;
     }
 
-    return Object.entries(value).reduce((acc, [key, subValue]) => {
-      // @ts-ignore
-      acc[key] = resolveValue(subValue, originalObj);
-
-      return acc;
-    }, {} as TokenCompositeValue);
+    return Object.entries(value as Record<string, unknown>).reduce(
+      (acc, [key, subValue]) => {
+        (acc as Record<string, unknown>)[key] = resolveValue(
+          subValue,
+          originalObj,
+        );
+        return acc;
+      },
+      {} as TokenCompositeValue,
+    );
   }
 
   if (!isReference(value)) {
@@ -163,9 +169,11 @@ const resolveValue = (
     return undefined;
   }
 
-  if (isReference(referencedToken.$value)) {
-    return resolveValue(referencedToken.$value, originalObj);
+  const referencedValue = getTokenValue(referencedToken);
+
+  if (isReference(referencedValue)) {
+    return resolveValue(referencedValue, originalObj);
   }
 
-  return referencedToken.$value;
+  return referencedValue;
 };

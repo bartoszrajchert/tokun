@@ -1,5 +1,5 @@
 import { MainNav } from "@/components/main-nav";
-import { ThemeProvider } from "@/components/ui/theme-provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Rubik } from "next/font/google";
 import { getDocs, groupBySlug } from "./docs/utils";
@@ -26,7 +26,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${rubik.variable} ${IBMPlexMono.variable} font-sans`}>
+      <body
+        className={`${rubik.variable} ${IBMPlexMono.variable} ${rubik.className} font-sans`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

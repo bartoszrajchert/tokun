@@ -1,46 +1,44 @@
-import {
+import { tokenTypes } from "types/constants.js";
+import type {
   BorderToken,
   DimensionToken,
   DurationToken,
   GradientToken,
+  JsonPointerReference,
   ReferenceValue,
   ShadowToken,
   StrokeStyleToken,
   Token,
   TokenCompositeValue,
+  TokenReference,
   TokenType,
   TokenValue,
   TransitionToken,
   TypographyToken,
 } from "types/definitions.js";
-import { Transform } from "./types.js";
+import type { Transform } from "./types.js";
 
 /**
- * The unallowed characters in token or group name.
- * Reference: https://tr.designtokens.org/format/#character-restrictions
+ * The disallowed characters in token/group names.
+ * Reference: https://www.designtokens.org/TR/2025.10/format/#x5-1-1-character-restrictions
  */
-export const UNALLOWED_CHARACTERS_IN_NAME = ["{", "}", ".", "$"];
+export const UNALLOWED_CHARACTERS_IN_NAME = ["{", "}", "."];
 
 /**
- * The keys of the Design Tokens Community Group Format.
+ * Reserved keys in DTCG objects.
  */
-export const DTCG_KEYS = ["$value", "$type", "$description", "$extensions"];
-
-export const TOKEN_TYPES: TokenType[] = [
-  "number",
-  "color",
-  "dimension",
-  "fontFamily",
-  "fontWeight",
-  "duration",
-  "cubicBezier",
-  "transition",
-  "shadow",
-  "gradient",
-  "typography",
-  "strokeStyle",
-  "border",
+export const DTCG_KEYS = [
+  "$value",
+  "$type",
+  "$description",
+  "$extensions",
+  "$deprecated",
+  "$extends",
+  "$root",
+  "$schema",
 ];
+
+export const TOKEN_TYPES: readonly TokenType[] = tokenTypes;
 
 export const COMPOSITE_TOKEN_TYPES: TokenType[] = [
   "transition",
@@ -52,43 +50,155 @@ export const COMPOSITE_TOKEN_TYPES: TokenType[] = [
 ];
 
 /**
- * Check if the value has unallowed characters in the name.
- * Reference: https://tr.designtokens.org/format/#character-restrictions
- *
- * @param value - The value to check.
- * @returns The result of the check.
+ * Check if the value has disallowed characters in token/group name.
  */
 export function hasUnallowedCharactersInName(value: string) {
-  return (
-    UNALLOWED_CHARACTERS_IN_NAME.some((char) => value.includes(char)) &&
-    DTCG_KEYS.every((key) => value !== key)
-  );
+  if (value.length === 0) {
+    return true;
+  }
+
+  if (DTCG_KEYS.includes(value)) {
+    return false;
+  }
+
+  if (value.startsWith("$")) {
+    return true;
+  }
+
+  return UNALLOWED_CHARACTERS_IN_NAME.some((char) => value.includes(char));
 }
 
 /**
  * Check if the object is a token.
- * Reference: https://tr.designtokens.org/format/#additional-group-properties
- *
- * @param obj - The object to check.
- * @returns The result of the check.
  */
 export function isToken(obj: object): obj is Token {
   return obj.hasOwnProperty("$value");
 }
 
 /**
- * Check if the value is composite.
- * It can be an object or an array of objects.
+ * Check if the value is a curly-brace reference.
+ */
+export function isReference(value: unknown): value is ReferenceValue {
+  return typeof value === "string" && tokenReferenceRegex.test(value);
+}
+
+/**
+ * Check if the value is a token value reference.
+ */
+export function isTokenReference(value: unknown): value is TokenReference {
+  return isReference(value);
+}
+
+/**
+ * Return token's logical value representation.
+ */
+export function getTokenValue(token: Token): TokenValue | TokenReference {
+  if (!("$value" in token)) {
+    throw new Error("Invalid token: missing $value. $ref is not supported.");
+  }
+
+  return token.$value as TokenValue;
+}
+
+/**
+ * Check if the value is a JSON Pointer reference string.
+ */
+export function isJsonPointerReference(
+  value: unknown,
+): value is JsonPointerReference {
+  return typeof value === "string" && jsonPointerReferenceRegex.test(value);
+}
+
+/**
+ * Unwrap a curly-brace reference.
+ */
+export function unwrapReference(value: unknown): string {
+  if (!isReference(value)) {
+    throw new Error(`The token is not a reference. Got ${value}`);
+  }
+
+  return value.slice(1, -1);
+}
+
+/**
+ * Normalize flattened token map paths for `$root` tokens.
  *
- * @param value - The value to check.
- * @returns Boolean value.
+ * In flattened maps, `$root` tokens are stored under their parent group path.
+ * Example: `brand.color.$root` becomes `brand.color`.
+ */
+export function normalizeRootTokenPath(path: string): string {
+  if (path === "$root") {
+    return "";
+  }
+
+  if (path.endsWith(".$root")) {
+    return path.slice(0, -".$root".length);
+  }
+
+  return path;
+}
+
+/**
+ * Decode JSON Pointer into path segments.
+ */
+export function decodeJsonPointer(pointer: string): string[] {
+  if (!isJsonPointerReference(pointer)) {
+    throw new Error(`Invalid JSON Pointer reference: ${pointer}`);
+  }
+
+  const raw = pointer.slice(2);
+  if (raw === "") {
+    return [];
+  }
+
+  return raw
+    .split("/")
+    .map((segment) => segment.replace(/~1/g, "/").replace(/~0/g, "~"));
+}
+
+/**
+ * Resolve a value from JSON Pointer.
+ */
+export function getByJsonPointer(root: unknown, pointer: string): unknown {
+  const segments = decodeJsonPointer(pointer);
+  let current: unknown = root;
+
+  for (const segment of segments) {
+    if (Array.isArray(current)) {
+      const index = Number(segment);
+      if (!Number.isInteger(index) || index < 0) {
+        return undefined;
+      }
+      current = current[index];
+    } else if (typeof current === "object" && current !== null) {
+      current = (current as Record<string, unknown>)[segment];
+    } else {
+      return undefined;
+    }
+
+    if (current === undefined) {
+      return undefined;
+    }
+  }
+
+  return current;
+}
+
+/**
+ * Check if the value is composite.
  */
 export function isValueComposite(
   value: TokenValue,
 ): value is TokenCompositeValue {
+  if (isTokenReference(value)) {
+    return false;
+  }
+
   if (Array.isArray(value)) {
     return value.every(
-      (v) => (typeof v === "object" && value !== null) || isReference(v), // TODO: Check if it should be isReference(v)
+      (entry) =>
+        isTokenReference(entry) ||
+        (typeof entry === "object" && entry !== null && !Array.isArray(entry)),
     );
   }
 
@@ -112,85 +222,59 @@ export function isTokenComposite(
 }
 
 /**
- * Check if the value is a reference.
- *
- * @param value - The $value parameter of the Token.
- * @see Token
- * @returns The result of the check.
- */
-export function isReference(value: any): value is ReferenceValue {
-  return typeof value === "string" && tokenReferenceRegex.test(value);
-}
-
-/**
- * Unwrap the reference.
- *
- * @param value - The value parameter of the Token.
- * @see Token
- * @returns The unwrapped reference.
- */
-export function unwrapReference(value: any): string {
-  if (!isReference(value)) {
-    throw new Error(`The token is not a reference. Got ${value}`);
-  }
-
-  return value.replace("{", "").replace("}", "");
-}
-
-/**
- * Type guard to distinguish between the two possible types of transformer and handle them appropriately.
- *
- * @param transform - The transform to check.
- * @param input - The input to transform.
- * @returns The result of the transformation.
+ * Type guard to distinguish transformer input kinds.
  */
 export function applyTransform(transform: Transform, input: string | Token) {
   if (transform.type === "token") {
-    // Ensure input is TokenInfo
     if (typeof input !== "string") {
       return transform.transformer(input);
-    } else {
-      throw new Error("Expected TokenInfo input for token transformer");
     }
-  } else if (transform.type === "name") {
-    // Ensure input is string
-    if (typeof input === "string") {
-      return transform.transformer(input);
-    } else {
-      throw new Error("Expected string input for name transformer");
-    }
+    throw new Error("Expected Token input for token transformer");
   }
+
+  if (typeof input === "string") {
+    return transform.transformer(input);
+  }
+
+  throw new Error("Expected string input for name transformer");
+}
+
+function stringifyScalar(value: string | number) {
+  return String(value);
 }
 
 /**
- * Stringify the value of the dimension token.
- *
- * @param value - The value of the dimension token.
- * @returns The stringified value.
+ * Stringify value/unit pair for dimension and duration values.
  */
 export function stringifyUnitValue(
   value: DimensionToken["$value"] | DurationToken["$value"],
 ) {
-  if (typeof value === "object" && value !== null) {
-    return `${value.value}${value.unit}`;
+  if (isReference(value)) {
+    return value;
   }
 
-  return value;
+  if (typeof value === "object" && value !== null) {
+    return `${stringifyScalar(value.value)}${stringifyScalar(value.unit)}`;
+  }
+
+  return String(value);
 }
 
 /**
- * Replace the Map with an object.
- * Used in JSON.stringify.
+ * Replace Map with plain object in JSON.stringify.
  */
-export function replacer(_: any, value: any) {
+export function replacer(_: unknown, value: unknown) {
   if (value instanceof Map) {
-    return Array.from(value.entries()).reduce((acc: any, [key, value]) => {
-      acc[key] = value;
-      return acc;
-    }, {});
-  } else {
-    return value;
+    return Array.from(value.entries()).reduce(
+      (acc: Record<string, unknown>, [key, mapValue]) => {
+        acc[key] = mapValue;
+        return acc;
+      },
+      {},
+    );
   }
+
+  return value;
 }
 
 export const findInRegistry = <T>(
@@ -200,52 +284,25 @@ export const findInRegistry = <T>(
   const found = registry.find((reg) => reg.name === name);
 
   if (!found) {
-    throw new Error(`${name} not found.`);
+    throw new Error(`${name} not found in the registry.`);
   }
 
   return found;
 };
 
 /**
- * Regex for token reference.
- *
- * Explanation:
- * - `^` asserts the start of a line.
- * - `\{` matches the character `{` literally.
- * - `[a-zA-Z0-9\s@_-]+` matches any character in the range `a-z`, `A-Z`, `0-9`, whitespace, `@`, `_`, `-` one or more times.
- * - `(?:\.[a-zA-Z0-9\s@_-]+)*` non-capturing group that matches any character in the range `a-z`, `A-Z`, `0-9`, whitespace, `@`, `_`, `-` one or more times, zero or more times.
- * - `\}` matches the character `}` literally.
- * - `$` asserts the end of a line.
- *
- * @example
- * ```ts
- * tokenReferenceRegex.test("{brand.color.core}"); // true
- * tokenReferenceRegex.test("{@typography_primitives.Scale 03}"); // true
- * tokenReferenceRegex.test("{brand.color.unknown"); // false
- * ```
+ * Curly-brace reference syntax.
+ * Supports regular token names and explicit $root path segments.
  */
 export const tokenReferenceRegex =
-  /^\{[a-zA-Z0-9\s@_-]+(?:\.[a-zA-Z0-9\s@_-]+)*\}$/;
+  /^\{(?:\$root|[^${}.][^{}.]*)(?:\.(?:\$root|[^${}.][^{}.]*))*\}$/;
 
 /**
- * Regex for hex color with alpha.
- *
- * Explanation:
- * - `#` matches the character `#` literally.
- * - `([A-Fa-f0-9]{3}){1,2}` matches any character in the range `A-F`, `a-f`, or `0-9` three times, one or two times.
- * - `\b` asserts a word boundary.
- * - `|` or.
- * - `#` matches the character `#` literally.
- * - `([A-Fa-f0-9]{4}){1,2}` matches any character in the range `A-F`, `a-f`, or `0-9` four times, one or two times.
- * - `\b` asserts a word boundary.
- *
- * @example
- * ```ts
- * hexColorWithAlphaRegex.test("#000000"); // true
- * hexColorWithAlphaRegex.test("#000"); // true
- * hexColorWithAlphaRegex.test("#000000ff"); // true
- * hexColorWithAlphaRegex.test("#000f"); // true
- * ```
+ * JSON Pointer URI fragment syntax.
  */
-export const hexColorWithAlphaRegex =
-  /#([A-Fa-f0-9]{3}){1,2}\b|#([A-Fa-f0-9]{4}){1,2}\b/;
+export const jsonPointerReferenceRegex = /^#\/.*/;
+
+/**
+ * 6-digit CSS hex fallback used by DTCG color.
+ */
+export const hexColorWithAlphaRegex = /^#[A-Fa-f0-9]{6}$/;

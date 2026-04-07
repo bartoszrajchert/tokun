@@ -9,18 +9,19 @@
   "module": "dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/builder/index.d.ts",
+      "browser": "./dist/browser/index.js",
       "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/builder/browser/index.d.ts",
+      "default": "./dist/browser/index.js"
     },
     "./validators": {
       "types": "./dist/validators/index.d.ts",
+      "browser": "./dist/validators/index.js",
       "default": "./dist/validators/index.js"
-    },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "default": "./dist/utils/index.js"
-    },
-    "./types": "./dist/types/index.d.ts"
+    }
   },
   "files": [
     "dist"
@@ -29,25 +30,26 @@
     "url": "https://github.com/bartoszrajchert/tokun"
   },
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup",
+    "dev": "bun --watch run build",
+    "build": "rm -rf ./dist && bun run build:js && bun run build:types",
+    "build:js": "bun build ./src/builder/browser/index.ts ./src/builder/index.ts --outdir ./dist --format esm --target node --splitting && bun build ./src/validators/index.ts --outfile ./dist/validators/index.js --format esm --target browser -e zod -e zod/* && bun build ./src/cli/index.ts --outfile ./dist/cli/index.js --format esm --target node -e tinyglobby -e zod -e zod/*",
+    "build:types": "bunx tsc -p tsconfig.build.json",
+    "size:report": "node ./scripts/size-report.mjs",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "lint": "echo 'Add lint script here'"
+    "lint": "eslint ."
   },
   "author": "Bartosz Rajchert",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@types/node": "^20.17.10",
-    "@types/prompts": "^2.4.9"
+    "eslint": "^9.39.1",
+    "typescript-eslint": "^8.58.0"
   },
   "dependencies": {
-    "commander": "^12.1.0",
-    "kleur": "^4.1.5",
-    "ora": "^8.1.1",
-    "prompts": "^2.4.2",
     "tinyglobby": "^0.2.10",
-    "zod": "^3.25.55"
+    "zod": "^4.3.6"
   },
   "browser": {
     "tinyglobby": false,

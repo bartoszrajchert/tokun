@@ -1,27 +1,27 @@
-import { Token } from "types/definitions.js";
-import { ValidatorConfig, ValidatorReturn } from "validators/types.js";
-import {
+import type { Token } from "types/definitions.js";
+import type { ValidatorConfig, ValidatorReturn } from "validators/types.js";
+import type { LogConfig } from "../utils/logger.js";
+import type {
   FileHeader,
   Format,
+  FormatConfig,
   Loader,
   ModifyProperties,
   Transform,
   TransformGroup,
 } from "../utils/types.js";
 
+export type Config = {
+  data: string | string[] | object | object[];
+  log?: Partial<LogConfig>;
+  options?: ConfigOptions;
+};
+
 /**
  * Define a configuration object for the design token builder.
  * It should be used with CLI.
- *
- * @param config
- * @returns
  */
-export const defineConfig = (config: Config) => config;
-
-export type Config = {
-  data: string | string[] | object | object[];
-  options?: ConfigOptions;
-};
+export const defineConfig = <T extends Config>(config: T): T => config;
 
 export type ConfigOptions = {
   loader: Loader | string;
@@ -39,7 +39,7 @@ export type Platform = {
     filter?: ({ token, path }: { token: Token; path: string }) => boolean;
     fileHeader?: FileHeader;
   }[];
-  config?: any;
+  config?: FormatConfig;
 };
 
 export type PlatformWithoutString = ModifyProperties<

@@ -1,5 +1,5 @@
-export const isObject = (value: any): value is object => {
-  return !!value && value.constructor === Object;
+export const isObject = (value: unknown): value is object => {
+  return !!value && (value as object).constructor === Object;
 };
 
 /**
@@ -7,19 +7,18 @@ export const isObject = (value: any): value is object => {
  * object applying values from right to left.
  * Recursion only applies to child object properties.
  */
-export const assign = <X extends Record<string | symbol | number, any>>(
+export const assign = <X extends Record<string | symbol | number, unknown>>(
   initial: X,
   override: X,
 ): X => {
-  if (!initial || !override) return initial ?? override ?? {};
+  if (!initial || !override) return initial ?? override ?? ({} as X);
 
   return Object.entries({ ...initial, ...override }).reduce(
     (acc, [key, value]) => {
       return {
         ...acc,
         [key]: (() => {
-          if (isObject(initial[key])) return assign(initial[key], value);
-          // if (isArray(value)) return value.map(x => assign)
+          if (isObject(initial[key])) return assign(initial[key] as X, value as X);
           return value;
         })(),
       };
@@ -61,19 +60,19 @@ export const isEqual = <TType>(x: TType, y: TType): boolean => {
  * @example get(person, 'friends[0].name')
  */
 export const get = <TDefault = unknown>(
-  value: any,
+  value: unknown,
   path: string,
   defaultValue?: TDefault,
 ): TDefault => {
   const segments = path.split(/[\.\[\]]/g);
-  let current: any = value;
+  let current: unknown = value;
   for (const key of segments) {
     if (current === null) return defaultValue as TDefault;
     if (current === undefined) return defaultValue as TDefault;
     const dequoted = key.replace(/['"]/g, "");
     if (dequoted.trim() === "") continue;
-    current = current[dequoted];
+    current = (current as Record<string, unknown>)[dequoted];
   }
   if (current === undefined) return defaultValue as TDefault;
-  return current;
+  return current as TDefault;
 };

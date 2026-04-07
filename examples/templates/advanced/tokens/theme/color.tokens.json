@@ -3,22 +3,38 @@
     "color": {
       "$type": "color",
       "primary": {
-        "$value": "#0057FF",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0, 0.3412, 1],
+          "hex": "#0057FF"
+        },
         "$description": "Primary brand color"
       },
       "secondary": {
-        "$value": "#FFD700",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 0.8431, 0],
+          "hex": "#FFD700"
+        },
         "$type": "color",
         "$description": "Secondary brand color"
       },
       "neutral": {
         "light": {
-          "$value": "#F5F5F5",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [0.9608, 0.9608, 0.9608],
+            "hex": "#F5F5F5"
+          },
           "$type": "color",
           "$description": "Light neutral color"
         },
         "dark": {
-          "$value": "#333333",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [0.2, 0.2, 0.2],
+            "hex": "#333333"
+          },
           "$type": "color",
           "$description": "Dark neutral color"
         }

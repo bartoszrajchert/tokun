@@ -1,8 +1,15 @@
-import { CSS_EXTENSION } from "builder/formats/css-format.js";
+import {
+  CSS_EXTENSION,
+  stringifyCssValue,
+} from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { ReferenceValue, ShadowToken, Token } from "types/definitions.js";
-import { isReference, stringifyUnitValue } from "utils/token-utils.js";
-import { Transform } from "utils/types.js";
+import type { Token } from "types/definitions.js";
+import {
+  getTokenValue,
+  isTokenReference,
+  stringifyUnitValue,
+} from "utils/token-utils.js";
+import type { Transform } from "utils/types.js";
 
 export const cssShadowTransform: Transform = {
   name: "css-shadow",
@@ -17,38 +24,17 @@ export const cssShadowTransform: Transform = {
       return token;
     }
 
-    if (isReference(token.$value)) {
-      cssExtension.value = token.$value;
+    const tokenValue = getTokenValue(token);
+    if (isTokenReference(tokenValue)) {
+      cssExtension.value = tokenValue;
     } else {
-      if (Array.isArray(token.$value)) {
-        cssExtension.value = token.$value
-          .map((shadow) =>
-            isReference(shadow)
-              ? shadow
-              : `${stringifyUnitValue(shadow.offsetX)} ${stringifyUnitValue(shadow.offsetY)} ${stringifyUnitValue(shadow.blur)} ${stringifyUnitValue(shadow.spread)} ${shadow.color}${shadow.inset ? " inset" : ""}`,
-          )
-          .join(", ");
-      } else {
-        cssExtension.value = `${stringifyUnitValue(token.$value.offsetX)} ${stringifyUnitValue(token.$value.offsetY)} ${stringifyUnitValue(token.$value.blur)} ${stringifyUnitValue(token.$value.spread)} ${token.$value.color}${token.$value.inset ? " inset" : ""}`;
-      }
+      cssExtension.value = stringifyShadow(tokenValue);
     }
 
     if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {
-      const resolvedValue = token.$extensions[RESOLVED_EXTENSION] as Exclude<
-        ShadowToken["$value"],
-        ReferenceValue
-      >;
-      if (Array.isArray(resolvedValue)) {
-        cssExtension.resolvedValue = resolvedValue
-          .map((shadow) =>
-            isReference(shadow)
-              ? shadow
-              : `${stringifyUnitValue(shadow.offsetX)} ${stringifyUnitValue(shadow.offsetY)} ${stringifyUnitValue(shadow.blur)} ${stringifyUnitValue(shadow.spread)} ${shadow.color}${shadow.inset ? " inset" : ""}`,
-          )
-          .join(", ");
-      } else {
-        cssExtension.resolvedValue = `${stringifyUnitValue(resolvedValue.offsetX)} ${stringifyUnitValue(resolvedValue.offsetY)} ${stringifyUnitValue(resolvedValue.blur)} ${stringifyUnitValue(resolvedValue.spread)} ${resolvedValue.color}${resolvedValue.inset ? " inset" : ""}`;
-      }
+      cssExtension.resolvedValue = stringifyShadow(
+        token.$extensions[RESOLVED_EXTENSION],
+      );
     }
 
     if (Object.keys(cssExtension).length > 0) {
@@ -61,3 +47,31 @@ export const cssShadowTransform: Transform = {
     return token;
   },
 };
+
+function stringifyShadow(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value.map((shadow) => stringifyShadowEntry(shadow)).join(", ");
+  }
+
+  return stringifyShadowEntry(value);
+}
+
+function stringifyShadowEntry(value: unknown): string {
+  if (isTokenReference(value)) {
+    return value;
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return String(value);
+  }
+
+  const shadow = value as {
+    offsetX: unknown;
+    offsetY: unknown;
+    blur: unknown;
+    spread: unknown;
+    color: unknown;
+  };
+
+  return `${stringifyUnitValue(shadow.offsetX as never)} ${stringifyUnitValue(shadow.offsetY as never)} ${stringifyUnitValue(shadow.blur as never)} ${stringifyUnitValue(shadow.spread as never)} ${stringifyCssValue(shadow.color)}`;
+}

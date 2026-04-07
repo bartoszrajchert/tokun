@@ -12,16 +12,19 @@ Tokun provides an API for seamless interaction.
 
 To use Tokun API, install it as a dependency (or devDependencies).
 
-```bash
-npm install tokun
-```
+<PackageManagerTabs
+  npm="npm install tokun"
+  yarn="yarn add tokun"
+  pnpm="pnpm add tokun"
+  bun="bun add tokun"
+/>
 
 ## Quick start
 
 See below simple way to use Tokun module
 
 ```js
-import { build } from 'tokun';
+import { build, logVerbosityLevels } from 'tokun';
 
 const value = ...;
 
@@ -31,4 +34,12 @@ const tokens = build({
 });
 
 tokens.forEach(console.log);
+
+// Enable verbose logs programmatically.
+build(
+  { data: JSON.parse(value) },
+  { log: { verbosity: logVerbosityLevels.verbose } }
+);
 ```
+
+> Programmatic `build` is silent by default. To enable logs, pass runtime logging options (for example `{ log: { verbosity: logVerbosityLevels.verbose } }`).

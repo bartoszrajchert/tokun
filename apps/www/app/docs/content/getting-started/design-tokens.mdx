@@ -1,8 +1,140 @@
 ---
 title: "Design Tokens"
+description: "How to structure DTCG design tokens for Tokun."
 order: 6
 ---
 
 # Design Tokens
 
-🚧 The page is under construction.
+Tokun works with design tokens in the [DTCG Format (2025.10)](https://www.designtokens.org/TR/2025.10/format/).
+This means tokens are plain JSON objects with a predictable shape, references, and strict validation.
+
+## Token structure
+
+A token is an object with a `$value` and a `$type`.
+Groups can contain tokens and nested groups.
+
+```json "tokens/base.tokens.json"
+{
+  "brand": {
+    "color": {
+      "$type": "color",
+      "$root": {
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.0706, 0.2039, 0.3373],
+          "hex": "#123456"
+        },
+        "$description": "Default brand color"
+      },
+      "white": {
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "hex": "#ffffff"
+        }
+      }
+    },
+    "spacing": {
+      "md": {
+        "$type": "dimension",
+        "$value": {
+          "value": 8,
+          "unit": "px"
+        }
+      }
+    }
+  }
+}
+```
+
+## Common token fields
+
+| Field          | Required                    | Notes                                                                         |
+| -------------- | --------------------------- | ----------------------------------------------------------------------------- |
+| `$value`       | Yes                         | Token value. Can be literal data or a reference such as `{brand.spacing.md}`. |
+| `$type`        | Yes (directly or inherited) | Token type (for example `color`, `dimension`, `typography`).                  |
+| `$description` | No                          | Human-readable explanation.                                                   |
+| `$extensions`  | No                          | Custom metadata under your own namespace.                                     |
+| `$deprecated`  | No                          | Boolean or string with migration context.                                     |
+
+## References and aliases
+
+Use curly-brace references to build semantic aliases from base tokens.
+
+```json
+{
+  "alias": {
+    "color": {
+      "primary": {
+        "$type": "color",
+        "$value": "{brand.color.$root}"
+      }
+    },
+    "spacing": {
+      "page": {
+        "$type": "dimension",
+        "$value": "{brand.spacing.md}"
+      }
+    }
+  }
+}
+```
+
+Tokun resolves references recursively, validates types, and reports missing/circular references.
+
+## Group features
+
+Groups support DTCG metadata and inheritance:
+
+- `$root` defines a default token for the group (for example `brand.color.$root`).
+- `$extends` lets one group inherit another group (curly reference or JSON Pointer).
+- `$type` on a group can be inherited by child tokens.
+
+Example with `$extends`:
+
+```json
+{
+  "base": {
+    "spacing": {
+      "sm": { "$type": "dimension", "$value": { "value": 4, "unit": "px" } },
+      "md": { "$type": "dimension", "$value": { "value": 8, "unit": "px" } }
+    }
+  },
+  "theme": {
+    "spacing": {
+      "$extends": "#/base/spacing",
+      "lg": { "$type": "dimension", "$value": { "value": 16, "unit": "px" } }
+    }
+  }
+}
+```
+
+## Supported token types
+
+Tokun validates these built-in DTCG types:
+
+- `color`
+- `dimension`
+- `fontFamily`
+- `fontWeight`
+- `duration`
+- `cubicBezier`
+- `number`
+- `strokeStyle`
+- `border`
+- `transition`
+- `shadow`
+- `gradient`
+- `typography`
+
+## Validate your tokens
+
+Run validation before building:
+
+```bash
+tokun validate "tokens/**/*.tokens.json"
+```
+
+For complete build configuration, see [Config API](/docs/reference/config).
+For real-world token sets, see [Examples - Simple](/docs/examples/simple) and [Examples - Advanced](/docs/examples/advanced).

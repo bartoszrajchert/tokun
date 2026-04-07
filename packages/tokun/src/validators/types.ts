@@ -1,5 +1,5 @@
-import { Token } from "types/definitions.js";
-import { FlattenTokens } from "utils/to-flat.js";
+import type { Token } from "types/definitions.js";
+import type { FlattenTokens } from "utils/to-flat.js";
 
 export type TypeValidators = {
   [key: string]: {

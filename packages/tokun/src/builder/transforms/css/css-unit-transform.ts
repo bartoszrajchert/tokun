@@ -1,8 +1,16 @@
 import { CSS_EXTENSION } from "builder/formats/css-format.js";
 import { RESOLVED_EXTENSION } from "builder/loaders/dtcg-json-loader.js";
-import { DimensionToken, ReferenceValue, Token } from "types/definitions.js";
-import { isReference, stringifyUnitValue } from "utils/token-utils.js";
-import { Transform } from "utils/types.js";
+import type {
+  DimensionToken,
+  ReferenceValue,
+  Token,
+} from "types/definitions.js";
+import {
+  getTokenValue,
+  isTokenReference,
+  stringifyUnitValue,
+} from "utils/token-utils.js";
+import type { Transform } from "utils/types.js";
 
 export const cssUnitTransform: Transform = {
   name: "css-unit",
@@ -17,10 +25,12 @@ export const cssUnitTransform: Transform = {
       resolvedValue?: string;
     } = {};
 
-    if (!isReference(token.$value)) {
-      cssExtension.value = stringifyUnitValue(token.$value);
+    const tokenValue = getTokenValue(token);
+
+    if (!isTokenReference(tokenValue)) {
+      cssExtension.value = stringifyUnitValue(tokenValue as never);
     } else {
-      cssExtension.value = token.$value;
+      cssExtension.value = tokenValue;
     }
 
     if (token.$extensions && token.$extensions[RESOLVED_EXTENSION]) {

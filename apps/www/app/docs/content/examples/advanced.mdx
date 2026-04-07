@@ -5,6 +5,31 @@ order: 2
 
 # Examples — Advanced
 
-🚧 The page is under construction.
+The advanced template demonstrates a multi-file setup loaded by:
 
-See examples on Tokun [repository](https://github.com/bartoszrajchert/tokun/tree/main/examples).
+- `examples/templates/advanced/config.mjs`
+- `data: ["tokens/theme/*.tokens.json", "tokens/base.tokens.json"]`
+
+It splits tokens by domain and includes custom validation and types:
+
+- `base.tokens.json` for shared primitives and aliases
+- `theme/color.tokens.json` for semantic color mapping
+- `theme/typography.tokens.json` for typography composites
+- `theme/more.tokens.json` for dimensions, shadows, spacing, and motion
+- `theme/custom.tokens.json` for custom `unknown` token examples
+
+The config uses `dtcgJsonLoader` + `dtcgValidator` and extends validation with `customValidator` rules.
+
+Start here:
+
+- `examples/templates/advanced/tokens/base.tokens.json`
+- `examples/templates/advanced/tokens/theme/color.tokens.json`
+- `examples/templates/advanced/tokens/theme/typography.tokens.json`
+- `examples/templates/advanced/tokens/theme/more.tokens.json`
+- `examples/templates/advanced/tokens/theme/custom.tokens.json`
+
+Outputs:
+
+- `examples/templates/advanced/dist/sample.css`
+- `examples/templates/advanced/dist/sample-typography.css`
+- `examples/templates/advanced/dist/sample-flatten.json`

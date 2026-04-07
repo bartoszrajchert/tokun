@@ -1,4 +1,4 @@
 {
   "readme": "none",
-  "entryPoints": ["src/builder", "src/types", "src/utils", "src/validators"]
+  "entryPoints": ["src/builder", "src/validators"]
 }

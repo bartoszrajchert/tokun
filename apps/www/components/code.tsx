@@ -2,9 +2,9 @@ import { cn } from "@/lib/utils";
 import React from "react";
 import { highlight } from "sugar-high";
 
-interface CodeProps {
+interface CodeProps
+  extends Omit<React.ComponentPropsWithoutRef<"code">, "children"> {
   children: string;
-  className?: string;
 }
 
 export function Code({ children, className, ...props }: CodeProps) {

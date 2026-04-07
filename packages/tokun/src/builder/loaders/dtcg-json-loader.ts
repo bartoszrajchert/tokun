@@ -1,29 +1,144 @@
-import { yellow } from "kleur/colors";
-import { Token, TokenValue } from "types/definitions.js";
-import { isObject } from "utils/object-utils.js";
-import { FlattenTokens, toFlat } from "utils/to-flat.js";
+import type { Token, TokenGroup } from "types/definitions.js";
+import { logger } from "utils/logger.js";
+import { assign, isEqual, isObject } from "utils/object-utils.js";
+import type { FlattenTokens } from "utils/to-flat.js";
+import { toFlat } from "utils/to-flat.js";
 import {
+  getByJsonPointer,
+  getTokenValue,
   isReference,
-  isValueComposite,
+  isToken,
+  isTokenReference,
+  normalizeRootTokenPath,
   unwrapReference,
 } from "utils/token-utils.js";
 
-import { Loader } from "utils/types.js";
+import type { Loader } from "utils/types.js";
 
 export const dtcgJsonLoader: Loader = {
   name: "dtcg-json",
   pattern: /(?:\.tokens)?(?:\.json)?$/,
   loadFn: ({ content }) => {
+    resolveExtends(content);
     const { flatten } = toFlat(content);
     const resolvedFlatten = resolveTokens(flatten);
 
     fixGradientPosition(resolvedFlatten);
-    // TODO: Dash array fix -> https://tr.designtokens.org/format/#object-value
-    // TODO: Fallbacks https://tr.designtokens.org/format/#fallbacks
 
     return resolvedFlatten;
   },
 };
+
+/**
+ * Resolve `$extends` group inheritance.
+ * Deep-merges the referenced group's tokens into the extending group.
+ * Detects circular inheritance.
+ */
+function resolveExtends(
+  content: TokenGroup,
+  root?: TokenGroup,
+  resolving: Set<string> = new Set(),
+  path = "",
+): void {
+  const rootContent = root ?? content;
+  const currentPath = path || "#";
+
+  if (resolving.has(currentPath)) {
+    throw new Error(`Circular $extends detected at "${currentPath}"`);
+  }
+  resolving.add(currentPath);
+
+  if (content.$extends) {
+    const { group: referencedGroup, path: referencedPath } =
+      resolveGroupReference(rootContent, content.$extends);
+
+    resolveExtends(referencedGroup, rootContent, resolving, referencedPath);
+
+    const merged = assign(
+      structuredClone(referencedGroup),
+      structuredClone(content),
+    );
+
+    delete merged.$extends;
+
+    Object.keys(content).forEach((key) => {
+      delete (content as Record<string, unknown>)[key];
+    });
+    Object.assign(content, merged);
+  }
+
+  for (const [key, value] of Object.entries(content)) {
+    if (key.startsWith("$")) {
+      continue;
+    }
+
+    if (!isTokenGroup(value)) {
+      continue;
+    }
+
+    const groupPath = path ? `${path}.${key}` : key;
+    resolveExtends(value, rootContent, resolving, groupPath);
+  }
+
+  resolving.delete(currentPath);
+}
+
+function isTokenGroup(value: unknown): value is TokenGroup {
+  return isObject(value) && !isToken(value);
+}
+
+function getNestedGroup(
+  root: TokenGroup,
+  path: string,
+): TokenGroup | undefined {
+  if (path === "") {
+    return root;
+  }
+
+  const parts = path.split(".").filter((part) => part !== "");
+  let current: unknown = root;
+
+  for (const part of parts) {
+    if (typeof current !== "object" || current === null) return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+
+  if (!isTokenGroup(current)) {
+    return undefined;
+  }
+
+  return current;
+}
+
+function resolveGroupReference(
+  root: TokenGroup,
+  reference: string,
+): { group: TokenGroup; path: string } {
+  if (isReference(reference)) {
+    const path = unwrapReference(reference);
+    const group = getNestedGroup(root, path);
+
+    if (!group) {
+      throw new Error(`$extends reference "${reference}" not found`);
+    }
+
+    return { group, path };
+  }
+
+  const target = getByJsonPointer(root, reference);
+  if (!isTokenGroup(target)) {
+    throw new Error(`$extends reference "${reference}" must point to a group`);
+  }
+
+  const normalizedPath = reference
+    .slice(2)
+    .split("/")
+    .filter((segment) => segment !== "")
+    .map((segment) => segment.replace(/~1/g, "/").replace(/~0/g, "~"))
+    .join(".");
+
+  return { group: target, path: normalizedPath };
+}
 
 /**
  * Gradient fix according to the design-tokens spec
@@ -31,18 +146,28 @@ export const dtcgJsonLoader: Loader = {
  * @link https://tr.designtokens.org/format/#gradient
  */
 const fixGradientPosition = (flatten: FlattenTokens) => {
-  const validateGradientPosition = (gradient: any, tokenName: string) => {
-    if (isReference(gradient) || isReference(gradient.position)) {
+  const validateGradientPosition = (
+    gradient: Record<string, unknown>,
+    tokenName: string,
+  ) => {
+    if (isTokenReference(gradient)) {
       return gradient;
     }
 
-    const { position, color } = gradient;
+    if (isTokenReference(gradient.position)) {
+      return gradient;
+    }
+
+    const position = gradient.position as number;
+    const color = gradient.color;
+    if (typeof position !== "number") {
+      return gradient;
+    }
+
     if (position > 1 || position < 0) {
       const newPosition = position > 1 ? 1 : 0;
-      console.warn(
-        yellow(
-          `⚠ The position of the gradient in "${tokenName}" for "${color}" is set to ${position}. It should not be ${position > 1 ? "more then" : "less then"} ${position > 1 ? "1" : "0"}. Setting it to ${newPosition}.`,
-        ),
+      logger.warn(
+        `⚠ The position of the gradient in "${tokenName}" for "${String(color)}" is set to ${position}. It should not be ${position > 1 ? "more than" : "less than"} ${position > 1 ? "1" : "0"}. Setting it to ${newPosition}.`,
       );
       gradient.position = newPosition;
     }
@@ -55,194 +180,143 @@ const fixGradientPosition = (flatten: FlattenTokens) => {
       return;
     }
 
-    if (isReference(token.$value)) {
-      return;
+    const tokenValue = getTokenValue(token);
+
+    if (!isTokenReference(tokenValue) && Array.isArray(tokenValue)) {
+      const normalized = tokenValue.map((gradient) =>
+        validateGradientPosition(gradient as Record<string, unknown>, name),
+      );
+
+      if ("$value" in token) {
+        (token as { $value: Record<string, unknown>[] }).$value = normalized;
+      }
     }
 
-    token.$value = token.$value.map((gradient) =>
-      validateGradientPosition(gradient, name),
-    );
-
     if (token.$extensions?.[RESOLVED_EXTENSION]) {
-      token.$extensions[RESOLVED_EXTENSION] = token.$extensions[
-        RESOLVED_EXTENSION
-      ].map((gradient: any) => validateGradientPosition(gradient, name));
+      const resolved = token.$extensions[RESOLVED_EXTENSION];
+
+      if (Array.isArray(resolved)) {
+        token.$extensions[RESOLVED_EXTENSION] = resolved.map((gradient) =>
+          validateGradientPosition(gradient as Record<string, unknown>, name),
+        );
+      }
     }
   });
 };
 
 export const RESOLVED_EXTENSION = "com.tokun.resolvedValue";
 
-type ResolvedValue = TokenValue | TokenValue[] | Record<string, TokenValue>;
+type ResolvedValue = unknown;
 
-/**
- * Resolves a reference to its actual token value
- */
+function withCycleGuard(stack: string[], id: string): string[] {
+  if (stack.includes(id)) {
+    throw new Error(
+      `Circular reference detected: ${[...stack, id].join(" -> ")}`,
+    );
+  }
+
+  return [...stack, id];
+}
+
 function resolveReference(
-  value: TokenValue,
+  reference: string,
   tokens: FlattenTokens,
-): Token | null {
-  if (!isReference(value)) {
-    return null;
-  }
+  stack: string[],
+  cache: Map<string, ResolvedValue>,
+): unknown {
+  if (isReference(reference)) {
+    const rawRefPath = unwrapReference(reference);
+    const refPath = normalizeRootTokenPath(rawRefPath);
 
-  const ref = tokens.get(unwrapReference(value));
-  if (!ref) {
-    throw new Error(`Reference ${unwrapReference(value)} not found`);
-  }
-
-  // If the value is a reference, resolve it first
-  if (isReference(ref.$value)) {
-    const nestedRef = resolveReference(ref.$value, tokens);
-    if (nestedRef) {
-      if (nestedRef.$extensions?.[RESOLVED_EXTENSION]) {
-        if (!ref.$extensions) {
-          ref.$extensions = {};
-        }
-        ref.$extensions[RESOLVED_EXTENSION] =
-          nestedRef.$extensions[RESOLVED_EXTENSION];
-      }
+    if (cache.has(refPath)) {
+      return cache.get(refPath);
     }
-  }
 
-  // If the value is composite, resolve it
-  if (isValueComposite(ref.$value)) {
-    let resolvedValue: ResolvedValue;
-    if (Array.isArray(ref.$value)) {
-      resolvedValue = resolveArrayValues(
-        ref.$value as unknown as TokenValue[],
-        tokens,
-      );
-    } else if (typeof ref.$value === "object" && ref.$value !== null) {
-      resolvedValue = resolveObjectValues(
-        ref.$value as Record<string, TokenValue>,
-        tokens,
-      );
-    } else {
-      resolvedValue = ref.$value;
+    const guardedStack = withCycleGuard(stack, `token:${refPath}`);
+    const referencedToken = tokens.get(refPath);
+
+    if (!referencedToken) {
+      throw new Error(`Reference ${rawRefPath} not found`);
     }
-    setResolvedValue(ref, resolvedValue);
-  } else {
-    // For simple values, set the resolved value directly
-    setResolvedValue(ref, ref.$value);
+
+    const resolvedValue = resolveValue(
+      getTokenValue(referencedToken),
+      tokens,
+      guardedStack,
+      cache,
+    );
+
+    cache.set(refPath, resolvedValue);
+
+    return resolvedValue;
   }
 
-  return ref;
+  throw new Error(`Invalid reference ${String(reference)}`);
+}
+
+function resolveValue(
+  value: unknown,
+  tokens: FlattenTokens,
+  stack: string[],
+  cache: Map<string, ResolvedValue>,
+): ResolvedValue {
+  if (isReference(value)) {
+    return resolveReference(value, tokens, stack, cache);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveValue(item, tokens, stack, cache));
+  }
+
+  if (isObject(value)) {
+    if (isToken(value)) {
+      return resolveValue(getTokenValue(value), tokens, stack, cache);
+    }
+
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nestedValue]) => [
+        key,
+        resolveValue(nestedValue, tokens, stack, cache),
+      ]),
+    );
+  }
+
+  return value;
 }
 
 /**
  * Sets the resolved value in the token's extensions
  */
-function setResolvedValue(token: Token, resolvedValue: ResolvedValue): void {
-  // Only add the extension if the resolved value is different from the original value
-  if (JSON.stringify(token.$value) === JSON.stringify(resolvedValue)) {
-    // Do not add the extension if nothing changed
+function setResolvedValue(
+  token: Token,
+  sourceValue: unknown,
+  resolvedValue: ResolvedValue,
+): void {
+  if (isEqual(sourceValue, resolvedValue)) {
     return;
   }
+
   if (!token.$extensions) {
     token.$extensions = {};
   }
+
   token.$extensions[RESOLVED_EXTENSION] = resolvedValue;
-}
-
-/**
- * Resolves references in an array of values
- */
-function resolveArrayValues(
-  values: TokenValue[],
-  tokens: FlattenTokens,
-): TokenValue[] {
-  return values
-    .map((item) => {
-      if (isReference(item)) {
-        const ref = resolveReference(item, tokens);
-        return ref ? ref.$value : item;
-      }
-
-      if (isValueComposite(item)) {
-        if (Array.isArray(item)) {
-          return resolveArrayValues(item as unknown as TokenValue[], tokens);
-        }
-        if (typeof item === "object" && item !== null) {
-          return resolveObjectValues(
-            item as Record<string, TokenValue>,
-            tokens,
-          );
-        }
-      }
-
-      return item;
-    })
-    .filter((item): item is TokenValue => item !== null);
-}
-
-/**
- * Resolves references in an object's values
- */
-function resolveObjectValues(
-  obj: Record<string, TokenValue>,
-  tokens: FlattenTokens,
-): Record<string, TokenValue> {
-  return Object.fromEntries(
-    Object.entries(obj).map(([key, val]) => {
-      if (isReference(val)) {
-        const ref = resolveReference(val, tokens);
-        return [key, ref ? ref.$value : val];
-      }
-      if (isValueComposite(val)) {
-        if (Array.isArray(val)) {
-          return [
-            key,
-            resolveArrayValues(val as unknown as TokenValue[], tokens),
-          ];
-        }
-        if (typeof val === "object" && val !== null) {
-          return [
-            key,
-            resolveObjectValues(val as Record<string, TokenValue>, tokens),
-          ];
-        }
-      }
-      return [key, val];
-    }),
-  );
 }
 
 /**
  * Resolves all token references in the given token collection
  */
 export function resolveTokens(tokens: FlattenTokens): FlattenTokens {
-  tokens.forEach((token) => {
-    if (isReference(token.$value)) {
-      const ref = resolveReference(token.$value, tokens);
-      if (ref) {
-        if (ref.$extensions) {
-          if (!token.$extensions) {
-            token.$extensions = {};
-          }
-          token.$extensions[RESOLVED_EXTENSION] =
-            ref.$extensions[RESOLVED_EXTENSION];
-        } else {
-          setResolvedValue(token, ref.$value);
-        }
-      }
-    } else if (isValueComposite(token.$value)) {
-      if (Array.isArray(token.$value)) {
-        const resolvedArray = resolveArrayValues(
-          token.$value as unknown as TokenValue[],
-          tokens,
-        );
-        if (resolvedArray.length > 0) {
-          setResolvedValue(token, resolvedArray);
-        }
-      } else if (isObject(token.$value)) {
-        const resolvedObject = resolveObjectValues(
-          token.$value as Record<string, TokenValue>,
-          tokens,
-        );
-        setResolvedValue(token, resolvedObject);
-      }
-    }
+  const resolvedByPath = new Map<string, ResolvedValue>();
+
+  tokens.forEach((token, key) => {
+    const tokenValue = getTokenValue(token);
+    const resolved = resolvedByPath.has(key)
+      ? resolvedByPath.get(key)
+      : resolveValue(tokenValue, tokens, [`token:${key}`], resolvedByPath);
+
+    resolvedByPath.set(key, resolved);
+    setResolvedValue(token, tokenValue, resolved);
   });
 
   return tokens;
