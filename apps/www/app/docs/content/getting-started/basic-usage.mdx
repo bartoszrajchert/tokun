@@ -5,19 +5,29 @@ order: 2
 
 # Installation
 
-Installation is not required to use Tokun — simply, you can run it via `npx`:
+Installation is not required to use Tokun — you can run it directly:
 
-```bash
-npx tokun
-```
-But if you want to use it as a library, you can install it as a dev dependency in your NPM package:
+<PackageManagerTabs
+  npm="npx tokun"
+  yarn="yarn dlx tokun"
+  pnpm="pnpm dlx tokun"
+  bun="bunx tokun"
+/>
 
-```bash
-npm install -D tokun
-```
+But if you want to use it as a library, install it as a dev dependency in your project:
+
+<PackageManagerTabs
+  npm="npm install -D tokun"
+  yarn="yarn add -D tokun"
+  pnpm="pnpm add -D tokun"
+  bun="bun add --dev tokun"
+/>
 
 However, if you want to use this package directly in an application (not only internally), then install it as a regular dependency:
 
-```bash
-npm install tokun
-```
+<PackageManagerTabs
+  npm="npm install tokun"
+  yarn="yarn add tokun"
+  pnpm="pnpm add tokun"
+  bun="bun add tokun"
+/>

@@ -1,0 +1,49 @@
+---
+title: "Simple"
+order: 1
+---
+
+# Examples — Simple
+
+This docs page maps to the `simple` template in the repository.
+
+It keeps everything in one token file and demonstrates:
+
+- structured color values (`colorSpace` + `components`)
+- group root tokens with `$root`
+- curly-brace aliases
+- gradient positions in the `[0, 1]` range
+- typography composite aliases built from primitive tokens
+
+Files:
+
+- `examples/templates/simple/simple.tokens.json`
+- `examples/templates/simple/config.mjs`
+- output: `examples/templates/simple/dist/vars.css`
+
+```json
+{
+  "alias": {
+    "gradient": {
+      "$type": "gradient",
+      "$value": [
+        { "color": "{brand.color.$root}", "position": 0 },
+        { "color": "{brand.color.black}", "position": 1 }
+      ]
+    },
+    "typography": {
+      "header": {
+        "$type": "typography",
+        "$value": {
+          "fontFamily": "{brand.typography.header.fontFamily}",
+          "fontSize": "{brand.typography.header.fontSize}",
+          "fontWeight": "{brand.typography.header.fontWeight}",
+          "lineHeight": 1.2
+        }
+      }
+    }
+  }
+}
+```
+
+For more complete setups, see the advanced template.
