@@ -52,13 +52,14 @@ export default function SearchDialog() {
   const [query, setQuery] = React.useState("");
   const [results, setResults] = React.useState<PagefindResult[]>([]);
   const [open, setOpen] = React.useState(false);
+  const [isPagefindReady, setIsPagefindReady] = React.useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     async function loadPagefind() {
       if (typeof window.pagefind === "undefined") {
         try {
-          const modulePath = "./pagefind/pagefind.js";
+          const modulePath = "/_next/static/chunks/app/pagefind/pagefind.js";
           window.pagefind = (await import(
             /* webpackIgnore: true */ modulePath
           )) as unknown as PagefindApi;
@@ -71,7 +72,12 @@ export default function SearchDialog() {
           console.log(error);
         }
       }
+
+      if (window.pagefind) {
+        setIsPagefindReady(true);
+      }
     }
+
     loadPagefind();
   }, []);
 
@@ -88,15 +94,33 @@ export default function SearchDialog() {
   }, []);
 
   useEffect(() => {
+    let isCurrent = true;
+
     async function handleSearch() {
+      const nextQuery = query.trim();
+
+      if (!isPagefindReady || nextQuery.length === 0) {
+        if (isCurrent) {
+          setResults([]);
+        }
+        return;
+      }
+
       if (window.pagefind) {
-        const search = await window.pagefind.search(query);
+        const search = await window.pagefind.search(nextQuery);
+        if (!isCurrent) {
+          return;
+        }
         setResults(search.results);
       }
     }
 
     handleSearch();
-  }, [query]);
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [query, isPagefindReady]);
 
   useEffect(() => {
     setOpen(false);
@@ -110,7 +134,11 @@ export default function SearchDialog() {
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog
+        open={open}
+        onOpenChange={setOpen}
+        commandProps={{ shouldFilter: false }}
+      >
         <CommandInput
           placeholder="Search..."
           value={query}
