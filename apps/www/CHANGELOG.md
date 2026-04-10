@@ -1,5 +1,12 @@
 # docs
 
+## 0.2.4
+
+### Patch Changes
+
+- 0291072: Reorder imports and enhance button variant styles, add cursor-pointer to button
+- cf82053: Match playground dropdown menu width to the trigger width so options align with the corresponding input.
+
 ## 0.2.3
 
 ### Patch Changes
