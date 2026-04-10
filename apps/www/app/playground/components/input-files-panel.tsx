@@ -80,9 +80,6 @@ export function InputFilesPanel({
             <p className="text-foreground/60 text-xs uppercase tracking-wide">
               Directory tree
             </p>
-            <p className="text-foreground/60 pt-1 text-xs">
-              Use / in file paths to create folders.
-            </p>
           </div>
 
           <div className="max-h-[470px] overflow-auto pr-1">
@@ -126,6 +123,9 @@ export function InputFilesPanel({
         <div className="space-y-3">
           <div className="space-y-1">
             <Label htmlFor="playground-file-name">Selected file path</Label>
+            <p className="text-foreground/60 pb-1 text-xs">
+              Use / in file paths to create folders.
+            </p>
             <input
               id="playground-file-name"
               className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
