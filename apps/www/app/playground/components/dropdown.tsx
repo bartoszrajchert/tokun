@@ -55,7 +55,7 @@ export function Dropdown({
           </Button>
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56">
+      <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-(--radix-dropdown-menu-trigger-width)">
         <DropdownMenuRadioGroup value={value} onValueChange={setValue}>
           {normalizedItems.map((item) => (
             <DropdownMenuRadioItem key={item.value} value={item.value}>
