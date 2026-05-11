@@ -40,6 +40,7 @@ When anything meaningful changes, update AGEND and linked docs in the same chang
 - CLI `tokun validate` now fails the process when validation errors are present (non-zero exit behavior).
 - Pull request CI gate runs `lint`, `test`, and `build` in `.github/workflows/ci.yml`.
 - ESLint is standardized on flat config in active workspaces (`apps/www/eslint.config.mjs`, `packages/tokun/eslint.config.mjs`).
+- `apps/tokun-editor` provides a Vite React SPA with Zustand-persisted structured token editing and tokun-powered transforms.
 - Compatibility links:
   - `.claude/skills` -> `../.agents/skills`
   - `.opencode/skills` -> `../.agents/skills`

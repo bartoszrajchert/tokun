@@ -10,6 +10,7 @@ When structure, workflows, or agent-skill behavior changes, update this file in 
 ```
 tokun/
 |- apps/
+|  |- tokun-editor/         # Vite React SPA for structured design token editing
 |  `- www/                  # Next.js docs and playground app
 |- packages/
 |  `- tokun/                # Core library + CLI package
@@ -41,11 +42,18 @@ tokun/
 - API docs content is generated into `apps/www/app/docs/content/api/`.
 - Depends on workspace package `tokun` for examples and references.
 
-### 3) `examples` (integration samples)
+### 3) `apps/tokun-editor` (editor SPA)
+
+- Vite + React + React Router application for structured token file editing.
+- Uses shadcn/ui-style local components and Zustand persisted state.
+- Depends on workspace package `tokun` through browser-safe builder and validator exports.
+- Maintains token references across file/group/token renames before invoking tokun transforms.
+
+### 4) `examples` (integration samples)
 
 - Example configs and commands that run against local workspace `tokun`.
 
-### 4) `.agents/skills` (agent skill system)
+### 5) `.agents/skills` (agent skill system)
 
 - Canonical root for repository-specific skills.
 - Current skills:
